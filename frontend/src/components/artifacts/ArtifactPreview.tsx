@@ -44,6 +44,15 @@ function formatFileSize(bytes: number): string {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
 }
 
+/**
+ * Count words in text (English words, not characters).
+ */
+function countWords(text: string): number {
+  if (!text || !text.trim()) return 0;
+  // Split on whitespace and filter out empty strings
+  return text.trim().split(/\s+/).filter(word => word.length > 0).length;
+}
+
 function getMonacoLanguage(previewKind: ArtifactPreviewKind | undefined, extension: string | null) {
   if (previewKind === "markdown") return "markdown";
   if (previewKind === "text") return "plaintext";
@@ -196,6 +205,9 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
   const [isSavingTitle, setIsSavingTitle] = useState(false);
   const titleInputRef = useRef<HTMLInputElement>(null);
   const lastRewriteSnapshotRef = useRef<string | null>(null);
+  
+  // Word count state
+  const [selectedWordCount, setSelectedWordCount] = useState<number | null>(null);
   const pendingSelectionRef = useRef<{
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     range: any;
@@ -216,6 +228,12 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     return preview?.text ?? "";
   }, [artifact, artifactEdits, preview?.text]);
 
+  // Total word count for the current content
+  const totalWordCount = useMemo(() => {
+    const content = isEditing ? editContent : originalContent;
+    return countWords(content);
+  }, [isEditing, editContent, originalContent]);
+
   // Reset editing state when artifact changes
   useEffect(() => {
     setIsEditing(false);
@@ -224,6 +242,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     lastRewriteSnapshotRef.current = null;
     setIsEditingTitle(false);
     setEditedTitle("");
+    setSelectedWordCount(null);
   }, [artifact?.id]);
 
   // Focus title input when editing starts
@@ -573,6 +592,25 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
             {artifact.display_name}
           </h3>
         )}
+
+        {/* Word count display */}
+        {canShowEditor && totalWordCount > 0 && (
+          <span className="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0 ml-2">
+            {selectedWordCount !== null ? (
+              <span title={`${selectedWordCount} of ${totalWordCount} words selected`}>
+                <span className="text-blue-600 dark:text-blue-400 font-medium">{selectedWordCount}</span>
+                <span className="mx-0.5">/</span>
+                <span>{totalWordCount}</span>
+                <span className="ml-0.5">words</span>
+              </span>
+            ) : (
+              <span title={`${totalWordCount} words total`}>
+                {totalWordCount} words
+              </span>
+            )}
+          </span>
+        )}
+
         <div className="flex items-center gap-1.5 flex-shrink-0">
           {/* Maximize/Minimize button */}
           <button
@@ -737,6 +775,18 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
               }}
               onMount={(editor) => {
                 editorRef.current = editor;
+
+                // Listen for selection changes to update word count
+                editor.onDidChangeCursorSelection(() => {
+                  const selection = editor.getSelection();
+                  const model = editor.getModel();
+                  if (selection && !selection.isEmpty() && model) {
+                    const selectedText = model.getValueInRange(selection);
+                    setSelectedWordCount(countWords(selectedText));
+                  } else {
+                    setSelectedWordCount(null);
+                  }
+                });
 
                 // Custom right-click handler for simple academic-friendly menu
                 const editorDomNode = editor.getDomNode();
