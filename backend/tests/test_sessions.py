@@ -282,13 +282,13 @@ class TestDeleteSession:
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_session
         mock_db.execute = AsyncMock(return_value=mock_result)
-        mock_db.delete = AsyncMock()
         mock_db.commit = AsyncMock()
 
         result = await delete_session(session_id, mock_db, mock_user)
 
         assert result is None
-        mock_db.delete.assert_awaited_once_with(mock_session)
+        # Session is soft-deleted (is_deleted flag set to True)
+        assert mock_session.is_deleted is True
         mock_db.commit.assert_awaited_once()
 
     @pytest.mark.asyncio
