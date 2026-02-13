@@ -953,19 +953,15 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
               <span className="text-gray-700 dark:text-gray-300">Empiricals</span>
             </label>
             {(ragEnabled.library || ragEnabled.interviews) && (
-              <select
+              <input
+                type="number"
                 value={ragTopK}
-                onChange={(e) => setRagTopK(Number(e.target.value))}
+                onChange={(e) => setRagTopK(Math.max(1, Number(e.target.value) || 5))}
                 disabled={isStreaming}
-                className="text-xs border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                min={1}
+                className="w-12 text-xs border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 text-center"
                 title="Number of results to retrieve"
-              >
-                <option value={3}>3 results</option>
-                <option value={5}>5 results</option>
-                <option value={10}>10 results</option>
-                <option value={15}>15 results</option>
-                <option value={20}>20 results</option>
-              </select>
+              />
             )}
           </div>
         </div>
