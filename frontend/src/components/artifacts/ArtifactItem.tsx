@@ -406,9 +406,12 @@ export function ArtifactItem({
               isDeletingRemote && !isLocal && "opacity-50 cursor-not-allowed"
             )}
             disabled={isDeletingRemote && !isLocal}
-            onClick={async () => {
+            onClick={() => {
               setShowContextMenu(false);
-              await handleDelete();
+              // Use setTimeout to ensure menu closes before confirm dialog
+              setTimeout(() => {
+                void handleDelete();
+              }, 0);
             }}
           >
             Delete
