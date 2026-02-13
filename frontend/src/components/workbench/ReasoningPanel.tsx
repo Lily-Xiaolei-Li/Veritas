@@ -267,6 +267,21 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     addLocalArtifact(localArtifact);
   };
 
+  // Helper to save message to database for conversation history
+  const saveMessageToDb = async (role: "user" | "assistant" | "system", content: string) => {
+    if (!currentSessionId) return;
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/messages/save`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role, content }),
+      });
+    } catch (e) {
+      console.error("Failed to save message to DB:", e);
+      // Don't block chat if save fails
+    }
+  };
+
   const sendMessage = async (rawContent: string, options?: { clearInput?: boolean }) => {
     const content = rawContent.trim();
 
@@ -287,6 +302,9 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
       content,
       created_at: new Date().toISOString(),
     });
+
+    // Save user message to DB for conversation history
+    void saveMessageToDb("user", content);
 
     if (options?.clearInput) {
       setInputValue("");
@@ -677,8 +695,16 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
       }
     } finally {
       if (chatMode === "xiaolei") {
+        // Get the final assistant message content before finalizing
+        const finalContent = useWorkbenchStore.getState().streamingMessage?.content?.trim();
+        
         finalizeStreamingMessage(runId);
         setSSEConnected(false);
+        
+        // Save assistant message to DB for conversation history
+        if (finalContent && finalContent.length > 0) {
+          void saveMessageToDb("assistant", finalContent);
+        }
       }
       setIsStreaming(false);
       abortRef.current = null;

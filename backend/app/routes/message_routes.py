@@ -372,6 +372,99 @@ async def get_message_history(
 
 
 # =============================================================================
+# Save Message (No Agent Run) - For conversation recording
+# =============================================================================
+
+
+class MessageSaveRequest(BaseModel):
+    """Request model for saving a message without triggering agent run."""
+
+    role: str = Field(..., description="Message role: user|assistant|system")
+    content: str = Field(..., min_length=1, description="Message content")
+
+
+@router.post(
+    "/sessions/{session_id}/messages/save",
+    response_model=MessageResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def save_message(
+    session_id: str,
+    message_data: MessageSaveRequest,
+    db_session: AsyncSession = Depends(get_session),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Save a message to the session without triggering an agent run.
+
+    Used by the frontend to record conversation history when using
+    external LLM APIs (XiaoLei, OpenRouter direct, etc.).
+
+    Requires authentication if AUTH_ENABLED=true.
+    """
+    try:
+        # Verify session exists
+        result = await db_session.execute(
+            select(Session).where(Session.id == session_id)
+        )
+        session = result.scalar_one_or_none()
+
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Validate role
+        if message_data.role not in ("user", "assistant", "system"):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid role: {message_data.role}. Must be user|assistant|system",
+            )
+
+        # Create message
+        message = Message(
+            id=str(uuid4()),
+            session_id=session_id,
+            role=message_data.role,
+            content=message_data.content,
+        )
+
+        db_session.add(message)
+        await db_session.commit()
+        await db_session.refresh(message)
+
+        # Increment message counter (B7.2)
+        MESSAGES_TOTAL.labels(role=message_data.role).inc()
+
+        logger.info(
+            f"Message saved to session {session_id}",
+            extra={
+                "session_id": session_id,
+                "message_id": message.id,
+                "role": message_data.role,
+            },
+        )
+
+        return MessageResponse(
+            id=message.id,
+            session_id=message.session_id,
+            role=message.role,
+            content=message.content,
+            created_at=message.created_at,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to save message: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to save message: {str(e)}",
+        )
+
+
+# =============================================================================
 # SSE Streaming Endpoint
 # =============================================================================
 
