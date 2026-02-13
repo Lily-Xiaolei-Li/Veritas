@@ -189,7 +189,7 @@ export function ArtifactItem({
   };
 
   const handleDelete = async () => {
-    const ok = confirm(`Delete artifact "${artifact.display_name}"?`);
+    const ok = window.confirm(`Delete artifact "${artifact.display_name}"?`);
     if (!ok) return;
 
     try {
@@ -406,12 +406,13 @@ export function ArtifactItem({
               isDeletingRemote && !isLocal && "opacity-50 cursor-not-allowed"
             )}
             disabled={isDeletingRemote && !isLocal}
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               setShowContextMenu(false);
               // Use setTimeout to ensure menu closes before confirm dialog
               setTimeout(() => {
                 void handleDelete();
-              }, 0);
+              }, 50);
             }}
           >
             Delete
