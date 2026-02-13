@@ -401,13 +401,18 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
           if (ragRes.ok) {
             const ragData = await ragRes.json();
             if (ragData.results && ragData.results.length > 0) {
-              const ragContext = ragData.results
-                .map((r: { text: string; source?: string; score: number }) => {
-                  const source = r.source ? ` (${r.source})` : "";
-                  return `[${src.name}${source}]\n${r.text}`;
+              // Build RAG context with clear header explaining source
+              const sourceDesc = src.key === "library" 
+                ? "academic papers library (~1000 articles)" 
+                : "interview transcripts";
+              const ragHeader = `[RAG SEARCH RESULTS from ${sourceDesc}]\nThe following excerpts were retrieved via semantic search for relevance to the user's query:\n`;
+              const ragItems = ragData.results
+                .map((r: { text: string; source?: string; score: number }, i: number) => {
+                  const source = r.source ? ` — Source: ${r.source}` : "";
+                  return `[${i + 1}${source}]\n${r.text}`;
                 })
                 .join("\n\n");
-              contextParts.push(ragContext);
+              contextParts.push(ragHeader + ragItems);
               contextChunks.push({
                 label: `${src.name} RAG (${ragData.results.length} results)`,
                 preview: ragData.results[0]?.text?.slice(0, 400) || "",
