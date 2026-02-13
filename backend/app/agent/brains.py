@@ -12,9 +12,9 @@ from typing import Any, Dict, Optional, Tuple
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import get_settings
-from app.llm.types import ProviderType, LLMMessage, LLMOptions, LLMResponse
-from app.services.llm_service import get_llm_service
+from app.llm.types import LLMMessage, LLMOptions, LLMResponse, ProviderType
 from app.logging_config import get_logger
+from app.services.llm_service import get_llm_service
 
 from .state import BrainDecision
 
@@ -160,7 +160,7 @@ async def call_brain_1(
         )
 
     logger.debug(
-        f"Calling Brain 1",
+        "Calling Brain 1",
         extra={
             "extra_fields": {
                 "provider": provider_type.value,
@@ -222,7 +222,7 @@ async def call_brain_2(
         )
 
     logger.debug(
-        f"Calling Brain 2",
+        "Calling Brain 2",
         extra={
             "extra_fields": {
                 "provider": provider_type.value,
@@ -405,7 +405,12 @@ async def call_brain_1_for_decision(
         # Retry with stricter prompt
         logger.warning(
             "B1 returned invalid JSON, retrying with stricter prompt",
-            extra={"extra_fields": {"error": str(e), "raw": e.raw_response[:200] if e.raw_response else "N/A"}}
+            extra={
+                "extra_fields": {
+                    "error": str(e),
+                    "raw": e.raw_response[:200] if e.raw_response else "N/A"
+                }
+            }
         )
         strict_prompt = (
             "ERROR: Your response was not valid JSON.\n\n"
@@ -457,7 +462,12 @@ async def call_brain_2_for_decision(
         # Retry with stricter prompt
         logger.warning(
             "B2 returned invalid JSON, retrying with stricter prompt",
-            extra={"extra_fields": {"error": str(e), "raw": e.raw_response[:200] if e.raw_response else "N/A"}}
+            extra={
+                "extra_fields": {
+                    "error": str(e),
+                    "raw": e.raw_response[:200] if e.raw_response else "N/A"
+                }
+            }
         )
         strict_prompt = (
             "ERROR: Your response was not valid JSON.\n\n"
