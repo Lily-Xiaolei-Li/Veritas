@@ -41,6 +41,13 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<"xiaolei" | "openrouter">("xiaolei");
   const [openrouterModel, setOpenrouterModel] = useState<string>("");
+  
+  // RAG configuration
+  const [ragEnabled, setRagEnabled] = useState<{ library: boolean; interviews: boolean }>({
+    library: false,
+    interviews: false,
+  });
+  const [ragTopK, setRagTopK] = useState<number>(5);
 
   const saveArtifactMutation = useSaveArtifact();
   const queryClient = useQueryClient();
@@ -371,32 +378,39 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
         }
       }
 
-      // Search Library RAG if available (automatic academic context)
-      try {
-        const ragRes = await authFetch(`${API_BASE_URL}/api/v1/knowledge/sources/library/search`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: content, top_k: 3 }),
-        });
-        if (ragRes.ok) {
-          const ragData = await ragRes.json();
-          if (ragData.results && ragData.results.length > 0) {
-            const ragContext = ragData.results
-              .map((r: { text: string; source?: string; score: number }) => {
-                const source = r.source ? ` (${r.source})` : "";
-                return `[Library Paper${source}]\n${r.text}`;
-              })
-              .join("\n\n");
-            contextParts.push(ragContext);
-            contextChunks.push({
-              label: `Library RAG (${ragData.results.length} papers)`,
-              preview: ragData.results[0]?.text?.slice(0, 400) || "",
-            });
+      // Search RAG sources if enabled
+      const ragSources = [
+        { key: "library", name: "Library", enabled: ragEnabled.library },
+        { key: "interviews", name: "Empiricals", enabled: ragEnabled.interviews },
+      ];
+
+      for (const src of ragSources) {
+        if (!src.enabled) continue;
+        try {
+          const ragRes = await authFetch(`${API_BASE_URL}/api/v1/knowledge/sources/${src.key}/search`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ query: content, top_k: ragTopK }),
+          });
+          if (ragRes.ok) {
+            const ragData = await ragRes.json();
+            if (ragData.results && ragData.results.length > 0) {
+              const ragContext = ragData.results
+                .map((r: { text: string; source?: string; score: number }) => {
+                  const source = r.source ? ` (${r.source})` : "";
+                  return `[${src.name}${source}]\n${r.text}`;
+                })
+                .join("\n\n");
+              contextParts.push(ragContext);
+              contextChunks.push({
+                label: `${src.name} RAG (${ragData.results.length} results)`,
+                preview: ragData.results[0]?.text?.slice(0, 400) || "",
+              });
+            }
           }
+        } catch (e) {
+          console.log(`${src.name} RAG search skipped:`, e);
         }
-      } catch (e) {
-        console.log("Library RAG search skipped:", e);
-        // Don't block chat if RAG fails
       }
 
       const contextStr = contextParts.length > 0 ? contextParts.join("\n\n---\n\n") : undefined;
@@ -907,13 +921,53 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
 
       {/* Input form */}
       <form onSubmit={handleSubmit} className="p-4 border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 flex-shrink-0">
-        {/* Persona selector row */}
-        <div className="flex items-center gap-2 mb-2">
+        {/* Persona + RAG selector row */}
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <PersonaSelector
             selectedPersonaId={selectedPersonaId}
             onSelect={setSelectedPersona}
             disabled={isStreaming}
           />
+          
+          {/* RAG Sources */}
+          <div className="flex items-center gap-1.5 text-xs">
+            <span className="text-gray-500 dark:text-gray-400">RAG:</span>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ragEnabled.library}
+                onChange={(e) => setRagEnabled(prev => ({ ...prev, library: e.target.checked }))}
+                disabled={isStreaming}
+                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-700 dark:text-gray-300">Library</span>
+            </label>
+            <label className="flex items-center gap-1 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={ragEnabled.interviews}
+                onChange={(e) => setRagEnabled(prev => ({ ...prev, interviews: e.target.checked }))}
+                disabled={isStreaming}
+                className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-gray-700 dark:text-gray-300">Empiricals</span>
+            </label>
+            {(ragEnabled.library || ragEnabled.interviews) && (
+              <select
+                value={ragTopK}
+                onChange={(e) => setRagTopK(Number(e.target.value))}
+                disabled={isStreaming}
+                className="text-xs border border-gray-300 dark:border-gray-600 rounded px-1 py-0.5 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                title="Number of results to retrieve"
+              >
+                <option value={3}>3 results</option>
+                <option value={5}>5 results</option>
+                <option value={10}>10 results</option>
+                <option value={15}>15 results</option>
+                <option value={20}>20 results</option>
+              </select>
+            )}
+          </div>
         </div>
 
         {/* Input row */}
