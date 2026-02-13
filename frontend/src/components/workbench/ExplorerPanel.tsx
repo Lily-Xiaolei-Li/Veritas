@@ -904,7 +904,9 @@ export function ExplorerPanel({ onCollapse }: ExplorerPanelProps) {
               .slice()
               .sort((a, b) => {
                 // Folders always first
-                if (a.is_dir !== b.is_dir) return a.is_dir ? -1 : 1;
+                const aIsDir = a.type === "folder";
+                const bIsDir = b.type === "folder";
+                if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
                 
                 let cmp = 0;
                 if (sortKey === "name") {
