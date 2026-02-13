@@ -266,7 +266,7 @@ class TestDeleteSession:
 
     @pytest.mark.asyncio
     async def test_delete_session_success(self):
-        """Test successful session deletion."""
+        """Test successful session deletion (soft delete)."""
         mock_db = AsyncMock(spec=AsyncSession)
         mock_user = {"user_id": "user_123", "username": "testuser"}
         session_id = "session_123"
@@ -278,6 +278,7 @@ class TestDeleteSession:
             status="active",
             config=None,
         )
+        mock_session.is_deleted = False  # Initialize for soft-delete test
 
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_session

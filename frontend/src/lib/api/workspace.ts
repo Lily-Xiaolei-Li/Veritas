@@ -71,7 +71,7 @@ export async function importWorkspace(data: unknown, mode: "merge" | "replace"):
     const text = await resp.text();
     throw new Error(text || `HTTP ${resp.status}`);
   }
-  return (await resp.json()) as Record<string, unknown>;
+  return (await resp.json()) as { ok: boolean; imported_session_id?: string; imported_messages?: number; imported_artifacts?: number };
 }
 
 export interface ResetWorkspaceResponse {
