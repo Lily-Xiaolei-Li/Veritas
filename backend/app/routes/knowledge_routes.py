@@ -306,20 +306,20 @@ def search_qdrant(
             logger.warning(f"Collection not found: {collection_name}")
             return []
 
-        # Use the same embedding model as library-rag
-        model = SentenceTransformer("all-MiniLM-L6-v2")
+        # Use the same embedding model as library-rag (BGE-M3, 1024 dim)
+        model = SentenceTransformer("BAAI/bge-m3")
         query_vector = model.encode(query).tolist()
 
-        # Search
-        hits = client.search(
+        # Search using new Qdrant API (1.7+)
+        response = client.query_points(
             collection_name=collection_name,
-            query_vector=query_vector,
+            query=query_vector,
             limit=top_k,
             with_payload=True,
         )
 
         results = []
-        for hit in hits:
+        for hit in response.points:
             payload = hit.payload or {}
             # Extract text content
             text = payload.get("text") or payload.get("content") or payload.get("chunk") or ""
