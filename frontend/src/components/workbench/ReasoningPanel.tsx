@@ -86,6 +86,8 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     editTargetSelections,
     setEditTarget,
     clearEditTargetSelections,
+    // Conversation refresh
+    bumpConversationRefresh,
   } = useWorkbenchStore();
 
   // Provider config (Phase 2)
@@ -278,11 +280,15 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
   const saveMessageToDb = async (role: "user" | "assistant" | "system", content: string) => {
     if (!currentSessionId) return;
     try {
-      await authFetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/messages/save`, {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/messages/save`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ role, content }),
       });
+      if (resp.ok) {
+        // Trigger ConversationTab refresh
+        bumpConversationRefresh();
+      }
     } catch (e) {
       console.error("Failed to save message to DB:", e);
       // Don't block chat if save fails
@@ -678,13 +684,16 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
                       // Clear the streaming message and show success
                       useWorkbenchStore.getState().finalizeStreamingMessage(runId);
                       // Remove the JSON from messages, add success message
+                      const successMsg = `✅ Updated artifact: ${editTargetName || parsed.artifact_id}`;
                       addMessage({
                         id: `artifact-updated-${Date.now()}`,
                         session_id: currentSessionId || "",
                         role: "assistant",
-                        content: `✅ Updated artifact: ${editTargetName || parsed.artifact_id}`,
+                        content: successMsg,
                         created_at: new Date().toISOString(),
                       });
+                      // Save the success message (not the JSON) to conversation history
+                      void saveMessageToDb("assistant", successMsg);
                       // Clear edit target after successful update
                       setEditTarget(null);
                       clearEditTargetSelections();
@@ -696,6 +705,12 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
                 } catch {
                   // Not valid JSON, continue with normal finalization
                 }
+              }
+              
+              // Save assistant message to DB for conversation history (before finalizing clears it)
+              // Only save non-JSON responses (normal chat messages)
+              if (rawContent.length > 0) {
+                void saveMessageToDb("assistant", rawContent);
               }
               
               finalizeStreamingMessage(runId);
@@ -737,16 +752,9 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
       }
     } finally {
       if (chatMode === "xiaolei") {
-        // Get the final assistant message content before finalizing
-        const finalContent = useWorkbenchStore.getState().streamingMessage?.content?.trim();
-        
+        // Note: Assistant message is already saved in onDone callback (before finalize clears it)
         finalizeStreamingMessage(runId);
         setSSEConnected(false);
-        
-        // Save assistant message to DB for conversation history
-        if (finalContent && finalContent.length > 0) {
-          void saveMessageToDb("assistant", finalContent);
-        }
       }
       setIsStreaming(false);
       abortRef.current = null;
