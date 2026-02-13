@@ -378,6 +378,13 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [textSelections, editTargetSelections, editTargetArtifactId, artifact?.id]);
 
+  // Auto-refetch when flash is triggered (must be before early return)
+  useEffect(() => {
+    if (isFlashing && !isLocal) {
+      void refetch();
+    }
+  }, [isFlashing, isLocal, refetch]);
+
   // No artifact selected
   if (!artifact) {
     return (
@@ -567,13 +574,6 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
       setRewriteRunning(false);
     }
   };
-
-  // Auto-refetch when flash is triggered
-  useEffect(() => {
-    if (isFlashing && !isLocal) {
-      void refetch();
-    }
-  }, [isFlashing, isLocal, refetch]);
 
   return (
     <div className={`relative flex flex-col h-full transition-all duration-300 ${isFlashing ? "ring-2 ring-green-500 ring-opacity-75 bg-green-50 dark:bg-green-900/20" : ""}`}>
