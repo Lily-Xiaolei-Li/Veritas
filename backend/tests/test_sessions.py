@@ -278,7 +278,6 @@ class TestDeleteSession:
             status="active",
             config=None,
         )
-        mock_session.is_deleted = False  # Initialize for soft-delete test
 
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = mock_session
@@ -288,9 +287,10 @@ class TestDeleteSession:
         result = await delete_session(session_id, mock_db, mock_user)
 
         assert result is None
-        # Session is soft-deleted (is_deleted flag set to True)
-        assert mock_session.is_deleted is True
-        mock_db.commit.assert_awaited_once()
+        # Session is soft-deleted (status set to "deleted", ended_at set)
+        assert mock_session.status == "deleted"
+        assert mock_session.ended_at is not None
+        mock_db.commit.assert_awaited()
 
     @pytest.mark.asyncio
     async def test_delete_session_not_found(self):
