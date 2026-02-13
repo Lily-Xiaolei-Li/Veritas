@@ -10,15 +10,15 @@ AsyncSession lifecycle issues with background tasks.
 
 import asyncio
 import json
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from app.llm.types import LLMResponse
-from app.models import LLMUsage
 from app.logging_config import get_logger
+from app.models import LLMUsage
 
 logger = get_logger("llm.cost_tracker")
 

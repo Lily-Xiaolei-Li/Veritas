@@ -61,7 +61,7 @@ def _call_xiaolei_chat(message: str, system_prompt: str | None = None) -> str:
             data = response.json()
             # Extract content from OpenAI format
             content = data.get("choices", [{}])[0].get("message", {}).get("content", "")
-            return content if content else f"[No response from model]"
+            return content if content else "[No response from model]"
             
     except httpx.TimeoutException:
         return "[Error: Request timed out. XiaoLei Gateway may be slow or unavailable.]"

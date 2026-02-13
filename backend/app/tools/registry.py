@@ -6,7 +6,6 @@ from typing import Any
 
 from app.tools.types import ToolResult, ToolSpec
 
-
 ToolFn = Callable[[dict[str, Any]], ToolResult | Awaitable[ToolResult]]
 
 

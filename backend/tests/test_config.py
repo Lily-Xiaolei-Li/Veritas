@@ -9,16 +9,14 @@ Tests cover:
 - Error handling for invalid configuration
 """
 
-import os
 import pytest
-from pathlib import Path
 
 from app.config import (
+    ConfigurationError,
     Settings,
     get_settings,
     load_settings,
     reset_settings,
-    ConfigurationError,
 )
 
 

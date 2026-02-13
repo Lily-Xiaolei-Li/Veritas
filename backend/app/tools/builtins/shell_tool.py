@@ -3,10 +3,10 @@ from __future__ import annotations
 from typing import Any
 
 from app.executor import (
-    execute_command,
     ApprovalRequiredError,
     ExecutionError,
     ValidationError,
+    execute_command,
 )
 from app.tools.registry import register_tool
 from app.tools.types import ToolResult, ToolSpec

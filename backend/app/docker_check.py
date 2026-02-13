@@ -10,7 +10,7 @@ Use `app.health_checks` instead.
 
 from __future__ import annotations
 
-from app.health_checks import check_disk_space, check_memory, run_resource_checks
+from app.health_checks import run_resource_checks
 
 
 def run_all_checks() -> dict:

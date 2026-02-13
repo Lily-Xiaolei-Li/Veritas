@@ -14,8 +14,9 @@ from dataclasses import dataclass
 from functools import wraps
 from typing import Callable, Optional
 
-from .exceptions import LLMError, LLMRateLimitError
 from app.logging_config import get_logger
+
+from .exceptions import LLMError, LLMRateLimitError
 
 logger = get_logger("llm.retry")
 
@@ -158,7 +159,7 @@ async def retry_with_fallback(
     except LLMError as e:
         if e.fallback_eligible:
             logger.warning(
-                f"Primary failed, trying fallback",
+                "Primary failed, trying fallback",
                 extra={
                     "extra_fields": {
                         "provider": e.provider,

@@ -22,8 +22,8 @@ from typing import List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from .types import ProviderType, LLMMessage, LLMOptions, LLMResponse
 from .logging import log_llm_request, log_llm_response
+from .types import LLMMessage, LLMOptions, LLMResponse, ProviderType
 
 
 async def llm_complete(
@@ -80,9 +80,9 @@ async def llm_complete(
         print(f"Tokens: {response.tokens.total_tokens}")
         print(f"Cost: ${response.cost.total_cost_usd}")
     """
-    from app.services.llm_service import get_llm_service
-    from app.services.cost_tracker import schedule_usage_recording
     from app.config import get_settings
+    from app.services.cost_tracker import schedule_usage_recording
+    from app.services.llm_service import get_llm_service
 
     settings = get_settings()
     service = get_llm_service()

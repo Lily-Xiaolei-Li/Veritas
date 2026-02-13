@@ -11,13 +11,12 @@ from typing import Callable
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .logging_config import set_request_id, clear_request_id, get_logger
+from .logging_config import clear_request_id, get_logger, set_request_id
 from .metrics import (
-    HTTP_REQUESTS_TOTAL,
     HTTP_REQUEST_DURATION_SECONDS,
     HTTP_REQUESTS_IN_PROGRESS,
+    HTTP_REQUESTS_TOTAL,
 )
-
 
 logger = get_logger("api.middleware")
 

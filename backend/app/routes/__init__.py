@@ -3,23 +3,24 @@ API routes for Agent B.
 """
 
 from fastapi import APIRouter
-from .auth_routes import router as auth_router
-from .exec_routes import router as exec_router
-from .session_routes import router as session_router
-from .message_routes import router as message_router
-from .file_routes import router as file_router
+
 from .artifact_routes import router as artifact_router
-from .run_routes import router as run_router
-from .explorer_routes import router as explorer_router
-from .llm_routes import router as llm_router
-from .llm_provider_config_routes import router as llm_provider_config_router
+from .auth_routes import router as auth_router
 from .document_routes import router as document_router
-from .tool_routes import router as tool_router
-from .rag_routes import router as rag_router
+from .exec_routes import router as exec_router
+from .explorer_routes import router as explorer_router
+from .file_routes import router as file_router
 from .knowledge_routes import router as knowledge_router
+from .llm_provider_config_routes import router as llm_provider_config_router
+from .llm_routes import router as llm_router
+from .message_routes import router as message_router
 from .persona_routes import router as persona_router
-from .workspace_routes import router as workspace_router
+from .rag_routes import router as rag_router
+from .run_routes import router as run_router
+from .session_routes import router as session_router
+from .tool_routes import router as tool_router
 from .workspace_export_import import router as workspace_xfer_router
+from .workspace_routes import router as workspace_router
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")

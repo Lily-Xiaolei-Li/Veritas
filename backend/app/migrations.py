@@ -5,15 +5,15 @@ Handles automatic migration on startup and migration status queries.
 """
 
 import os
-import sys
 from pathlib import Path
 from typing import Optional
 
-from alembic import command
 from alembic.config import Config
-from alembic.script import ScriptDirectory
 from alembic.runtime.migration import MigrationContext
-from sqlalchemy import create_engine, text
+from alembic.script import ScriptDirectory
+from sqlalchemy import create_engine
+
+from alembic import command
 
 
 def get_alembic_config() -> Config:

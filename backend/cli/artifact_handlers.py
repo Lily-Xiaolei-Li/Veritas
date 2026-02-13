@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import load_state, now_iso, save_state, create_artifact_api
+from .state_store import create_artifact_api, load_state, now_iso, save_state
 
 
 def _session_exists(state: dict, session_id: str) -> bool:

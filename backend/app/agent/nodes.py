@@ -23,40 +23,35 @@ Each node:
 
 import asyncio
 import json
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.logging_config import get_logger
 from app.llm.client import llm_complete
 from app.llm.types import LLMMessage, LLMOptions
+from app.logging_config import get_logger
 
-from .state import AgentState, AgentMessage, BrainDecision
-from .events import EventEmitter
-from .utils import cap_text, cap_list_items, extract_latest_user_message
-from .prompts import (
-    CLASSIFICATION_SYSTEM_PROMPT,
-    CLASSIFICATION_USER_TEMPLATE,
-    BRAIN1_SOLO_SYSTEM_PROMPT,
-    BRAIN1_SOLO_USER_TEMPLATE,
-    BRAIN1_CLARIFY_SYSTEM_PROMPT,
-    BRAIN1_CLARIFY_USER_TEMPLATE,
-    BRAIN2_DECISION_SYSTEM_PROMPT,
-    BRAIN2_DECISION_USER_TEMPLATE,
-    BRAIN1_REVIEW_SYSTEM_PROMPT,
-    BRAIN1_REVIEW_USER_TEMPLATE,
-    FINAL_RESPONSE_SYSTEM_PROMPT,
-    FINAL_RESPONSE_USER_TEMPLATE,
-)
 from .brains import (
+    BrainCallError,
     call_brain_1,
-    call_brain_2,
     call_brain_1_for_decision,
     call_brain_2_for_decision,
     parse_json_response,
-    BrainCallError,
 )
 from .consensus import check_consensus, merge_decisions, should_escalate
+from .events import EventEmitter
+from .prompts import (
+    BRAIN1_CLARIFY_SYSTEM_PROMPT,
+    BRAIN1_CLARIFY_USER_TEMPLATE,
+    BRAIN1_REVIEW_SYSTEM_PROMPT,
+    BRAIN1_REVIEW_USER_TEMPLATE,
+    BRAIN1_SOLO_SYSTEM_PROMPT,
+    BRAIN1_SOLO_USER_TEMPLATE,
+    BRAIN2_DECISION_SYSTEM_PROMPT,
+    BRAIN2_DECISION_USER_TEMPLATE,
+    CLASSIFICATION_SYSTEM_PROMPT,
+    CLASSIFICATION_USER_TEMPLATE,
+)
+from .state import AgentMessage, AgentState, BrainDecision
+from .utils import cap_list_items, cap_text, extract_latest_user_message
 
 logger = get_logger("nodes")
 
@@ -383,7 +378,7 @@ async def classify_task_node(
         )
 
         logger.info(
-            f"Task classified",
+            "Task classified",
             extra={
                 "extra_fields": {
                     "run_id": run_id,
@@ -545,8 +540,8 @@ async def deliberation_node(
     ])
 
     try:
-        from app.database import get_database
         from app.config import get_settings
+        from app.database import get_database
         db = get_database()
         settings = get_settings()
 
@@ -804,7 +799,7 @@ async def tool_execute_node(
         return {"current_node": "respond"}
 
     # Import tool validation
-    from .tool_validation import validate_bash_command, build_bash_command_for_file_creation
+    from .tool_validation import build_bash_command_for_file_creation, validate_bash_command
 
     # For now, we'll generate a simple command based on the plan
     # In a real implementation, the LLM would provide the exact command
@@ -849,9 +844,9 @@ async def tool_execute_node(
 
     try:
         # Execute command using existing executor
-        from app.executor import execute_command
-
         import time
+
+        from app.executor import execute_command
         start_time = time.time()
 
         result = await execute_command(command)

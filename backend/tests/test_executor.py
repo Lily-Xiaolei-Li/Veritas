@@ -5,21 +5,20 @@ This repo enforces NO DOCKER.
 
 from __future__ import annotations
 
-import time
 from pathlib import Path
 
 import pytest
 
-from app.executor import (
-    execute_command,
-    validate_command,
-    cancel_execution,
-    get_execution_status,
-    ValidationError,
-    ApprovalRequiredError,
-    _prepare_workspace,
-)
 from app.config import reset_settings
+from app.executor import (
+    ApprovalRequiredError,
+    ValidationError,
+    _prepare_workspace,
+    cancel_execution,
+    execute_command,
+    get_execution_status,
+    validate_command,
+)
 
 
 @pytest.fixture(autouse=True)

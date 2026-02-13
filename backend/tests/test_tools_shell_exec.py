@@ -3,8 +3,9 @@ import pytest
 
 @pytest.mark.anyio
 async def test_shell_exec_tool_smoke():
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -24,8 +25,9 @@ async def test_shell_exec_tool_smoke():
 
 @pytest.mark.anyio
 async def test_shell_exec_tool_allows_cwd_in_workspace():
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -51,8 +53,9 @@ async def test_shell_exec_tool_allows_cwd_in_workspace():
 
 @pytest.mark.anyio
 async def test_shell_exec_tool_blocks_rm():
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:

@@ -7,7 +7,9 @@ user authentication, and authorization helpers.
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
+
 import jwt
+
 from app.config import get_settings
 
 

@@ -15,7 +15,6 @@ Usage:
     await shutdown_checkpointer()
 """
 
-import os
 from typing import Optional
 
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver

@@ -4,21 +4,20 @@ Tests for message and streaming API (B1.1 - Updated).
 Note: SSE streaming tests are in test_sse_streaming.py
 """
 
-import pytest
 from datetime import datetime
 from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
 
+import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Message, Session
 from app.routes.message_routes import (
-    submit_message,
+    MessageCreate,
     get_message_history,
     stream_events,
-    MessageCreate,
+    submit_message,
 )
-from app.models import Message, Session
 
 
 class TestSubmitMessage:

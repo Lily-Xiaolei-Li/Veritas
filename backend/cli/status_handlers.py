@@ -2,11 +2,9 @@ from __future__ import annotations
 
 import os
 import sys
-from pathlib import Path
 
 from .contract import success_envelope
 from .state_store import load_state, state_file
-
 
 DISTRIBUTION_MODE = "bundled-backend-v1"
 

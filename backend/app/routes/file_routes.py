@@ -19,9 +19,9 @@ from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
+from app.logging_config import get_logger
 from app.models import FileIndex, Session, SessionFileAttachment
 from app.routes.auth_routes import require_auth
-from app.logging_config import get_logger
 
 router = APIRouter()
 logger = get_logger("files")

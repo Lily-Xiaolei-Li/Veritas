@@ -15,11 +15,9 @@ import logging.handlers
 import re
 import sys
 from datetime import datetime, timezone
-from pathlib import Path
 from typing import Any, Dict, Optional
 
 from .config import Settings
-
 
 # Context variable for request ID
 request_id_var: contextvars.ContextVar[Optional[str]] = contextvars.ContextVar(

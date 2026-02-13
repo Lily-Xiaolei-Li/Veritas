@@ -9,29 +9,28 @@ Tests cover:
 """
 
 import json
-import pytest
 from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from fastapi import HTTPException
+import pytest
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models import Session
 from app.routes.message_routes import (
-    format_sse_event,
+    MessageCreate,
     format_sse_comment,
+    format_sse_event,
     stream_events,
     submit_message,
-    MessageCreate,
 )
 from app.schemas.sse_events import (
-    TokenEvent,
-    ToolStartEvent,
-    ToolEndEvent,
-    ErrorEvent,
     DoneEvent,
+    ErrorEvent,
+    TokenEvent,
+    ToolEndEvent,
+    ToolStartEvent,
 )
-from app.models import Session
 
 
 class TestSSEFormat:

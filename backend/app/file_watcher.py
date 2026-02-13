@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Optional, Set
 from uuid import uuid4
 
-from sqlalchemy import select, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from watchfiles import awatch, Change
+from watchfiles import Change, awatch
 
 from .config import get_settings
 from .database import Database
@@ -24,8 +24,8 @@ from .file_service import (
     PathSecurityError,
     extract_file_metadata,
     get_relative_path,
-    should_ignore_path,
     scan_workspace,
+    should_ignore_path,
     validate_path_safety,
 )
 from .logging_config import get_logger

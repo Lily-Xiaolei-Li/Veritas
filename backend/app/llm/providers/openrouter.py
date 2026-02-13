@@ -9,9 +9,11 @@ import asyncio
 import hashlib
 import time
 from decimal import Decimal
-from typing import AsyncIterator, Dict, List, Optional
+from typing import AsyncIterator, Dict, List
 
 import httpx
+
+from app.logging_config import get_logger
 
 from ..base import LLMProvider
 from ..exceptions import (
@@ -36,7 +38,6 @@ from ..types import (
     StreamChunk,
     TokenUsage,
 )
-from app.logging_config import get_logger
 
 logger = get_logger("llm.openrouter")
 

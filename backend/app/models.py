@@ -34,16 +34,16 @@ from typing import Optional
 from uuid import uuid4
 
 from sqlalchemy import (
-    String,
-    Text,
-    DateTime,
-    Integer,
+    JSON,
     BigInteger,
     Boolean,
-    JSON,
+    DateTime,
     ForeignKey,
-    func,
     Index,
+    Integer,
+    String,
+    Text,
+    func,
 )
 from sqlalchemy.orm import Mapped, mapped_column
 

@@ -8,28 +8,27 @@ Endpoints:
 - GET /explorer/roots - Get common root directories
 """
 
-import os
 import logging
+import os
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional
 
-from fastapi import APIRouter, HTTPException, Query, Depends
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel
 
-from datetime import datetime, timezone
-
-from ..services.explorer_service import (
-    list_directory,
-    get_file_info,
-    convert_file_to_artifact_payloads,
-)
-from ..services.capabilities_service import get_explorer_capabilities
-from ..services.bulk_import_service import list_importable_files
+from ..artifact_service import create_artifact_internal
 from ..config import get_settings
 from ..database import get_session
 from ..models import Run, Session
-from ..artifact_service import create_artifact_internal
 from ..routes.message_routes import get_or_create_session_queue
+from ..services.bulk_import_service import list_importable_files
+from ..services.capabilities_service import get_explorer_capabilities
+from ..services.explorer_service import (
+    convert_file_to_artifact_payloads,
+    get_file_info,
+    list_directory,
+)
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/explorer")

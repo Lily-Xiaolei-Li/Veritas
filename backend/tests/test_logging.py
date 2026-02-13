@@ -11,20 +11,18 @@ Tests cover:
 
 import json
 import logging
-import pytest
-from io import StringIO
 
+from app.config import Settings
 from app.logging_config import (
-    redact_sensitive_data,
     JSONFormatter,
     TextFormatter,
-    setup_logging,
-    get_logger,
-    set_request_id,
-    get_request_id,
     clear_request_id,
+    get_logger,
+    get_request_id,
+    redact_sensitive_data,
+    set_request_id,
+    setup_logging,
 )
-from app.config import Settings
 
 
 def test_redact_aws_api_key():

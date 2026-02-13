@@ -5,10 +5,9 @@ from pathlib import Path
 # Add parent to path for absolute imports when running standalone
 sys.path.insert(0, str(Path(__file__).parent))
 
+from config import get_settings
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
-from config import get_settings
 from routes import api_router
 
 settings = get_settings()

@@ -4,7 +4,6 @@ Tests for Consensus Detection (B2.2).
 Tests intent-based structured consensus detection.
 """
 
-import pytest
 
 from app.agent.consensus import check_consensus, merge_decisions, should_escalate
 from app.agent.state import BrainDecision

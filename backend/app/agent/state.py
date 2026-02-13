@@ -12,7 +12,6 @@ from datetime import datetime, timezone
 from typing import Annotated, Any, Dict, List, Literal, Optional, TypedDict
 from uuid import uuid4
 
-
 # ============================================================================
 # B2.2 Type Definitions
 # ============================================================================

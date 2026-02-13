@@ -5,7 +5,13 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import load_state, now_iso, save_state, create_persona_api, update_session_persona_api
+from .state_store import (
+    create_persona_api,
+    load_state,
+    now_iso,
+    save_state,
+    update_session_persona_api,
+)
 
 
 def _personas(state: dict) -> list[dict]:

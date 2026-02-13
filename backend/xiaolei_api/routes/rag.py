@@ -3,9 +3,8 @@ from __future__ import annotations
 import logging
 
 import httpx
-from fastapi import APIRouter
-
 from config import get_settings
+from fastapi import APIRouter
 from models import RagSearchRequest, RagSearchResponse, RagSearchResult
 
 router = APIRouter()

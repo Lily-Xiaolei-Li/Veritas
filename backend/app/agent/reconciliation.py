@@ -8,13 +8,12 @@ Solution: Mark any run with status="running" and stale last_event_at as "interru
 """
 
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
-from sqlalchemy import select, update, func
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.logging_config import get_logger
-from app.models import Run, Event
+from app.models import Event, Run
 
 logger = get_logger("reconciliation")
 

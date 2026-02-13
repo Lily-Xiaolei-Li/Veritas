@@ -9,9 +9,9 @@ Available providers:
 """
 
 from .gemini import GeminiProvider
-from .openrouter import OpenRouterProvider
-from .ollama import OllamaProvider
 from .mock import MockProvider
+from .ollama import OllamaProvider
+from .openrouter import OpenRouterProvider
 
 __all__ = [
     "GeminiProvider",

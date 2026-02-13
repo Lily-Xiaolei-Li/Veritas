@@ -3,9 +3,10 @@ import os
 
 os.environ['DATABASE_URL'] = 'postgresql+asyncpg://agentb:AgentB#Lily2026!@localhost:5433/agent_b'
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
 from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.orm import sessionmaker
+
 
 async def test():
     engine = create_async_engine(os.environ['DATABASE_URL'])

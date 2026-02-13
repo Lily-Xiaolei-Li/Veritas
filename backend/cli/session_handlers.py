@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import load_state, now_iso, save_state, create_session_api, get_sessions_api
+from .state_store import create_session_api, load_state, now_iso, save_state
 
 
 def _find_session(state: dict, session_id: str):

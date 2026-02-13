@@ -13,9 +13,9 @@ def test_resource_checks_structure(monkeypatch):
 
 @pytest.mark.anyio
 async def test_fastapi_health_endpoint(monkeypatch):
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
-    from app import main as main_module
+
+    from app.main import app
 
     # /health no longer depends on docker check payload; it should always return JSON.
 

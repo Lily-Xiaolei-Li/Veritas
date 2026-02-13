@@ -6,8 +6,9 @@ a live PostgreSQL instance.
 """
 
 import pytest
-from app.database import DatabaseConfig, Database, Base
+
 from app import models
+from app.database import Base, Database, DatabaseConfig
 
 
 def test_database_config_default(monkeypatch):

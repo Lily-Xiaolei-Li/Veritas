@@ -7,19 +7,18 @@ Contains:
 """
 
 from app.services.run_registry import (
-    RunResources,
     RunRegistry,
-    get_run_registry,
-    set_active_run,
+    RunResources,
+    clear_run,
     get_active_run,
+    get_run_registry,
     get_run_resources,
-    register_task,
-    register_container,
     is_cancelled,
     mark_cancelled,
-    clear_run,
+    register_container,
+    register_task,
+    set_active_run,
 )
-
 from app.services.termination_service import (
     TerminationResult,
     terminate_session,

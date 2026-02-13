@@ -2,22 +2,21 @@
 Tests for session management API (B0.3).
 """
 
-import pytest
 from datetime import datetime
-from unittest.mock import AsyncMock, MagicMock, patch
-from uuid import uuid4
+from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from fastapi import HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.routes.session_routes import (
-    create_session,
-    list_sessions,
-    get_session_details,
-    delete_session,
-    SessionCreate,
-)
 from app.models import Session
+from app.routes.session_routes import (
+    SessionCreate,
+    create_session,
+    delete_session,
+    get_session_details,
+    list_sessions,
+)
 
 
 class TestCreateSession:

@@ -90,7 +90,7 @@ def _matches_executor_blocklist(command: str) -> bool:
     for blocked_pattern in settings.command_blocklist:
         if blocked_pattern in command:
             logger.warning(
-                f"Command matches blocklist pattern",
+                "Command matches blocklist pattern",
                 extra={
                     "extra_fields": {
                         "pattern": blocked_pattern,

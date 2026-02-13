@@ -13,8 +13,8 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
-from app.middleware import RequestIDMiddleware
 from app.logging_config import get_request_id
+from app.middleware import RequestIDMiddleware
 
 
 @pytest.fixture

@@ -21,7 +21,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import Session, AuditLog, Artifact, Message
+from app.models import Artifact, AuditLog, Message, Session
 from app.routes.auth_routes import require_auth
 
 router = APIRouter(prefix="/workspace")

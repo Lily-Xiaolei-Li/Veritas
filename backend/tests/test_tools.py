@@ -3,8 +3,9 @@ import pytest
 
 @pytest.mark.anyio
 async def test_list_tools_endpoint():
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:
@@ -16,8 +17,9 @@ async def test_list_tools_endpoint():
 
 @pytest.mark.anyio
 async def test_execute_file_write_and_read():
-    from app.main import app
     from httpx import ASGITransport, AsyncClient
+
+    from app.main import app
 
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://testserver") as client:

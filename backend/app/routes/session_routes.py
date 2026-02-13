@@ -12,10 +12,10 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import Session, Message, Artifact, AuditLog
-from app.routes.auth_routes import require_auth
 from app.logging_config import get_logger
 from app.metrics import SESSIONS_CREATED_TOTAL
+from app.models import Artifact, AuditLog, Message, Session
+from app.routes.auth_routes import require_auth
 
 router = APIRouter()
 logger = get_logger("sessions")
@@ -540,8 +540,8 @@ async def terminate_session_run(
     Returns:
         TerminateResponse with status and termination details
     """
-    from app.services.termination_service import terminate_session
     from app.schemas.sse_events import TerminationReason
+    from app.services.termination_service import terminate_session
 
     try:
         # Verify session exists

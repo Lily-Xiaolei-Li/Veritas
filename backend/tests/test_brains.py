@@ -4,16 +4,16 @@ Tests for Brain Provider Selection (B2.2).
 Uses mocks to test brain call logic without hitting real LLMs.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
 import json
 
+import pytest
+
 from app.agent.brains import (
-    parse_json_response,
-    parse_brain_decision,
     BrainCallError,
     _extract_json_object,
     _repair_json_strings,
+    parse_brain_decision,
+    parse_json_response,
 )
 from app.agent.state import BrainDecision
 

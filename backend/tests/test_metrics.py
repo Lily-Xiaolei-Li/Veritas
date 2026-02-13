@@ -11,15 +11,16 @@ Tests cover:
 - Blocked exec doesn't record duration
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from prometheus_client import REGISTRY
 
-from app.routes.metrics_routes import router as metrics_router
-from app.middleware import MetricsMiddleware
 from app.config import Settings
+from app.middleware import MetricsMiddleware
+from app.routes.metrics_routes import router as metrics_router
 
 
 @pytest.fixture
@@ -247,9 +248,9 @@ class TestMetricDefinitions:
     def test_http_metrics_exist(self):
         """Verify HTTP metrics are defined."""
         from app.metrics import (
-            HTTP_REQUESTS_TOTAL,
             HTTP_REQUEST_DURATION_SECONDS,
             HTTP_REQUESTS_IN_PROGRESS,
+            HTTP_REQUESTS_TOTAL,
         )
 
         assert HTTP_REQUESTS_TOTAL is not None
@@ -271,8 +272,8 @@ class TestMetricDefinitions:
     def test_sse_metrics_exist(self):
         """Verify SSE metrics are defined."""
         from app.metrics import (
-            SSE_CONNECTIONS_TOTAL,
             SSE_CONNECTIONS_ACTIVE,
+            SSE_CONNECTIONS_TOTAL,
         )
 
         assert SSE_CONNECTIONS_TOTAL is not None
@@ -281,8 +282,8 @@ class TestMetricDefinitions:
     def test_session_message_metrics_exist(self):
         """Verify session/message metrics are defined."""
         from app.metrics import (
-            SESSIONS_CREATED_TOTAL,
             MESSAGES_TOTAL,
+            SESSIONS_CREATED_TOTAL,
         )
 
         assert SESSIONS_CREATED_TOTAL is not None
@@ -291,8 +292,8 @@ class TestMetricDefinitions:
     def test_db_pool_metrics_exist(self):
         """Verify database pool metrics are defined."""
         from app.metrics import (
-            DB_POOL_SIZE,
             DB_POOL_IN_USE,
+            DB_POOL_SIZE,
         )
 
         assert DB_POOL_SIZE is not None

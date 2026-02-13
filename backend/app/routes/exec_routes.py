@@ -5,25 +5,24 @@ This repo enforces **NO DOCKER**. Commands run locally with safety controls.
 """
 
 import time
-from datetime import datetime, timezone
 from typing import Dict, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, status
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.database import get_session
-from app.models import AuditLog
-from app.routes.auth_routes import require_auth
 from app.executor import (
-    execute_command,
+    ApprovalRequiredError,
     ExecutionError,
     ValidationError,
-    ApprovalRequiredError,
+    execute_command,
 )
 from app.logging_config import get_logger, redact_sensitive_data
 from app.metrics import EXEC_COMMANDS_TOTAL, EXEC_DURATION_SECONDS, EXEC_RUNNING
+from app.models import AuditLog
+from app.routes.auth_routes import require_auth
 
 router = APIRouter()
 logger = get_logger("exec_routes")
@@ -122,6 +121,7 @@ async def execute(
     def on_container_start(container_id: str) -> None:
         if request_data.run_id:
             import asyncio
+
             from app.services import run_registry
 
             # Register container with run_registry

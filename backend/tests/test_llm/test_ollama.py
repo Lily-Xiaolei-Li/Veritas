@@ -1,13 +1,11 @@
 """Tests for OllamaProvider."""
 
-import pytest
 from decimal import Decimal
-from unittest.mock import AsyncMock, patch, MagicMock
-import httpx
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from app.llm.providers.ollama import OllamaProvider
-from app.llm.secrets import SecretStr
-from app.llm.types import LLMMessage, LLMOptions, ProviderType
+import httpx
+import pytest
+
 from app.llm.exceptions import (
     LLMConnectionError,
     LLMModelNotFoundError,
@@ -15,6 +13,9 @@ from app.llm.exceptions import (
     LLMTimeoutError,
     LLMValidationError,
 )
+from app.llm.providers.ollama import OllamaProvider
+from app.llm.secrets import SecretStr
+from app.llm.types import LLMMessage, LLMOptions, ProviderType
 
 
 @pytest.fixture
@@ -331,8 +332,9 @@ class TestOllamaConfig:
 
     def test_ollama_url_nonlocal_blocked_by_default(self, monkeypatch):
         """Test that non-local URLs are blocked without override."""
-        from app.config import Settings
         import pytest
+
+        from app.config import Settings
 
         # Clear any existing override
         monkeypatch.delenv("OLLAMA_ALLOW_NONLOCAL", raising=False)
@@ -354,8 +356,9 @@ class TestOllamaConfig:
 
     def test_ollama_url_invalid_scheme_rejected(self):
         """Test that non-http(s) schemes are rejected."""
-        from app.config import Settings
         import pytest
+
+        from app.config import Settings
 
         with pytest.raises(ValueError) as exc_info:
             Settings(ollama_base_url="ftp://localhost:11434")

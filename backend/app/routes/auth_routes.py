@@ -6,24 +6,23 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from uuid import uuid4
 
-from fastapi import APIRouter, Depends, HTTPException, status, Header
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.models import APIKey, User
-from app.crypto import encrypt_value, decrypt_value, hash_password, verify_password, EncryptionError
 from app.auth import (
-    generate_session_token,
-    validate_session_token,
-    extract_token_from_header,
-    AuthenticationError,
     TokenExpiredError,
     TokenInvalidError,
+    extract_token_from_header,
+    generate_session_token,
+    validate_session_token,
 )
-from app.logging_config import get_logger
 from app.config import get_settings
+from app.crypto import EncryptionError, encrypt_value, hash_password, verify_password
+from app.database import get_session
+from app.logging_config import get_logger
+from app.models import APIKey, User
 
 router = APIRouter()
 logger = get_logger("auth")

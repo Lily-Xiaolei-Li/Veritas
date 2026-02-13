@@ -6,7 +6,7 @@ Provides endpoints to query existing RAG collections (Library, Empiricals).
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Optional, Any
+from typing import Any, Optional
 
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel

@@ -10,7 +10,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-
 IMPORTABLE_EXTS = {".docx", ".xlsx", ".xls", ".csv", ".pdf", ".txt", ".md", ".json"}
 
 

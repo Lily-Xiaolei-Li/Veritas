@@ -25,15 +25,14 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
-from typing import Optional
 
 from .explorer_service import (
-    convert_docx_to_md,
-    convert_xlsx_to_md,
-    convert_xlsx_to_json,
-    convert_csv_to_md,
     convert_csv_to_json,
+    convert_csv_to_md,
+    convert_docx_to_md,
     convert_pdf_to_md,
+    convert_xlsx_to_json,
+    convert_xlsx_to_md,
     read_text_file,
 )
 

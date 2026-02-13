@@ -2,16 +2,18 @@
 Tests for cryptography utilities (B0.0.4).
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
-from unittest.mock import patch, MagicMock
+
+from app.config import Settings
 from app.crypto import (
-    encrypt_value,
+    EncryptionError,
     decrypt_value,
+    encrypt_value,
     hash_password,
     verify_password,
-    EncryptionError,
 )
-from app.config import Settings
 
 
 @pytest.fixture

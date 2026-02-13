@@ -2,24 +2,23 @@
 Tests for LLM retry logic (B2.0).
 """
 
-import asyncio
-import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import patch
 
-from app.llm.retry import RetryConfig, with_retry
+import pytest
+
 from app.llm.exceptions import (
-    LLMError,
-    LLMRateLimitError,
     LLMAuthenticationError,
+    LLMRateLimitError,
     LLMTimeoutError,
     LLMValidationError,
 )
+from app.llm.retry import RetryConfig, with_retry
 from app.llm.types import (
-    LLMResponse,
-    RequestStatus,
-    ProviderType,
-    TokenUsage,
     CostEstimate,
+    LLMResponse,
+    ProviderType,
+    RequestStatus,
+    TokenUsage,
 )
 
 

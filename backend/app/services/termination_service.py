@@ -22,16 +22,16 @@ from uuid import uuid4
 
 from app.logging_config import get_logger
 from app.schemas.sse_events import (
+    CancelStatus,
     RunTerminatedEvent,
     TerminationReason,
-    CancelStatus,
 )
 from app.services.run_registry import (
+    RunResources,
+    clear_run,
     get_active_run,
     get_run_resources,
     mark_cancelled,
-    clear_run,
-    RunResources,
 )
 
 logger = get_logger("termination_service")

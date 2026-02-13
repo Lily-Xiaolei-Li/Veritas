@@ -1,8 +1,8 @@
+import asyncio
 import os
 import sys
-import asyncio
-from pathlib import Path
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 # Windows compatibility: psycopg3 async does not support ProactorEventLoop.
 # Force SelectorEventLoopPolicy early, before any async DB/checkpointer init.
@@ -18,6 +18,7 @@ if sys.platform.startswith("win"):
 # Load .env file FIRST, before any other imports.
 # IMPORTANT: do not override explicitly provided environment variables (even if empty).
 from dotenv import dotenv_values
+
 _env_path = Path(__file__).resolve().parent.parent / ".env"
 for _k, _v in (dotenv_values(_env_path) or {}).items():
     if _v is None:
@@ -31,31 +32,32 @@ from fastapi.responses import JSONResponse
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import Response
 
-from .config import get_settings, ConfigurationError
-from .logging_config import setup_logging, get_logger
-from .middleware import RequestIDMiddleware, MetricsMiddleware
-# docker_check removed (repo enforces no-docker)
-from .database import get_database
-from .migrations import run_migrations
-from .routes import api_router
-from .routes.metrics_routes import router as metrics_router
-from .routes.xiaolei_chat_routes import router as xiaolei_chat_router
-from .routes.log_routes import router as log_router, setup_websocket_log_handler
-from .metrics import APP_INFO
-from .file_watcher import (
-    FileWatcher,
-    set_session_event_queues,
-    broadcast_file_event_to_all_sessions,
-)
-from .routes.message_routes import get_session_event_queues
-from .services.llm_service import shutdown_llm_service
 from .agent.checkpointer import (
     initialize_checkpointer,
-    shutdown_checkpointer,
     is_checkpointer_ready,
+    shutdown_checkpointer,
 )
 from .agent.reconciliation import reconcile_stale_runs
+from .config import ConfigurationError, get_settings
 
+# docker_check removed (repo enforces no-docker)
+from .database import get_database
+from .file_watcher import (
+    FileWatcher,
+    broadcast_file_event_to_all_sessions,
+    set_session_event_queues,
+)
+from .logging_config import get_logger, setup_logging
+from .metrics import APP_INFO
+from .middleware import MetricsMiddleware, RequestIDMiddleware
+from .migrations import run_migrations
+from .routes import api_router
+from .routes.log_routes import router as log_router
+from .routes.log_routes import setup_websocket_log_handler
+from .routes.message_routes import get_session_event_queues
+from .routes.metrics_routes import router as metrics_router
+from .routes.xiaolei_chat_routes import router as xiaolei_chat_router
+from .services.llm_service import shutdown_llm_service
 
 # Load and validate configuration at module level
 try:

@@ -5,11 +5,10 @@ import json
 import logging
 from typing import AsyncGenerator
 
+from config import get_settings
 from fastapi import APIRouter
 from fastapi.responses import StreamingResponse
-
-from config import get_settings
-from models import ChatRequest, ChatEvent
+from models import ChatEvent, ChatRequest
 
 router = APIRouter()
 logger = logging.getLogger("xiaolei_api.chat")

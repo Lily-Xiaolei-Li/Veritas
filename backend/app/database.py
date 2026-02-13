@@ -5,20 +5,20 @@ Handles PostgreSQL connections using SQLAlchemy async engine.
 """
 
 import os
-from typing import AsyncGenerator, Optional
 from contextlib import asynccontextmanager
-
 from pathlib import Path
+from typing import AsyncGenerator, Optional
+
 from dotenv import load_dotenv
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
-    create_async_engine,
-    AsyncSession,
     AsyncEngine,
+    AsyncSession,
     async_sessionmaker,
+    create_async_engine,
 )
 from sqlalchemy.orm import DeclarativeBase
-from sqlalchemy.pool import NullPool, AsyncAdaptedQueuePool
+from sqlalchemy.pool import AsyncAdaptedQueuePool
 
 # Load .env file from backend directory
 _backend_dir = Path(__file__).resolve().parent.parent

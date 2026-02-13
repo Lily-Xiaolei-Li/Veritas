@@ -7,7 +7,7 @@ LABEL RULES (enforced):
 - Fallback to "unknown" if route unavailable
 """
 
-from prometheus_client import Counter, Histogram, Gauge, Info
+from prometheus_client import Counter, Gauge, Histogram, Info
 
 # ============================================================================
 # HTTP Request Metrics (excludes SSE endpoints)

@@ -4,12 +4,11 @@ Tests for Tool Validation (B2.2b).
 Tests bash command allowlist validation.
 """
 
-import pytest
 
 from app.agent.tool_validation import (
-    validate_bash_command,
     build_bash_command_for_file_creation,
     extract_target_files_from_cat_command,
+    validate_bash_command,
 )
 
 

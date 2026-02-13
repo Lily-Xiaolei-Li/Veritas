@@ -11,9 +11,9 @@ import json
 import logging
 from collections import deque
 from datetime import datetime, timezone
-from typing import Set, Deque, Dict, Any
+from typing import Any, Deque, Dict, Set
 
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query
+from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
 from pydantic import BaseModel
 
 from app.logging_config import get_logger

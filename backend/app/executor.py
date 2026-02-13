@@ -14,8 +14,6 @@ facility with guardrails suitable for local-first use.
 
 from __future__ import annotations
 
-import os
-import secrets
 import subprocess
 import threading
 from pathlib import Path

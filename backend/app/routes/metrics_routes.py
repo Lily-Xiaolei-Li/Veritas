@@ -6,10 +6,10 @@ Security:
 - METRICS_TOKEN required in production (or behind proxy)
 """
 
-from fastapi import APIRouter, Response, HTTPException, Header
 from typing import Optional
 
-from prometheus_client import generate_latest, CONTENT_TYPE_LATEST
+from fastapi import APIRouter, Header, HTTPException, Response
+from prometheus_client import CONTENT_TYPE_LATEST, generate_latest
 
 from app.config import get_settings
 

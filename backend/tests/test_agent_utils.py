@@ -4,10 +4,9 @@ Tests for Agent Utilities (B2.2).
 Tests cap_text, cap_list_items, and extract_latest_user_message.
 """
 
-import pytest
 
-from app.agent.utils import cap_text, cap_list_items, extract_latest_user_message
 from app.agent.state import AgentMessage
+from app.agent.utils import cap_list_items, cap_text, extract_latest_user_message
 
 
 class TestCapText:

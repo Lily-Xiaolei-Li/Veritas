@@ -2,18 +2,20 @@
 Tests for authentication utilities (B0.0.4).
 """
 
-import pytest
-import jwt
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
+
+import jwt
+import pytest
+
 from app.auth import (
-    generate_session_token,
-    validate_session_token,
-    extract_token_from_header,
-    get_current_user_id_from_token,
     AuthenticationError,
     TokenExpiredError,
     TokenInvalidError,
+    extract_token_from_header,
+    generate_session_token,
+    get_current_user_id_from_token,
+    validate_session_token,
 )
 from app.config import Settings
 

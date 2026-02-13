@@ -19,7 +19,7 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -35,7 +35,7 @@ from app.artifact_service import (
 from app.config import get_settings
 from app.database import get_session
 from app.logging_config import get_logger
-from app.models import Artifact, Run, Session, AuditLog
+from app.models import Artifact, AuditLog, Run, Session
 from app.routes.auth_routes import require_auth
 from app.routes.message_routes import get_or_create_session_queue
 

@@ -3,7 +3,6 @@ Tests for LLM cost tracking (B2.0).
 """
 
 from decimal import Decimal
-import pytest
 
 from app.services.cost_tracker import to_cents
 
@@ -68,11 +67,11 @@ class TestCostTrackerIntegration:
     def test_response_with_unknown_pricing_records_null(self):
         """Unknown model pricing should record null cost fields."""
         from app.llm.types import (
-            LLMResponse,
-            RequestStatus,
-            ProviderType,
-            TokenUsage,
             CostEstimate,
+            LLMResponse,
+            ProviderType,
+            RequestStatus,
+            TokenUsage,
         )
 
         # Response with tokens but unknown pricing
@@ -97,11 +96,11 @@ class TestCostTrackerIntegration:
     def test_response_with_unavailable_tokens_records_null(self):
         """Missing token info should record null token fields."""
         from app.llm.types import (
-            LLMResponse,
-            RequestStatus,
-            ProviderType,
-            TokenUsage,
             CostEstimate,
+            LLMResponse,
+            ProviderType,
+            RequestStatus,
+            TokenUsage,
         )
 
         response = LLMResponse(

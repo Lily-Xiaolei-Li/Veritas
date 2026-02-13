@@ -5,7 +5,6 @@ CRITICAL: These tests verify that API keys never appear in logs.
 """
 
 import logging
-import pytest
 
 from app.llm.secrets import SecretStr, redact_headers
 

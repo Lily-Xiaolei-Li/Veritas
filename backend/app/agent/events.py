@@ -28,8 +28,7 @@ B2.2 Multi-Brain Events:
 import asyncio
 import os
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 from uuid import uuid4
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -356,7 +355,7 @@ class EventEmitter:
         self._add_db_event(
             event_type="run_resumed",
             component="agent",
-            message=f"Run resumed from checkpoint",
+            message="Run resumed from checkpoint",
             data={"from_checkpoint": from_checkpoint},
         )
 
@@ -660,7 +659,7 @@ class EventEmitter:
         })
 
         logger.debug(
-            f"State field truncated",
+            "State field truncated",
             extra={
                 "extra_fields": {
                     "field_name": field_name,

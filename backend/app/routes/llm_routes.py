@@ -8,15 +8,15 @@ Security: requires auth when AUTH_ENABLED=true (same as other APIs).
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.routes.auth_routes import require_auth
-from app.llm.types import ProviderType, LLMMessage, LLMOptions
-from app.services.llm_service import get_llm_service
 from app.config import get_settings
+from app.database import get_session
+from app.llm.types import LLMMessage, LLMOptions, ProviderType
+from app.routes.auth_routes import require_auth
+from app.services.llm_service import get_llm_service
 
 router = APIRouter()
 

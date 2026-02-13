@@ -1,7 +1,5 @@
 from pathlib import Path
 
-import pytest
-
 from app.services.document_processing_service import convert_file_to_artifact_payloads
 
 

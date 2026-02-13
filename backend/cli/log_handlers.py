@@ -16,7 +16,7 @@ from datetime import datetime
 
 import websockets
 
-from .contract import success_envelope, CLIBusinessError
+from .contract import CLIBusinessError, success_envelope
 from .health import get_api_base
 
 

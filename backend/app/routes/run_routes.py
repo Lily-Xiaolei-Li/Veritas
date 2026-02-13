@@ -12,22 +12,21 @@ from typing import List, Optional
 from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from pydantic import BaseModel, Field
-from sqlalchemy import select, func, desc
+from pydantic import BaseModel
+from sqlalchemy import desc, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.database import get_session
-from app.models import Run, Session, AuditLog
-from app.routes.auth_routes import require_auth
-from app.logging_config import get_logger
 from app.agent.checkpointer import has_checkpoint
-from app.services.run_registry import has_active_run, set_active_run
-from app.services.agent_service import (
-    start_agent_run,
-    can_resume_run,
-    RESUMABLE_STATUSES,
-)
+from app.database import get_session
+from app.logging_config import get_logger
+from app.models import AuditLog, Run, Session
+from app.routes.auth_routes import require_auth
 from app.routes.message_routes import get_or_create_session_queue
+from app.services.agent_service import (
+    can_resume_run,
+    start_agent_run,
+)
+from app.services.run_registry import has_active_run, set_active_run
 
 router = APIRouter()
 logger = get_logger("runs")

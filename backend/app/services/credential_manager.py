@@ -14,10 +14,10 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models import APIKey
-from app.crypto import decrypt_value, EncryptionError
+from app.crypto import EncryptionError, decrypt_value
 from app.llm.exceptions import LLMAuthenticationError
 from app.logging_config import get_logger
+from app.models import APIKey
 
 logger = get_logger("llm.credentials")
 

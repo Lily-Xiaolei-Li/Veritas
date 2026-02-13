@@ -17,15 +17,15 @@ from uuid import uuid4
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
+
+# ensure built-in tools are registered
+import app.tools  # noqa: F401
 from app.database import get_database
 from app.logging_config import get_logger, redact_sensitive_data
 from app.models import AuditLog
 from app.routes.auth_routes import require_auth
 from app.routes.message_routes import get_or_create_session_queue
 from app.tools.registry import execute_tool, list_tools
-
-# ensure built-in tools are registered
-import app.tools  # noqa: F401
 
 router = APIRouter(prefix="/tools")
 logger = get_logger("tools")

@@ -10,11 +10,11 @@ Run it manually if you want a quick local check.
 # Tell pytest to ignore this module
 __test__ = False
 
-import asyncio
-from fastapi.testclient import TestClient
-
 # Set environment before imports
 import os
+
+from fastapi.testclient import TestClient
+
 os.environ['DATABASE_URL'] = 'postgresql+asyncpg://agentb:AgentB#Lily2026!@localhost:5433/agent_b'
 os.environ['AUTH_ENABLED'] = 'false'
 

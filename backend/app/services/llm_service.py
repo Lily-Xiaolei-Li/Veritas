@@ -13,26 +13,26 @@ from typing import Dict, List, Optional
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.config import get_settings
 from app.llm.base import LLMProvider
+from app.llm.exceptions import (
+    LLMAuthenticationError,
+    LLMError,
+    LLMProviderUnavailableError,
+)
+from app.llm.providers.gemini import GeminiProvider
+from app.llm.providers.mock import MockProvider
+from app.llm.providers.ollama import OllamaProvider
+from app.llm.providers.openrouter import OpenRouterProvider
+from app.llm.retry import RetryConfig, with_retry
+from app.llm.secrets import SecretStr
 from app.llm.types import (
-    ProviderType,
+    ErrorType,
     LLMMessage,
     LLMOptions,
     LLMResponse,
-    ErrorType,
+    ProviderType,
 )
-from app.llm.providers.gemini import GeminiProvider
-from app.llm.providers.openrouter import OpenRouterProvider
-from app.llm.providers.ollama import OllamaProvider
-from app.llm.providers.mock import MockProvider
-from app.llm.exceptions import (
-    LLMError,
-    LLMAuthenticationError,
-    LLMProviderUnavailableError,
-)
-from app.llm.secrets import SecretStr
-from app.llm.retry import with_retry, RetryConfig
-from app.config import get_settings
 from app.logging_config import get_logger
 
 logger = get_logger("llm.service")
@@ -119,7 +119,7 @@ class LLMProviderService:
                 )
                 self._cache[provider_type] = CachedProvider(provider, now)
                 logger.debug(
-                    f"Created and cached Ollama provider",
+                    "Created and cached Ollama provider",
                     extra={"extra_fields": {"base_url": self._settings.ollama_base_url}},
                 )
                 return provider
@@ -131,8 +131,9 @@ class LLMProviderService:
 
             if provider_type == ProviderType.OPENROUTER:
                 # Phase 2: provider config stored in DB (plaintext, no encryption)
-                from app.models import LLMProviderConfig
                 from sqlalchemy import select
+
+                from app.models import LLMProviderConfig
 
                 row = await db_session.execute(
                     select(LLMProviderConfig).where(LLMProviderConfig.provider == "openrouter")

@@ -11,6 +11,8 @@ import time
 from decimal import Decimal
 from typing import AsyncIterator, Dict, List, Optional
 
+from app.logging_config import get_logger
+
 from ..base import LLMProvider
 from ..exceptions import (
     LLMAuthenticationError,
@@ -20,7 +22,6 @@ from ..exceptions import (
     LLMProviderUnavailableError,
     LLMRateLimitError,
     LLMTimeoutError,
-    LLMValidationError,
 )
 from ..secrets import SecretStr
 from ..types import (
@@ -34,7 +35,6 @@ from ..types import (
     StreamChunk,
     TokenUsage,
 )
-from app.logging_config import get_logger
 
 logger = get_logger("llm.gemini")
 

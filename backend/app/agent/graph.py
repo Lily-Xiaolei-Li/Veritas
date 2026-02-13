@@ -13,24 +13,24 @@ The graph uses PostgreSQL checkpoints for persistence and resumption.
 
 from typing import Any, Dict, Optional
 
-from langgraph.graph import StateGraph, END
 from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from langgraph.graph import END, StateGraph
 
 from app.logging_config import get_logger
 
-from .state import AgentState
-from .nodes import (
-    receive_node,
-    process_node,
-    respond_node,
-    classify_task_node,
-    process_b1_node,
-    deliberation_node,
-    check_consensus_node,
-    tool_execute_node,
-    NodeContext,
-)
 from .checkpointer import get_checkpointer
+from .nodes import (
+    NodeContext,
+    check_consensus_node,
+    classify_task_node,
+    deliberation_node,
+    process_b1_node,
+    process_node,
+    receive_node,
+    respond_node,
+    tool_execute_node,
+)
+from .state import AgentState
 
 logger = get_logger("graph")
 

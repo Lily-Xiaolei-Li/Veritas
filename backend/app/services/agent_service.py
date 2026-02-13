@@ -12,23 +12,21 @@ Critical: Background tasks must create their own AsyncSession.
 
 import asyncio
 from datetime import datetime, timezone
-from typing import Optional, List, Any, Dict
+from typing import List, Optional
 from uuid import uuid4
 
 from sqlalchemy import select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.logging_config import get_logger
-from app.database import get_database
-from app.models import Run, Message, AuditLog, Artifact
-from app.agent.state import AgentState, AgentMessage, create_initial_state
-from app.agent.graph import create_multi_brain_graph, run_agent
-from app.agent.events import EventEmitter, create_bounded_queue
-from app.agent.nodes import NodeContext
 from app.agent.checkpointer import get_checkpointer
+from app.agent.events import EventEmitter
+from app.agent.graph import create_multi_brain_graph, run_agent
+from app.agent.nodes import NodeContext
+from app.agent.state import AgentMessage, AgentState, create_initial_state
+from app.database import get_database
+from app.logging_config import get_logger
+from app.models import Artifact, AuditLog, Message, Run
 from app.services.run_registry import (
-    get_run_registry,
-    set_active_run,
     clear_run,
     is_cancelled,
     register_task,

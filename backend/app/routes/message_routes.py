@@ -24,17 +24,17 @@ from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.agent.events import DEFAULT_QUEUE_SIZE, create_bounded_queue
 from app.database import get_session
-from app.models import Message, Session, Run
-from app.routes.auth_routes import require_auth
 from app.logging_config import get_logger
 from app.metrics import (
-    SSE_CONNECTIONS_TOTAL,
-    SSE_CONNECTIONS_ACTIVE,
     MESSAGES_TOTAL,
+    SSE_CONNECTIONS_ACTIVE,
+    SSE_CONNECTIONS_TOTAL,
 )
+from app.models import Message, Run, Session
+from app.routes.auth_routes import require_auth
 from app.schemas.sse_events import ErrorEvent
-from app.agent.events import create_bounded_queue, DEFAULT_QUEUE_SIZE
 
 router = APIRouter()
 logger = get_logger("messages")

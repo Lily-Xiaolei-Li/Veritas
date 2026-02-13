@@ -4,6 +4,15 @@ import argparse
 import sys
 from typing import Callable, Optional
 
+from .artifact_handlers import (
+    artifact_create,
+    artifact_delete,
+    artifact_export,
+    artifact_list,
+    artifact_show,
+)
+from .chat_handlers import chat_history, chat_send
+from .context_handlers import context_clear, context_get, context_resolve, context_set
 from .contract import (
     CLIBusinessError,
     CLIError,
@@ -12,27 +21,29 @@ from .contract import (
     render_json,
     success_envelope,
 )
+from .log_handlers import log_recent, log_stream
+from .logger import emit_log
 from .mode import detect_mode
-from .session_handlers import session_create, session_list, session_show, session_use, session_current
-from .context_handlers import context_set, context_get, context_clear, context_resolve
-from .chat_handlers import chat_send, chat_history
-from .source_handlers import source_add, source_list, source_show, source_remove, source_tag
-from .artifact_handlers import artifact_create, artifact_list, artifact_show, artifact_export, artifact_delete
-from .run_handlers import run_list, run_show, run_retry, run_resume, run_cancel
 from .persona_handlers import (
     persona_create,
+    persona_export,
+    persona_import,
     persona_list,
+    persona_select,
     persona_show,
     persona_update,
     persona_version,
-    persona_select,
-    persona_export,
-    persona_import,
 )
-from .status_handlers import status_show, status_doctor
-from .log_handlers import log_stream, log_recent
-from .logger import emit_log
-
+from .run_handlers import run_cancel, run_list, run_resume, run_retry, run_show
+from .session_handlers import (
+    session_create,
+    session_current,
+    session_list,
+    session_show,
+    session_use,
+)
+from .source_handlers import source_add, source_list, source_remove, source_show, source_tag
+from .status_handlers import status_doctor, status_show
 
 Handler = Callable[[argparse.Namespace], dict]
 

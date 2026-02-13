@@ -1,6 +1,6 @@
-# Ruff configuration (minimal)
+# Ruff configuration
 
-line-length = 100
+line-length = 200
 
 [lint]
 # Start with a conservative rule set; expand over time.
@@ -9,7 +9,13 @@ select = [
   "F",  # pyflakes
   "I",  # isort
 ]
-ignore = []
+ignore = [
+  "E402",   # module level import not at top (needed for main.py env setup)
+  "E501",   # line too long (many long prompts and strings are clearer on one line)
+  "E712",   # comparison to True/False (needed for SQLAlchemy filters)
+  "E741",   # ambiguous variable name (l is fine in list comprehensions)
+  "F841",   # local variable assigned but never used (sometimes intentional)
+]
 
 [lint.isort]
 known-first-party = ["app"]

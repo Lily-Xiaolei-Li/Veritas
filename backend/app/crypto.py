@@ -7,7 +7,9 @@ Uses Fernet (symmetric encryption) with a configurable encryption key.
 
 import base64
 import hashlib
+
 from cryptography.fernet import Fernet, InvalidToken
+
 from app.config import get_settings
 
 

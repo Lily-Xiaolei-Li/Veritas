@@ -6,14 +6,12 @@ Validates all settings on startup and provides typed access to configuration.
 """
 
 import os
-import warnings
 from pathlib import Path
 from typing import Literal, Optional
 from urllib.parse import urlparse
 
-from pydantic import Field, field_validator, model_validator, ValidationError
+from pydantic import Field, ValidationError, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
 
 # Allowed hosts for local LLM providers (SSRF prevention)
 ALLOWED_LOCAL_HOSTS = frozenset({

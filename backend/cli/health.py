@@ -1,6 +1,7 @@
 import os
 import sys
-from typing import Optional, List, Dict, Any
+from typing import Any, Dict, List, Optional
+
 from app.docker_check import as_health_payload
 
 
@@ -33,7 +34,7 @@ def _print_section(title: str, checks: List[Dict[str, Any]], ok: bool) -> None:
         if not check_ok:
             remediation = check.get("remediation")
             if remediation:
-                print(f"\n    REMEDIATION:")
+                print("\n    REMEDIATION:")
                 for line in remediation.split("\n"):
                     if line.strip():
                         print(f"    {line}")
