@@ -255,3 +255,114 @@ async def list_source_documents(source_name: str, limit: int = 2000):
 
     docs = get_qdrant_documents(qdrant_path, collection, limit=limit)
     return DocumentsResponse(documents=docs)
+
+
+# =============================================================================
+# RAG Search API
+# =============================================================================
+
+
+class SearchRequest(BaseModel):
+    """Search request for RAG collections."""
+    query: str
+    top_k: int = 5
+
+
+class SearchResult(BaseModel):
+    """A single search result."""
+    text: str
+    score: float
+    source: Optional[str] = None
+    metadata: Optional[dict] = None
+
+
+class SearchResponse(BaseModel):
+    """Search response with results."""
+    results: list[SearchResult]
+    query: str
+    source: str
+
+
+def search_qdrant(
+    qdrant_path: Path,
+    collection_name: str,
+    query: str,
+    top_k: int = 5,
+) -> list[SearchResult]:
+    """Search a Qdrant collection using sentence-transformers embeddings."""
+    try:
+        from qdrant_client import QdrantClient
+        from sentence_transformers import SentenceTransformer
+
+        if not qdrant_path.exists():
+            logger.warning(f"Qdrant path not found: {qdrant_path}")
+            return []
+
+        client = QdrantClient(path=str(qdrant_path))
+
+        # Check collection exists
+        collections = client.get_collections().collections
+        if not any(c.name == collection_name for c in collections):
+            logger.warning(f"Collection not found: {collection_name}")
+            return []
+
+        # Use the same embedding model as library-rag
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+        query_vector = model.encode(query).tolist()
+
+        # Search
+        hits = client.search(
+            collection_name=collection_name,
+            query_vector=query_vector,
+            limit=top_k,
+            with_payload=True,
+        )
+
+        results = []
+        for hit in hits:
+            payload = hit.payload or {}
+            # Extract text content
+            text = payload.get("text") or payload.get("content") or payload.get("chunk") or ""
+            # Extract source/filename
+            source, _ = _extract_filename_from_payload(payload)
+            results.append(SearchResult(
+                text=str(text)[:2000],  # Limit text length
+                score=hit.score,
+                source=source,
+                metadata={k: v for k, v in payload.items() if k not in ("text", "content", "chunk")},
+            ))
+
+        return results
+
+    except ImportError as e:
+        logger.error(f"Import error during search: {e}")
+        return []
+    except Exception as e:
+        logger.error(f"Search error: {e}", exc_info=True)
+        return []
+
+
+@router.post("/sources/{source_name}/search", response_model=SearchResponse)
+async def search_knowledge_source(source_name: str, request: SearchRequest):
+    """Search a knowledge source using semantic similarity.
+    
+    This powers the Library RAG and Empiricals RAG features.
+    Returns top-k relevant text chunks for the given query.
+    """
+    # Map source name -> Qdrant collection and path
+    if source_name == "library":
+        collection = "academic_papers"
+        qdrant_path = LIBRARY_RAG_PATH
+    elif source_name == "interviews":
+        collection = "interview_data"
+        qdrant_path = INTERVIEWS_RAG_PATH
+    else:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Unknown source")
+
+    results = search_qdrant(qdrant_path, collection, request.query, request.top_k)
+
+    return SearchResponse(
+        results=results,
+        query=request.query,
+        source=source_name,
+    )

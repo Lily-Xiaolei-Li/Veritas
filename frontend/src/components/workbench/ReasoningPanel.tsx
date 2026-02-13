@@ -371,6 +371,34 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
         }
       }
 
+      // Search Library RAG if available (automatic academic context)
+      try {
+        const ragRes = await authFetch(`${API_BASE_URL}/api/v1/knowledge/sources/library/search`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: content, top_k: 3 }),
+        });
+        if (ragRes.ok) {
+          const ragData = await ragRes.json();
+          if (ragData.results && ragData.results.length > 0) {
+            const ragContext = ragData.results
+              .map((r: { text: string; source?: string; score: number }) => {
+                const source = r.source ? ` (${r.source})` : "";
+                return `[Library Paper${source}]\n${r.text}`;
+              })
+              .join("\n\n");
+            contextParts.push(ragContext);
+            contextChunks.push({
+              label: `Library RAG (${ragData.results.length} papers)`,
+              preview: ragData.results[0]?.text?.slice(0, 400) || "",
+            });
+          }
+        }
+      } catch (e) {
+        console.log("Library RAG search skipped:", e);
+        // Don't block chat if RAG fails
+      }
+
       const contextStr = contextParts.length > 0 ? contextParts.join("\n\n---\n\n") : undefined;
 
       // Phase 2: Update Events panel preview with what we're about to send
