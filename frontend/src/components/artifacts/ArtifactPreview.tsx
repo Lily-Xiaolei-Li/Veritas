@@ -21,6 +21,9 @@ import {
   Minimize2,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeRaw from "rehype-raw";
 import { useArtifactPreview, getArtifactDownloadUrl, useSaveArtifact, useUpdateArtifactContent, useArtifactDraft, useUpdateArtifactDraft } from "@/lib/hooks/useArtifacts";
 import { getArtifactMarkdownName } from "@/lib/artifacts/download";
 import { useWorkbenchStore } from "@/lib/store";
@@ -196,6 +199,18 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState("");
+  const isEditingRef = useRef(false);
+  const [showPreviewInEdit, setShowPreviewInEdit] = useState(false);
+  
+  // Keep ref in sync with state (for closures in event handlers)
+  useEffect(() => {
+    isEditingRef.current = isEditing;
+  }, [isEditing]);
+  
+  // Reset preview toggle when exiting edit mode
+  useEffect(() => {
+    if (!isEditing) setShowPreviewInEdit(false);
+  }, [isEditing]);
 
   // Phase 5: AI rewrite selection
   const [rewriteOpen, setRewriteOpen] = useState(false);
@@ -861,10 +876,51 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
         ) : canShowEditor ? (
           <div className="h-full border border-gray-200 dark:border-gray-700 rounded-md overflow-hidden bg-white dark:bg-gray-900 relative">
             {isEditing && (
-              <div className="absolute top-0 left-0 right-0 px-2 py-1 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-300 z-10">
-                ✏️ Editing mode {hasChanges && <span className="text-amber-600 dark:text-amber-400">• Unsaved changes</span>}
+              <div className="absolute top-0 left-0 right-0 px-2 py-1 bg-gray-100 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600 text-xs text-gray-600 dark:text-gray-300 z-10 flex items-center justify-between">
+                <span>
+                  ✏️ Editing mode {hasChanges && <span className="text-amber-600 dark:text-amber-400">• Unsaved changes</span>}
+                </span>
+                <button
+                  onClick={() => setShowPreviewInEdit(!showPreviewInEdit)}
+                  className={`px-2 py-0.5 rounded text-xs transition-colors ${
+                    showPreviewInEdit 
+                      ? "bg-blue-500 text-white" 
+                      : "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500"
+                  }`}
+                  title={showPreviewInEdit ? "Show raw markdown" : "Show formatted preview"}
+                >
+                  {showPreviewInEdit ? "📝 Raw" : "👁️ Preview"}
+                </button>
               </div>
             )}
+            {isEditing && showPreviewInEdit ? (
+              /* WYSIWYG Preview Mode - show rendered markdown while editing */
+              <div 
+                className="h-full overflow-auto p-4 pt-8 prose prose-sm dark:prose-invert max-w-none"
+                style={{ 
+                  fontSize: "13px",
+                  lineHeight: "1.6",
+                }}
+              >
+                <style jsx global>{`
+                  .prose mark {
+                    background-color: #fef08a;
+                    padding: 0 2px;
+                    border-radius: 2px;
+                  }
+                  .dark .prose mark {
+                    background-color: #854d0e;
+                    color: #fef9c3;
+                  }
+                `}</style>
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {editContent}
+                </ReactMarkdown>
+              </div>
+            ) : (
             <Editor
               value={displayContent}
               language={editorLanguage}
@@ -1014,7 +1070,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                     menu.appendChild(divider);
 
                     // Basic edit options (only in edit mode)
-                    if (isEditing) {
+                    if (isEditingRef.current) {
                       // Phase 5: AI rewrite selection
                       menu.appendChild(
                         createMenuItem(
@@ -1136,6 +1192,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                 updateDecorations(editor, artifact?.id);
               }}
             />
+            )}
             {truncated && !isEditing && (
               <div className="px-3 py-2 text-xs text-amber-600 border-t border-gray-200 bg-amber-50">
                 Content truncated - download for full file
