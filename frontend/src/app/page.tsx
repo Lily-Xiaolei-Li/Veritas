@@ -10,14 +10,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LogOut, RotateCcw, Save, Undo2, Download, Upload, FolderOpen, ChevronDown, FilePlus2 } from "lucide-react";
+import { LogOut, RotateCcw, Save, Undo2, Download, Upload, FolderOpen, FilePlus2 } from "lucide-react";
 import { WorkbenchLayout } from "@/components/workbench/WorkbenchLayout";
 import { HealthIndicator } from "@/components/health/HealthIndicator";
 import { KillSwitchButton } from "@/components/workbench/KillSwitchButton";
 import { SettingsModal, SettingsButton } from "@/components/settings";
 import { useLogout } from "@/lib/hooks/useAuth";
 import { useAuthStore, useWorkbenchStore } from "@/lib/store";
-import { APP_NAME, APP_VERSION } from "@/lib/utils/constants";
+import { APP_VERSION } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
 import { exportWorkspace, getUndoStack, importWorkspace, saveWorkspace, undoLatest, resetWorkspace } from "@/lib/api/workspace";
 
@@ -109,7 +109,7 @@ export default function Home() {
       if (!file) return;
 
       const text = await file.text();
-      let data: any;
+      let data: unknown;
       try {
         data = JSON.parse(text);
       } catch {

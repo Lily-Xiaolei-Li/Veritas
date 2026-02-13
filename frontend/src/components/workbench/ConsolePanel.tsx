@@ -45,7 +45,8 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
 
   const persona = useMemo(() => getPersonaById(selectedPersonaId), [selectedPersonaId]);
 
-  // Merge and sort all events by timestamp
+  // Merge and sort all events by timestamp (reserved for future timeline view)
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const allEvents = useMemo(() => {
     const toolEventsWithType = toolEvents.map(e => ({ ...e, eventType: "tool" as const }));
     const brainEventsWithType = brainEvents.map(e => ({ ...e, eventType: "brain" as const }));
@@ -596,6 +597,7 @@ async function copyToClipboard(text: string) {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function ToolEventCard({ event }: ToolEventCardProps) {
   const [expanded, setExpanded] = useState(false);
 
@@ -725,6 +727,7 @@ interface BrainEventCardProps {
   event: BrainEvent;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function BrainEventCard({ event }: BrainEventCardProps) {
   const data = event.data as Record<string, unknown>;
 

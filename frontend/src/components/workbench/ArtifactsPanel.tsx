@@ -8,7 +8,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { BookOpen, Users, Plus, Loader2, Database, X, FileText, FilePlus } from "lucide-react";
+import { BookOpen, Users, Plus, Loader2, Database, X, FileText } from "lucide-react";
 import { ArtifactBrowser } from "../artifacts";
 import { cn } from "@/lib/utils/cn";
 import { API_BASE_URL } from "@/lib/utils/constants";
@@ -71,10 +71,16 @@ function KnowledgeModal({
   onClose: () => void;
   onRefresh?: () => Promise<void>;
 }) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"stats" | "documents">("stats");
+  const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
+  const [docsLoading, setDocsLoading] = useState(false);
+  const [docsError, setDocsError] = useState<string | null>(null);
+
+  // Early return after all hooks
   if (!source) return null;
 
   const isOnline = source.status === "ready";
-  const [refreshing, setRefreshing] = useState(false);
 
   const handleReconnect = async () => {
     if (!onRefresh) return;
@@ -85,11 +91,6 @@ function KnowledgeModal({
       setRefreshing(false);
     }
   };
-
-  const [activeTab, setActiveTab] = useState<"stats" | "documents">("stats");
-  const [docs, setDocs] = useState<KnowledgeDocument[]>([]);
-  const [docsLoading, setDocsLoading] = useState(false);
-  const [docsError, setDocsError] = useState<string | null>(null);
 
   const fetchDocuments = async () => {
     if (!source) return;
@@ -199,7 +200,7 @@ function KnowledgeModal({
                     Chunks indexed
                   </div>
                   <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-1">
-                    Click "Documents" tab to see actual document count
+                    Click &quot;Documents&quot; tab to see actual document count
                   </div>
                 </div>
               )}

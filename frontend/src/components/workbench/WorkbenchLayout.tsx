@@ -28,9 +28,7 @@ import {
   type ImperativePanelHandle,
 } from "react-resizable-panels";
 import {
-  ChevronDown,
   ChevronUp,
-  Terminal,
   ChevronLeft,
   ChevronRight,
 } from "lucide-react";
