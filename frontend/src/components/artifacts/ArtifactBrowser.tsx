@@ -26,6 +26,7 @@ import {
   CheckSquare,
   Pin,
   Trash2,
+  Layers,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { ArtifactList } from "./ArtifactList";
@@ -75,6 +76,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
   const [isToolbarCollapsed, setIsToolbarCollapsed] = useState(false);
   const [batchSelectMode, setBatchSelectMode] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isMerging, setIsMerging] = useState(false);
   
   // New artifact modal state
   const [showNewModal, setShowNewModal] = useState(false);
@@ -305,6 +307,85 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
       console.error("Failed to delete artifacts:", e);
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  // Merge selected artifacts by time sequence
+  const handleMergeSelected = async () => {
+    if (checkedArtifactIds.length < 2 || !currentSessionId) return;
+    
+    setIsMerging(true);
+    try {
+      // Get all selected artifacts and sort by creation time
+      const selectedArtifacts = combinedArtifacts
+        .filter((a) => checkedArtifactIds.includes(a.id))
+        .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+      
+      // Fetch content for each artifact
+      const contents: string[] = [];
+      for (const artifact of selectedArtifacts) {
+        let content = "";
+        if (isLocalArtifact(artifact) && artifact.content) {
+          content = artifact.content;
+        } else {
+          // Fetch from backend
+          const res = await fetch(`${API_BASE_URL}/api/v1/artifacts/${artifact.id}/preview`);
+          if (res.ok) {
+            const preview = await res.json();
+            content = preview.text || preview.content || "";
+          }
+        }
+        if (content) {
+          contents.push(`## ${artifact.display_name}\n\n${content}`);
+        }
+      }
+      
+      if (contents.length === 0) {
+        throw new Error("No content to merge");
+      }
+      
+      // Create merged content
+      const mergedContent = contents.join("\n\n---\n\n");
+      const timestamp = new Date().toISOString().split("T")[0];
+      const mergedName = `merged_${timestamp}_${selectedArtifacts.length}files.md`;
+      
+      // Save as new artifact
+      const res = await fetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/artifacts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filename: mergedName,
+          content: mergedContent,
+          artifact_meta: {
+            merged_from: selectedArtifacts.map((a) => a.id),
+            merge_count: selectedArtifacts.length,
+          },
+        }),
+      });
+      
+      if (!res.ok) {
+        throw new Error("Failed to create merged artifact");
+      }
+      
+      const newArtifact = await res.json();
+      
+      // Refresh artifacts list
+      queryClient.invalidateQueries({ queryKey: ["session-artifacts", currentSessionId] });
+      
+      // Select the new merged artifact
+      setSelectedArtifact(newArtifact.id);
+      
+      // Clear selection
+      clearCheckedArtifacts();
+      
+      // Trigger flash effect
+      const { setArtifactFlash } = useWorkbenchStore.getState();
+      setArtifactFlash(newArtifact.id);
+      
+    } catch (e) {
+      console.error("Failed to merge artifacts:", e);
+    } finally {
+      setIsMerging(false);
     }
   };
 
@@ -618,6 +699,19 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                     title={`Pin ${checkedArtifactIds.length} selected`}
                   >
                     <Pin className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    className={cn(
+                      "p-1 rounded transition-colors",
+                      checkedArtifactIds.length >= 2 && !isMerging
+                        ? "text-blue-600 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30"
+                        : "text-gray-400 cursor-not-allowed"
+                    )}
+                    disabled={checkedArtifactIds.length < 2 || isMerging}
+                    onClick={handleMergeSelected}
+                    title={`Merge ${checkedArtifactIds.length} selected (by time)`}
+                  >
+                    <Layers className={cn("h-3.5 w-3.5", isMerging && "animate-pulse")} />
                   </button>
                   <button
                     className={cn(
