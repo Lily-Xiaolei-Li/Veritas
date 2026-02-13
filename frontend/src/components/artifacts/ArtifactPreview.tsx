@@ -28,6 +28,7 @@ import { isLocalArtifact, type ArtifactLike } from "@/lib/artifacts/types";
 import type { ArtifactPreviewKind } from "@/lib/api/types";
 import { Persona, getPersonaById } from "@/components/chat/PersonaSelector";
 import { streamXiaoLeiChat } from "@/lib/api/xiaoleiChat";
+import { API_BASE_URL } from "@/lib/utils/constants";
 
 interface ArtifactPreviewProps {
   artifact: ArtifactLike | null;
@@ -217,6 +218,12 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     range: any;
     selectedText: string;
   } | null>(null);
+  
+  // Create new artifact from selection state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createArtifactName, setCreateArtifactName] = useState("");
+  const [createArtifactContent, setCreateArtifactContent] = useState("");
+  const [isCreatingArtifact, setIsCreatingArtifact] = useState(false);
 
   const previewKind: ArtifactPreviewKind | undefined = !artifact
     ? undefined
@@ -753,6 +760,92 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
           </div>
         )}
 
+        {/* Create New Artifact Modal */}
+        {showCreateModal && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
+            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-96 shadow-xl" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Create New Artifact</h3>
+              
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Filename
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={createArtifactName}
+                      onChange={(e) => setCreateArtifactName(e.target.value)}
+                      placeholder="artifact-name"
+                      className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      autoFocus
+                    />
+                    <span className="flex items-center text-sm text-gray-500">.md</span>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                    Preview ({createArtifactContent.length} chars)
+                  </label>
+                  <div className="px-3 py-2 border border-gray-200 dark:border-gray-600 rounded-md bg-gray-50 dark:bg-gray-900 text-xs text-gray-600 dark:text-gray-400 max-h-32 overflow-y-auto whitespace-pre-wrap">
+                    {createArtifactContent.slice(0, 500)}{createArtifactContent.length > 500 ? "..." : ""}
+                  </div>
+                </div>
+                
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    onClick={() => {
+                      setShowCreateModal(false);
+                      setCreateArtifactName("");
+                      setCreateArtifactContent("");
+                    }}
+                    className="px-3 py-1.5 text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!createArtifactName.trim() || !currentSessionId) return;
+                      setIsCreatingArtifact(true);
+                      try {
+                        const filename = `${createArtifactName.trim()}.md`;
+                        const res = await fetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/artifacts`, {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
+                          body: JSON.stringify({
+                            filename,
+                            content: createArtifactContent,
+                            artifact_meta: { source: "selection" },
+                          }),
+                        });
+                        if (res.ok) {
+                          const newArtifact = await res.json();
+                          // Refresh and select new artifact
+                          const { setArtifactFlash } = useWorkbenchStore.getState();
+                          setSelectedArtifact(newArtifact.id);
+                          setArtifactFlash(newArtifact.id);
+                        }
+                      } catch (e) {
+                        console.error("Failed to create artifact:", e);
+                      } finally {
+                        setIsCreatingArtifact(false);
+                        setShowCreateModal(false);
+                        setCreateArtifactName("");
+                        setCreateArtifactContent("");
+                      }
+                    }}
+                    disabled={!createArtifactName.trim() || isCreatingArtifact}
+                    className="px-3 py-1.5 text-sm bg-blue-500 text-white rounded-md hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isCreatingArtifact ? "Creating..." : "Create"}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {isLoading ? (
           <div className="flex items-center justify-center h-32">
             <Loader2 className="h-6 w-6 animate-spin text-gray-400" />
@@ -892,6 +985,24 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                             endLine: selection!.endLineNumber,
                             text: selectedText,
                           });
+                        },
+                        !hasSelection
+                      )
+                    );
+
+                    // Create new artifact from selection
+                    menu.appendChild(
+                      createMenuItem(
+                        "📄 Create new artifact",
+                        () => {
+                          if (!hasSelection || !model) return;
+                          const selectedText = model.getValueInRange(selection!);
+                          // Generate suggested name from first few words
+                          const words = selectedText.trim().split(/\s+/).slice(0, 5).join("_");
+                          const suggestedName = words.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 30) || "selection";
+                          setCreateArtifactName(suggestedName);
+                          setCreateArtifactContent(selectedText);
+                          setShowCreateModal(true);
                         },
                         !hasSelection
                       )
