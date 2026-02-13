@@ -158,6 +158,10 @@ interface WorkbenchState {
   // Conversation refresh token (increment to force ConversationTab refetch)
   conversationRefreshToken: number;
 
+  // Artifact flash effect (for append/update visual feedback)
+  artifactFlashId: string | null;
+  setArtifactFlash: (artifactId: string | null) => void;
+
   // Session actions
   setCurrentSession: (sessionId: string | null) => void;
 
@@ -289,6 +293,9 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
   outboundPreview: null,
 
   conversationRefreshToken: 0,
+
+  // Artifact flash effect
+  artifactFlashId: null,
 
   // Editor maximize state
   isEditorMaximized: false,
@@ -710,6 +717,17 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
 
   bumpConversationRefresh: () =>
     set((state) => ({ conversationRefreshToken: (state.conversationRefreshToken || 0) + 1 })),
+
+  // Artifact flash effect (visual feedback for append/update)
+  setArtifactFlash: (artifactId) => {
+    set({ artifactFlashId: artifactId });
+    // Auto-clear after animation duration
+    if (artifactId) {
+      setTimeout(() => {
+        set({ artifactFlashId: null });
+      }, 1500);
+    }
+  },
 
   // Editor maximize toggle
   toggleEditorMaximized: () => set((state) => ({ isEditorMaximized: !state.isEditorMaximized })),

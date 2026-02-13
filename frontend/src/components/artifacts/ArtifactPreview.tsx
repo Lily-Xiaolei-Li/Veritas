@@ -155,6 +155,10 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
   const setSelectedArtifact = useWorkbenchStore((s) => s.setSelectedArtifact);
   const isEditorMaximized = useWorkbenchStore((s) => s.isEditorMaximized);
   const toggleEditorMaximized = useWorkbenchStore((s) => s.toggleEditorMaximized);
+  const artifactFlashId = useWorkbenchStore((s) => s.artifactFlashId);
+  
+  // Flash effect when content is appended
+  const isFlashing = artifact && artifactFlashId === artifact.id;
 
   const artifactEdits = useWorkbenchStore((s) => s.artifactEdits);
   const removeLocalArtifact = useWorkbenchStore((s) => s.removeLocalArtifact);
@@ -557,8 +561,22 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     }
   };
 
+  // Auto-refetch when flash is triggered
+  useEffect(() => {
+    if (isFlashing && !isLocal) {
+      void refetch();
+    }
+  }, [isFlashing, isLocal, refetch]);
+
   return (
-    <div className="flex flex-col h-full">
+    <div className={`relative flex flex-col h-full transition-all duration-300 ${isFlashing ? "ring-2 ring-green-500 ring-opacity-75 bg-green-50 dark:bg-green-900/20" : ""}`}>
+      {/* Flash indicator */}
+      {isFlashing && (
+        <div className="absolute top-2 right-2 z-20 flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full animate-pulse">
+          <span>✓</span>
+          <span>Updated</span>
+        </div>
+      )}
       {/* Minimal Header - just filename and action buttons */}
       <div className="flex items-center justify-between px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
         {isEditingTitle ? (

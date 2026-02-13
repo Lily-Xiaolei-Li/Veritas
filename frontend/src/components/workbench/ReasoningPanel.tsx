@@ -278,7 +278,12 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
 
   // Append content to the current edit target artifact
   const handleAppendToArtifact = async (content: string) => {
-    if (!editTargetArtifactId) return;
+    if (!editTargetArtifactId) {
+      console.error("[Append] No editTargetArtifactId");
+      return;
+    }
+    
+    console.log("[Append] Starting append to artifact:", editTargetArtifactId);
     
     try {
       // Get current artifact content
@@ -286,18 +291,26 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
       const localArt = localArtifacts.find((a) => a.id === editTargetArtifactId);
       
       if (localArt?.content) {
+        console.log("[Append] Using local artifact content, length:", localArt.content.length);
         currentContent = localArt.content;
       } else {
         // Fetch from backend
+        console.log("[Append] Fetching preview from backend...");
         const previewRes = await authFetch(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/preview`);
+        console.log("[Append] Preview response status:", previewRes.status);
         if (previewRes.ok) {
           const preview = await previewRes.json();
           currentContent = preview.text || preview.content || "";
+          console.log("[Append] Got preview content, length:", currentContent.length);
+        } else {
+          const errText = await previewRes.text();
+          console.error("[Append] Preview fetch failed:", errText);
         }
       }
       
       // Append new content with a separator
       const newContent = currentContent.trim() + "\n\n---\n\n" + content;
+      console.log("[Append] New combined content length:", newContent.length);
       
       // Update the artifact via API
       const updateRes = await authFetch(
@@ -309,11 +322,18 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
         }
       );
       
+      console.log("[Append] Update response status:", updateRes.status);
+      
       if (updateRes.ok) {
         // Invalidate caches to refresh preview
         queryClient.invalidateQueries({ queryKey: ["artifact-preview", editTargetArtifactId] });
         queryClient.invalidateQueries({ queryKey: ["artifact", editTargetArtifactId] });
         queryClient.invalidateQueries({ queryKey: ["session-artifacts", currentSessionId] });
+        
+        // Select the artifact to show it in preview and trigger visual refresh
+        const { setSelectedArtifact, setArtifactFlash } = useWorkbenchStore.getState();
+        setSelectedArtifact(editTargetArtifactId);
+        setArtifactFlash(editTargetArtifactId); // Trigger flash effect
         
         // Show success message in chat
         addMessage({
@@ -324,15 +344,17 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
           created_at: new Date().toISOString(),
         });
       } else {
-        throw new Error("Failed to update artifact");
+        const errText = await updateRes.text();
+        console.error("[Append] Update failed:", errText);
+        throw new Error(`Failed to update artifact: ${errText}`);
       }
     } catch (e) {
-      console.error("Failed to append to artifact:", e);
+      console.error("[Append] Error:", e);
       addMessage({
         id: `append-error-${Date.now()}`,
         session_id: currentSessionId || "",
         role: "assistant",
-        content: "⚠️ Failed to append content to artifact",
+        content: `⚠️ Failed to append content to artifact: ${e instanceof Error ? e.message : "Unknown error"}`,
         created_at: new Date().toISOString(),
       });
     }
