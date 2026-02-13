@@ -13,11 +13,11 @@
 "use client";
 
 import React, { useRef, useEffect, useState, FormEvent, KeyboardEvent } from "react";
-import { MessageSquare, Send, ChevronRight, Square, FileText, RefreshCw } from "lucide-react";
+import { MessageSquare, Send, ChevronRight, Square, FileText } from "lucide-react";
 import { Button } from "../ui/Button";
 import { PersonaSelector, getPersonaById } from "@/components/chat/PersonaSelector";
 import { useWorkbenchStore } from "@/lib/store";
-import { useSessionArtifacts, useSaveArtifact } from "@/lib/hooks/useArtifacts";
+import { useSessionArtifacts } from "@/lib/hooks/useArtifacts";
 import { useQueryClient } from "@tanstack/react-query";
 import { useLLMProviderConfig } from "@/lib/hooks/useLLMProviderConfig";
 import { streamXiaoLeiChat } from "@/lib/api/xiaoleiChat";
@@ -49,16 +49,18 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
   });
   const [ragTopK, setRagTopK] = useState<number>(5);
 
-  const saveArtifactMutation = useSaveArtifact();
+  // DISABLED - AI artifact auto-creation
+  // const saveArtifactMutation = useSaveArtifact();
   const queryClient = useQueryClient();
 
   // Phase 4: Artifact emission protocol (LLM writes files directly)
-  const ARTIFACT_PROTOCOL =
+  // DISABLED - AI now only responds in text, users manually append/copy to artifacts
+  /* const ARTIFACT_PROTOCOL =
     "If the user asks you to create/save a file, output it using this exact format (and nothing else inside the block):\n" +
     "<<<ARTIFACT:filename.ext>>>\n" +
     "<file content>\n" +
     "<<<END_ARTIFACT>>>\n\n" +
-    "Rules: filename must include an extension; do not wrap in markdown code fences; you may output multiple artifact blocks.";
+    "Rules: filename must include an extension; do not wrap in markdown code fences; you may output multiple artifact blocks."; */
 
 
   // Store state
@@ -360,100 +362,6 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     }
   };
 
-  // Replace selected text in the edit target artifact with new content
-  const handleReplaceInArtifact = async (content: string) => {
-    if (!editTargetArtifactId || editTargetSelections.length === 0) {
-      console.error("[Replace] No editTargetArtifactId or no selections");
-      return;
-    }
-    
-    console.log("[Replace] Starting replace in artifact:", editTargetArtifactId);
-    console.log("[Replace] Selections count:", editTargetSelections.length);
-    
-    try {
-      // Get current artifact content
-      let currentContent = "";
-      const localArt = localArtifacts.find((a) => a.id === editTargetArtifactId);
-      
-      if (localArt?.content) {
-        currentContent = localArt.content;
-      } else {
-        const previewRes = await authFetch(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/preview`);
-        if (previewRes.ok) {
-          const preview = await previewRes.json();
-          currentContent = preview.text || preview.content || "";
-        } else {
-          throw new Error("Failed to fetch artifact content");
-        }
-      }
-      
-      // Split content into lines
-      const lines = currentContent.split("\n");
-      
-      // Sort selections by startLine descending to replace from bottom to top
-      // (this prevents line number shifts from affecting earlier replacements)
-      const sortedSelections = [...editTargetSelections].sort((a, b) => b.startLine - a.startLine);
-      
-      // Replace each selection range with the new content
-      // For multiple selections, we'll replace all of them with the same content
-      for (const sel of sortedSelections) {
-        const startIdx = sel.startLine - 1; // Convert to 0-indexed
-        const endIdx = sel.endLine - 1;
-        
-        // Replace the lines in range with new content
-        const newContentLines = content.split("\n");
-        lines.splice(startIdx, endIdx - startIdx + 1, ...newContentLines);
-      }
-      
-      const newContent = lines.join("\n");
-      
-      // Update the artifact via API
-      const updateRes = await authFetch(
-        `${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/content`,
-        {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: newContent }),
-        }
-      );
-      
-      if (updateRes.ok) {
-        // Invalidate caches
-        queryClient.invalidateQueries({ queryKey: ["artifact-preview", editTargetArtifactId] });
-        queryClient.invalidateQueries({ queryKey: ["artifact", editTargetArtifactId] });
-        queryClient.invalidateQueries({ queryKey: ["session-artifacts", currentSessionId] });
-        
-        // Select artifact and trigger flash
-        const { setSelectedArtifact, setArtifactFlash } = useWorkbenchStore.getState();
-        setSelectedArtifact(editTargetArtifactId);
-        setArtifactFlash(editTargetArtifactId);
-        
-        // Clear edit target selections after successful replace
-        clearEditTargetSelections();
-        
-        addMessage({
-          id: `replace-success-${Date.now()}`,
-          session_id: currentSessionId || "",
-          role: "assistant",
-          content: `✅ Replaced ${sortedSelections.length} selection(s) in artifact`,
-          created_at: new Date().toISOString(),
-        });
-      } else {
-        const errText = await updateRes.text();
-        throw new Error(`Failed to update artifact: ${errText}`);
-      }
-    } catch (e) {
-      console.error("[Replace] Error:", e);
-      addMessage({
-        id: `replace-error-${Date.now()}`,
-        session_id: currentSessionId || "",
-        role: "assistant",
-        content: `⚠️ Failed to replace content: ${e instanceof Error ? e.message : "Unknown error"}`,
-        created_at: new Date().toISOString(),
-      });
-    }
-  };
-
   // Helper to save message to database for conversation history
   const saveMessageToDb = async (role: "user" | "assistant" | "system", content: string) => {
     if (!currentSessionId) return;
@@ -513,7 +421,10 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     try {
       // Get persona system prompt
       const persona = getPersonaById(selectedPersonaId);
-      const systemPrompt = `${persona.system_prompt}\n\n${ARTIFACT_PROTOCOL}`;
+      // DISABLED: Artifact emission protocol - AI now only responds in text
+      // Users can manually append/copy AI output to artifacts
+      const systemPrompt = persona.system_prompt;
+      // const systemPrompt = `${persona.system_prompt}\n\n${ARTIFACT_PROTOCOL}`;
 
       // Build context from focused artifacts and text selections
       const contextParts: string[] = [];
@@ -613,19 +524,21 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
 
       if (chatMode === "xiaolei") {
         // Phase 4: Parse artifact blocks emitted via token stream
-        let parseMode: "normal" | "artifact" = "normal";
+        // DISABLED - AI now only responds in text
+        /* let parseMode: "normal" | "artifact" = "normal";
         let tokenBuf = "";
         let artifactFilename = "";
         let artifactContent = "";
 
         const startRe = /<<<ARTIFACT:([^>]+)>>>/;
-        const endMarker = "<<<END_ARTIFACT>>>";
+        const endMarker = "<<<END_ARTIFACT>>>"; */
 
         const flushNormal = (text: string) => {
           if (text) appendToStreamingMessage(runId, text);
         };
 
-        const handleArtifactComplete = async (filename: string, contentText: string) => {
+        // DISABLED - AI artifact auto-creation
+        /* const handleArtifactComplete = async (filename: string, contentText: string) => {
           const safeName = filename.trim() || `artifact-${Date.now()}.md`;
           if (!currentSessionId) return;
 
@@ -665,9 +578,14 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
               created_at: new Date().toISOString(),
             });
           }
-        };
+        }; */
 
         const onParsedToken = (t: string) => {
+          // DISABLED: Artifact parsing - now just show all text as-is
+          // Users can manually append/copy AI output to artifacts
+          flushNormal(t);
+          
+          /* OLD ARTIFACT PARSING CODE - DISABLED
           tokenBuf += t;
 
           while (tokenBuf.length) {
@@ -708,6 +626,7 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             // fire and forget; keep parsing stream
             void handleArtifactComplete(fn, ct);
           }
+          */
         };
 
         // Fetch edit target artifact content if set (B1.7)
@@ -752,82 +671,27 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             onOpen: () => setSSEConnected(true),
             onToken: (token) => onParsedToken(token),
             onArtifact: (artifactContent, filename) => {
+              // DISABLED - AI artifact auto-creation
+              // Just show the content inline instead
               if (!artifactContent && !filename) return;
+              
+              /* OLD CODE - DISABLED
               // Prefer persisted artifacts (Phase 4). Fall back to local if no session.
               if (currentSessionId) {
                 void handleArtifactComplete(filename || `artifact-${Date.now()}.md`, artifactContent || "");
                 return;
               }
-
-              const createdAt = new Date().toISOString();
-              const trimmedName = filename?.trim();
-              const extension = trimmedName?.includes(".")
-                ? trimmedName.split(".").pop()?.toLowerCase() ?? null
-                : null;
-              const previewKind: ArtifactPreviewKind = (() => {
-                if (!extension) return "markdown";
-                if (extension === "md" || extension === "markdown") return "markdown";
-                if (
-                  [
-                    "ts",
-                    "tsx",
-                    "js",
-                    "jsx",
-                    "json",
-                    "py",
-                    "go",
-                    "rs",
-                    "java",
-                    "c",
-                    "cpp",
-                    "cs",
-                    "html",
-                    "css",
-                    "scss",
-                    "yml",
-                    "yaml",
-                    "sh",
-                    "bash",
-                    "sql",
-                  ].includes(extension)
-                ) {
-                  return "code";
-                }
-                return "text";
-              })();
-              const displayName = trimmedName || `artifact-${createdAt.replace(/[:.]/g, "-")}.md`;
-              const contentBytes = new TextEncoder().encode(artifactContent || "").length;
-              const artifactId = `chat-artifact-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-              const localArtifact: LocalArtifact = {
-                id: artifactId,
-                run_id: runId,
-                session_id: currentSessionId || "local",
-                display_name: displayName,
-                storage_path: `chat/${artifactId}`,
-                extension: extension ?? "md",
-                size_bytes: contentBytes,
-                content_hash: null,
-                mime_type: "text/markdown",
-                artifact_type: "file",
-                created_at: createdAt,
-                artifact_meta: { source: "chat" },
-                is_deleted: false,
-                can_preview: true,
-                preview_kind: previewKind,
-                download_url: "",
-                source: "chat",
-                content: artifactContent || "",
-                filename: trimmedName,
-              };
-              addLocalArtifact(localArtifact);
-              // Do not echo full artifact content into chat (it is already saved as an artifact).
+              */
+              
+              // Instead of auto-creating, show as message so user can manually save
               addMessage({
-                id: `artifact-created-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                id: `artifact-inline-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                 session_id: currentSessionId || "",
                 role: "assistant",
-                content: `✅ Created artifact: ${displayName}`,
+                content: `📄 **${filename || "Untitled"}**\n\n${artifactContent || ""}`,
                 created_at: new Date().toISOString(),
               });
+              // DISABLED - Local artifact creation code removed
             },
             onDone: async () => {
               // Check if the response is an artifact_update JSON (B1.7)
@@ -1057,9 +921,7 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             content={msg.content}
             onSaveAsArtifact={msg.role === "assistant" ? handleSaveAsArtifact : undefined}
             onAppendToArtifact={msg.role === "assistant" ? handleAppendToArtifact : undefined}
-            onReplaceInArtifact={msg.role === "assistant" ? handleReplaceInArtifact : undefined}
             editTargetArtifactId={editTargetArtifactId}
-            hasEditSelections={editTargetSelections.length > 0}
           />
         ))}
 
@@ -1195,27 +1057,66 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   onSaveAsArtifact?: (content: string, filename: string, extension: string) => void;
   onAppendToArtifact?: (content: string) => void;
-  onReplaceInArtifact?: (content: string) => void;
   editTargetArtifactId?: string | null;
-  hasEditSelections?: boolean;
 }
 
-function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendToArtifact, onReplaceInArtifact, editTargetArtifactId, hasEditSelections }: MessageBubbleProps) {
+function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendToArtifact, editTargetArtifactId }: MessageBubbleProps) {
   const isUser = role === "user";
   const isAssistant = role === "assistant";
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [filename, setFilename] = useState("");
   const [extension, setExtension] = useState("md");
   const [isAppending, setIsAppending] = useState(false);
-  const [isReplacing, setIsReplacing] = useState(false);
+  
+  // Right-click context menu state
+  const [contextMenu, setContextMenu] = useState<{ visible: boolean; x: number; y: number; selectedText: string }>({
+    visible: false,
+    x: 0,
+    y: 0,
+    selectedText: "",
+  });
+  const [saveContent, setSaveContent] = useState("");
 
   const handleSave = () => {
     if (onSaveAsArtifact && filename.trim()) {
-      onSaveAsArtifact(content, filename.trim(), extension);
+      onSaveAsArtifact(saveContent || content, filename.trim(), extension);
       setShowSaveModal(false);
       setFilename("");
+      setSaveContent("");
     }
   };
+  
+  // Handle right-click on assistant messages
+  const handleContextMenu = (e: React.MouseEvent) => {
+    if (!isAssistant || isStreaming) return;
+    
+    const selection = window.getSelection();
+    const selectedText = selection?.toString() || "";
+    
+    if (selectedText) {
+      e.preventDefault();
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        selectedText,
+      });
+    }
+  };
+  
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+  
+  // Close on click outside
+  React.useEffect(() => {
+    if (contextMenu.visible) {
+      const handleClick = () => closeContextMenu();
+      document.addEventListener("click", handleClick);
+      return () => document.removeEventListener("click", handleClick);
+    }
+  }, [contextMenu.visible]);
 
   return (
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
@@ -1224,6 +1125,7 @@ function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendT
           className={`px-4 py-2 rounded-lg ${
             isUser ? "bg-blue-500 text-white rounded-br-none" : "bg-gray-100 dark:bg-gray-800 text-gray-900 dark:text-gray-100 rounded-bl-none"
           }`}
+          onContextMenu={handleContextMenu}
         >
           <div className="whitespace-pre-wrap break-words">
             {content}
@@ -1231,16 +1133,71 @@ function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendT
           </div>
         </div>
         
+        {/* Right-click Context Menu */}
+        {contextMenu.visible && (
+          <div
+            className="fixed z-50 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-1 min-w-[200px]"
+            style={{ left: contextMenu.x, top: contextMenu.y }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setSaveContent(contextMenu.selectedText);
+                setShowSaveModal(true);
+                closeContextMenu();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
+            >
+              <FileText className="h-4 w-4" />
+              📄 Create Artifact
+            </button>
+            
+            {editTargetArtifactId && onAppendToArtifact && (
+              <button
+                onClick={async () => {
+                  closeContextMenu();
+                  setIsAppending(true);
+                  try {
+                    await onAppendToArtifact(contextMenu.selectedText);
+                  } finally {
+                    setIsAppending(false);
+                  }
+                }}
+                disabled={isAppending}
+                className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left disabled:opacity-50"
+              >
+                <ChevronRight className="h-4 w-4" />
+                ➕ Append to Artifact
+              </button>
+            )}
+            
+            <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+            
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(contextMenu.selectedText);
+                closeContextMenu();
+              }}
+              className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 text-left"
+            >
+              📋 Copy
+            </button>
+          </div>
+        )}
+        
         {/* Action buttons - only for assistant messages, not streaming */}
         {isAssistant && !isStreaming && content && (
           <div className="self-start flex items-center gap-2">
             <button
-              onClick={() => setShowSaveModal(true)}
+              onClick={() => {
+                setSaveContent(content);
+                setShowSaveModal(true);
+              }}
               className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-              title="Save as Artifact"
+              title="Save entire message as Artifact"
             >
               <FileText className="h-3 w-3" />
-              Save as Artifact
+              Save All
             </button>
             
             {/* Append to Artifact - only when Edit Mode is on */}
@@ -1254,34 +1211,18 @@ function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendT
                     setIsAppending(false);
                   }
                 }}
-                disabled={isAppending || isReplacing}
+                disabled={isAppending}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors disabled:opacity-50"
-                title="Append to end of Edit Target artifact"
+                title="Append entire message to Edit Target artifact"
               >
                 <ChevronRight className="h-3 w-3" />
-                {isAppending ? "Appending..." : "Append"}
+                {isAppending ? "..." : "Append All"}
               </button>
             )}
             
-            {/* Replace in Artifact - only when Edit Mode is on AND has selections */}
-            {editTargetArtifactId && hasEditSelections && onReplaceInArtifact && (
-              <button
-                onClick={async () => {
-                  setIsReplacing(true);
-                  try {
-                    await onReplaceInArtifact(content);
-                  } finally {
-                    setIsReplacing(false);
-                  }
-                }}
-                disabled={isAppending || isReplacing}
-                className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
-                title="Replace selected text in Edit Target artifact"
-              >
-                <RefreshCw className="h-3 w-3" />
-                {isReplacing ? "Replacing..." : "Replace"}
-              </button>
-            )}
+            <span className="text-[10px] text-gray-400 dark:text-gray-500 italic ml-2">
+              💡 Select text → right-click for options
+            </span>
           </div>
         )}
 

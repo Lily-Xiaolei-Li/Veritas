@@ -246,11 +246,18 @@ interface ToolEventCardProps {
 }
 
 // =============================================================================
-// Conversation Tab Component
+// Conversation Tab Component (with AI output context menu)
 // =============================================================================
 
 interface ConversationTabProps {
   sessionId: string | null;
+}
+
+interface AIContextMenuState {
+  visible: boolean;
+  x: number;
+  y: number;
+  selectedText: string;
 }
 
 function ConversationTab({ sessionId }: ConversationTabProps) {
@@ -258,6 +265,23 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const refreshToken = useWorkbenchStore((s) => s.conversationRefreshToken);
+  
+  // Context menu state
+  const [contextMenu, setContextMenu] = useState<AIContextMenuState>({
+    visible: false,
+    x: 0,
+    y: 0,
+    selectedText: "",
+  });
+  
+  // Create artifact modal state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [createArtifactName, setCreateArtifactName] = useState("");
+  const [createArtifactContent, setCreateArtifactContent] = useState("");
+  
+  // Get store state for edit target
+  const editTargetArtifactId = useWorkbenchStore((s) => s.editTargetArtifactId);
+  const setArtifactFlash = useWorkbenchStore((s) => s.setArtifactFlash);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -307,6 +331,116 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
       cancelled = true;
     };
   }, [sessionId, refreshToken]);
+  
+  // Handle right-click on AI messages
+  const handleContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const selection = window.getSelection();
+    const selectedText = selection?.toString() || "";
+    
+    if (selectedText) {
+      setContextMenu({
+        visible: true,
+        x: e.clientX,
+        y: e.clientY,
+        selectedText,
+      });
+    }
+  };
+  
+  // Close context menu
+  const closeContextMenu = () => {
+    setContextMenu((prev) => ({ ...prev, visible: false }));
+  };
+  
+  // Close on click outside
+  useEffect(() => {
+    const handleClick = () => closeContextMenu();
+    document.addEventListener("click", handleClick);
+    return () => document.removeEventListener("click", handleClick);
+  }, []);
+  
+  // Create new artifact from selection
+  const handleCreateArtifact = () => {
+    const words = contextMenu.selectedText.trim().split(/\s+/).slice(0, 5).join("_");
+    const suggestedName = words.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 30) || "ai_output";
+    setCreateArtifactName(suggestedName);
+    setCreateArtifactContent(contextMenu.selectedText);
+    setShowCreateModal(true);
+    closeContextMenu();
+  };
+  
+  // Append to edit target artifact
+  const handleAppendToArtifact = async () => {
+    if (!editTargetArtifactId || !contextMenu.selectedText) return;
+    
+    try {
+      // Fetch current content
+      const resp = await authGet(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/preview`);
+      if (!resp.ok) throw new Error("Failed to fetch artifact");
+      const data = await resp.json();
+      // API may return text OR content field
+      const currentContent = data.text || data.content || "";
+      
+      console.log("[Append] Current content length:", currentContent.length);
+      console.log("[Append] Selected text length:", contextMenu.selectedText.length);
+      
+      // Append new content
+      const newContent = currentContent + "\n\n" + contextMenu.selectedText;
+      
+      console.log("[Append] New content length:", newContent.length);
+      
+      // Update artifact using fetch with PUT method
+      const updateResp = await fetch(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/content`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ content: newContent }),
+      });
+      
+      if (!updateResp.ok) {
+        const errText = await updateResp.text();
+        throw new Error(`Failed to update artifact: ${errText}`);
+      }
+      
+      // Flash feedback
+      setArtifactFlash(editTargetArtifactId);
+      setTimeout(() => setArtifactFlash(null), 1000);
+      
+      console.log("[Append] Success!");
+    } catch (err) {
+      console.error("Failed to append to artifact:", err);
+    }
+    
+    closeContextMenu();
+  };
+  
+  // Context menu item component
+  const MenuItem = ({
+    label,
+    onClick,
+    disabled,
+    icon,
+  }: {
+    label: string;
+    onClick: () => void;
+    disabled?: boolean;
+    icon?: React.ReactNode;
+  }) => (
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+        if (!disabled) onClick();
+      }}
+      className={`flex items-center gap-2 px-3 py-1.5 text-sm cursor-pointer transition-colors ${
+        disabled
+          ? "text-gray-500 cursor-not-allowed"
+          : "text-gray-200 hover:bg-gray-700"
+      }`}
+    >
+      {icon}
+      <span>{label}</span>
+    </div>
+  );
 
   if (!sessionId) {
     return (
@@ -341,37 +475,125 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-3 space-y-2">
-      {messages.map((msg) => (
-        <div
-          key={msg.id}
-          className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-        >
+    <>
+      <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {messages.map((msg) => (
           <div
-            className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-              msg.role === "user"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-700 text-gray-100"
-            }`}
+            key={msg.id}
+            className={`flex gap-2 ${msg.role === "user" ? "justify-end" : "justify-start"}`}
           >
-            {msg.type === "artifact" ? (
-              <div className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                <span className="font-medium">{msg.content}</span>
+            <div
+              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                msg.role === "user"
+                  ? "bg-blue-600 text-white"
+                  : "bg-gray-700 text-gray-100"
+              }`}
+              onContextMenu={msg.role === "assistant" ? handleContextMenu : undefined}
+            >
+              {msg.type === "artifact" ? (
+                <div className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  <span className="font-medium">{msg.content}</span>
+                </div>
+              ) : (
+                <p className="whitespace-pre-wrap">{msg.content}</p>
+              )}
+              <div className="text-[10px] opacity-70 mt-1">
+                {new Date(msg.timestamp).toLocaleTimeString([], {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
               </div>
-            ) : (
-              <p className="whitespace-pre-wrap">{msg.content}</p>
-            )}
-            <div className="text-[10px] opacity-70 mt-1">
-              {new Date(msg.timestamp).toLocaleTimeString([], {
-                hour: "2-digit",
-                minute: "2-digit",
-              })}
             </div>
           </div>
+        ))}
+      </div>
+      
+      {/* AI Output Context Menu */}
+      {contextMenu.visible && (
+        <div
+          className="fixed z-50 bg-gray-800 rounded-lg shadow-lg border border-gray-700 py-1 min-w-[200px]"
+          style={{ left: contextMenu.x, top: contextMenu.y }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <MenuItem
+            label="📄 Create Artifact"
+            onClick={handleCreateArtifact}
+            disabled={!contextMenu.selectedText}
+          />
+          <MenuItem
+            label="➕ Append to Artifact"
+            onClick={handleAppendToArtifact}
+            disabled={!contextMenu.selectedText || !editTargetArtifactId}
+          />
+          <div className="border-t border-gray-700 my-1" />
+          <MenuItem
+            label="📋 Copy"
+            onClick={() => {
+              navigator.clipboard.writeText(contextMenu.selectedText);
+              closeContextMenu();
+            }}
+            disabled={!contextMenu.selectedText}
+          />
         </div>
-      ))}
-    </div>
+      )}
+      
+      {/* Create Artifact Modal */}
+      {showCreateModal && (
+        <>
+          <div className="fixed inset-0 bg-black/50 z-50" onClick={() => setShowCreateModal(false)} />
+          <div className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-gray-800 rounded-lg shadow-xl p-4 z-50 w-96 max-h-[80vh] overflow-auto">
+            <h3 className="text-lg font-semibold mb-3 text-white">Create New Artifact</h3>
+            <input
+              type="text"
+              value={createArtifactName}
+              onChange={(e) => setCreateArtifactName(e.target.value)}
+              placeholder="Artifact name"
+              className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white mb-3"
+              autoFocus
+            />
+            <textarea
+              value={createArtifactContent}
+              onChange={(e) => setCreateArtifactContent(e.target.value)}
+              placeholder="Content"
+              className="w-full px-3 py-2 border border-gray-600 rounded-lg bg-gray-700 text-white mb-3 h-40 resize-none"
+            />
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="px-3 py-1.5 text-sm text-gray-300 hover:bg-gray-700 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={async () => {
+                  if (!sessionId || !createArtifactName) return;
+                  try {
+                    const resp = await fetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}/artifacts`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        display_name: createArtifactName + ".md",
+                        content: createArtifactContent,
+                      }),
+                    });
+                    if (!resp.ok) throw new Error("Failed to create artifact");
+                    setShowCreateModal(false);
+                    setCreateArtifactName("");
+                    setCreateArtifactContent("");
+                  } catch (err) {
+                    console.error("Failed to create artifact:", err);
+                  }
+                }}
+                className="px-3 py-1.5 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+    </>
   );
 }
 

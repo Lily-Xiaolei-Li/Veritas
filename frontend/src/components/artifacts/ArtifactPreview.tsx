@@ -21,9 +21,13 @@ import {
   Minimize2,
 } from "lucide-react";
 import Editor from "@monaco-editor/react";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import rehypeRaw from "rehype-raw";
+import dynamic from "next/dynamic";
+
+// Lazy load TiptapEditor to avoid SSR issues
+const TiptapEditor = dynamic(() => import("./TiptapEditor"), { 
+  ssr: false,
+  loading: () => <div className="p-4 text-gray-500">Loading editor...</div>
+});
 import { useArtifactPreview, getArtifactDownloadUrl, useSaveArtifact, useUpdateArtifactContent, useArtifactDraft, useUpdateArtifactDraft } from "@/lib/hooks/useArtifacts";
 import { getArtifactMarkdownName } from "@/lib/artifacts/download";
 import { useWorkbenchStore } from "@/lib/store";
@@ -519,12 +523,14 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
 
   const runRewrite = async (instruction: string) => {
     if (!isEditing) return;
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    const model = editor.getModel?.();
+    
     const sel = pendingSelectionRef.current;
-    if (!model || !sel?.range) return;
+    if (!sel?.selectedText) return;
+    
+    // For Monaco: use editor and model
+    const editor = editorRef.current;
+    const model = editor?.getModel?.();
+    const hasMonacoRange = sel.range && model;
 
     setRewriteRunning(true);
     setRewriteError(null);
@@ -566,19 +572,24 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
       const replacement = out.replace(/\s+$/, "");
       if (!replacement) throw new Error("No rewrite output");
 
-      // Snapshot before rewrite for deterministic single-step undo
-      lastRewriteSnapshotRef.current = model.getValue();
-
-      // Apply edit into Monaco and sync state
-      editor.executeEdits("ai-rewrite", [
-        {
-          range: sel.range,
-          text: replacement,
-          forceMoveMarkers: true,
-        },
-      ]);
-
-      setEditContent(model.getValue());
+      if (hasMonacoRange && editor && model) {
+        // Monaco path: use executeEdits
+        lastRewriteSnapshotRef.current = model.getValue();
+        editor.executeEdits("ai-rewrite", [
+          {
+            range: sel.range,
+            text: replacement,
+            forceMoveMarkers: true,
+          },
+        ]);
+        setEditContent(model.getValue());
+      } else {
+        // Tiptap/WYSIWYG path: find and replace in editContent
+        lastRewriteSnapshotRef.current = editContent;
+        const newContent = editContent.replace(sel.selectedText, replacement);
+        setEditContent(newContent);
+      }
+      
       setCanUndoRewrite(true);
       pendingSelectionRef.current = null;
       setRewriteOpen(false);
@@ -887,38 +898,51 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                       ? "bg-blue-500 text-white" 
                       : "bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-500"
                   }`}
-                  title={showPreviewInEdit ? "Show raw markdown" : "Show formatted preview"}
+                  title={showPreviewInEdit ? "Show WYSIWYG editor" : "Show raw markdown"}
                 >
-                  {showPreviewInEdit ? "📝 Raw" : "👁️ Preview"}
+                  {showPreviewInEdit ? "✨ WYSIWYG" : "📝 Raw"}
                 </button>
               </div>
             )}
-            {isEditing && showPreviewInEdit ? (
-              /* WYSIWYG Preview Mode - show rendered markdown while editing */
-              <div 
-                className="h-full overflow-auto p-4 pt-8 prose prose-sm dark:prose-invert max-w-none"
-                style={{ 
-                  fontSize: "13px",
-                  lineHeight: "1.6",
-                }}
-              >
-                <style jsx global>{`
-                  .prose mark {
-                    background-color: #fef08a;
-                    padding: 0 2px;
-                    border-radius: 2px;
-                  }
-                  .dark .prose mark {
-                    background-color: #854d0e;
-                    color: #fef9c3;
-                  }
-                `}</style>
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                >
-                  {editContent}
-                </ReactMarkdown>
+            {/* WYSIWYG mode: Tiptap for markdown files in edit mode (default) */}
+            {isEditing && previewKind === "markdown" && !showPreviewInEdit ? (
+              <div className="h-full overflow-auto pt-7">
+                <TiptapEditor
+                  initialValue={editContent}
+                  onChange={(markdown) => setEditContent(markdown)}
+                  onTogglePrompting={(selectedText) => {
+                    if (!artifact) return;
+                    toggleTextSelection({
+                      artifactId: artifact.id,
+                      artifactName: artifact.display_name,
+                      startLine: 1,
+                      endLine: 1,
+                      text: selectedText,
+                    });
+                  }}
+                  onToggleEditing={(selectedText) => {
+                    if (!artifact) return;
+                    toggleEditTargetSelection({
+                      artifactId: artifact.id,
+                      artifactName: artifact.display_name,
+                      startLine: 1,
+                      endLine: 1,
+                      text: selectedText,
+                    });
+                  }}
+                  onCreateArtifact={(selectedText) => {
+                    const words = selectedText.trim().split(/\s+/).slice(0, 5).join("_");
+                    const suggestedName = words.replace(/[^a-zA-Z0-9_-]/g, "").substring(0, 30) || "selection";
+                    setCreateArtifactName(suggestedName);
+                    setCreateArtifactContent(selectedText);
+                    setShowCreateModal(true);
+                  }}
+                  onHighlight={(selectedText) => {
+                    // Tiptap handles highlighting internally via toggleHighlight()
+                    // This callback is for any additional logic needed
+                    console.log("Highlighted:", selectedText);
+                  }}
+                />
               </div>
             ) : (
             <Editor
