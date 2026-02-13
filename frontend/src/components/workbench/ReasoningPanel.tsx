@@ -13,7 +13,7 @@
 "use client";
 
 import React, { useRef, useEffect, useState, FormEvent, KeyboardEvent } from "react";
-import { MessageSquare, Send, ChevronRight, Square, FileText } from "lucide-react";
+import { MessageSquare, Send, ChevronRight, Square, FileText, RefreshCw } from "lucide-react";
 import { Button } from "../ui/Button";
 import { PersonaSelector, getPersonaById } from "@/components/chat/PersonaSelector";
 import { useWorkbenchStore } from "@/lib/store";
@@ -355,6 +355,100 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
         session_id: currentSessionId || "",
         role: "assistant",
         content: `⚠️ Failed to append content to artifact: ${e instanceof Error ? e.message : "Unknown error"}`,
+        created_at: new Date().toISOString(),
+      });
+    }
+  };
+
+  // Replace selected text in the edit target artifact with new content
+  const handleReplaceInArtifact = async (content: string) => {
+    if (!editTargetArtifactId || editTargetSelections.length === 0) {
+      console.error("[Replace] No editTargetArtifactId or no selections");
+      return;
+    }
+    
+    console.log("[Replace] Starting replace in artifact:", editTargetArtifactId);
+    console.log("[Replace] Selections count:", editTargetSelections.length);
+    
+    try {
+      // Get current artifact content
+      let currentContent = "";
+      const localArt = localArtifacts.find((a) => a.id === editTargetArtifactId);
+      
+      if (localArt?.content) {
+        currentContent = localArt.content;
+      } else {
+        const previewRes = await authFetch(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/preview`);
+        if (previewRes.ok) {
+          const preview = await previewRes.json();
+          currentContent = preview.text || preview.content || "";
+        } else {
+          throw new Error("Failed to fetch artifact content");
+        }
+      }
+      
+      // Split content into lines
+      const lines = currentContent.split("\n");
+      
+      // Sort selections by startLine descending to replace from bottom to top
+      // (this prevents line number shifts from affecting earlier replacements)
+      const sortedSelections = [...editTargetSelections].sort((a, b) => b.startLine - a.startLine);
+      
+      // Replace each selection range with the new content
+      // For multiple selections, we'll replace all of them with the same content
+      for (const sel of sortedSelections) {
+        const startIdx = sel.startLine - 1; // Convert to 0-indexed
+        const endIdx = sel.endLine - 1;
+        
+        // Replace the lines in range with new content
+        const newContentLines = content.split("\n");
+        lines.splice(startIdx, endIdx - startIdx + 1, ...newContentLines);
+      }
+      
+      const newContent = lines.join("\n");
+      
+      // Update the artifact via API
+      const updateRes = await authFetch(
+        `${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/content`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newContent }),
+        }
+      );
+      
+      if (updateRes.ok) {
+        // Invalidate caches
+        queryClient.invalidateQueries({ queryKey: ["artifact-preview", editTargetArtifactId] });
+        queryClient.invalidateQueries({ queryKey: ["artifact", editTargetArtifactId] });
+        queryClient.invalidateQueries({ queryKey: ["session-artifacts", currentSessionId] });
+        
+        // Select artifact and trigger flash
+        const { setSelectedArtifact, setArtifactFlash } = useWorkbenchStore.getState();
+        setSelectedArtifact(editTargetArtifactId);
+        setArtifactFlash(editTargetArtifactId);
+        
+        // Clear edit target selections after successful replace
+        clearEditTargetSelections();
+        
+        addMessage({
+          id: `replace-success-${Date.now()}`,
+          session_id: currentSessionId || "",
+          role: "assistant",
+          content: `✅ Replaced ${sortedSelections.length} selection(s) in artifact`,
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        const errText = await updateRes.text();
+        throw new Error(`Failed to update artifact: ${errText}`);
+      }
+    } catch (e) {
+      console.error("[Replace] Error:", e);
+      addMessage({
+        id: `replace-error-${Date.now()}`,
+        session_id: currentSessionId || "",
+        role: "assistant",
+        content: `⚠️ Failed to replace content: ${e instanceof Error ? e.message : "Unknown error"}`,
         created_at: new Date().toISOString(),
       });
     }
@@ -963,7 +1057,9 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             content={msg.content}
             onSaveAsArtifact={msg.role === "assistant" ? handleSaveAsArtifact : undefined}
             onAppendToArtifact={msg.role === "assistant" ? handleAppendToArtifact : undefined}
+            onReplaceInArtifact={msg.role === "assistant" ? handleReplaceInArtifact : undefined}
             editTargetArtifactId={editTargetArtifactId}
+            hasEditSelections={editTargetSelections.length > 0}
           />
         ))}
 
@@ -1099,16 +1195,19 @@ interface MessageBubbleProps {
   isStreaming?: boolean;
   onSaveAsArtifact?: (content: string, filename: string, extension: string) => void;
   onAppendToArtifact?: (content: string) => void;
+  onReplaceInArtifact?: (content: string) => void;
   editTargetArtifactId?: string | null;
+  hasEditSelections?: boolean;
 }
 
-function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendToArtifact, editTargetArtifactId }: MessageBubbleProps) {
+function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendToArtifact, onReplaceInArtifact, editTargetArtifactId, hasEditSelections }: MessageBubbleProps) {
   const isUser = role === "user";
   const isAssistant = role === "assistant";
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [filename, setFilename] = useState("");
   const [extension, setExtension] = useState("md");
   const [isAppending, setIsAppending] = useState(false);
+  const [isReplacing, setIsReplacing] = useState(false);
 
   const handleSave = () => {
     if (onSaveAsArtifact && filename.trim()) {
@@ -1155,12 +1254,32 @@ function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendT
                     setIsAppending(false);
                   }
                 }}
-                disabled={isAppending}
+                disabled={isAppending || isReplacing}
                 className="flex items-center gap-1 px-2 py-1 text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors disabled:opacity-50"
-                title="Append to current Edit Target artifact"
+                title="Append to end of Edit Target artifact"
               >
                 <ChevronRight className="h-3 w-3" />
-                {isAppending ? "Appending..." : "Append to Artifact"}
+                {isAppending ? "Appending..." : "Append"}
+              </button>
+            )}
+            
+            {/* Replace in Artifact - only when Edit Mode is on AND has selections */}
+            {editTargetArtifactId && hasEditSelections && onReplaceInArtifact && (
+              <button
+                onClick={async () => {
+                  setIsReplacing(true);
+                  try {
+                    await onReplaceInArtifact(content);
+                  } finally {
+                    setIsReplacing(false);
+                  }
+                }}
+                disabled={isAppending || isReplacing}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-purple-600 hover:text-purple-700 dark:text-purple-400 dark:hover:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded transition-colors disabled:opacity-50"
+                title="Replace selected text in Edit Target artifact"
+              >
+                <RefreshCw className="h-3 w-3" />
+                {isReplacing ? "Replacing..." : "Replace"}
               </button>
             )}
           </div>
