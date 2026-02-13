@@ -1,0 +1,15 @@
+# Ruff configuration (minimal)
+
+line-length = 100
+
+[lint]
+# Start with a conservative rule set; expand over time.
+select = [
+  "E",  # pycodestyle errors
+  "F",  # pyflakes
+  "I",  # isort
+]
+ignore = []
+
+[lint.isort]
+known-first-party = ["app"]

@@ -1,0 +1,30 @@
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+pytest==8.2.0
+pytest-asyncio==0.24.0
+httpx==0.27.0
+psutil==5.9.8
+sqlalchemy[asyncio]==2.0.29
+asyncpg==0.29.0
+psycopg[binary]>=3.1.0
+alembic==1.13.1
+pydantic-settings==2.2.1
+python-dotenv==1.0.1
+cryptography==42.0.5
+bcrypt==4.1.2
+pyjwt==2.8.0
+# B1.2 - File Browser & Workspace
+watchfiles>=1.0.0
+aiofiles>=24.0.0
+# B7.2 - Monitoring & Metrics
+prometheus-client==0.20.0
+# B2.0 - LLM Provider Abstraction
+google-genai>=1.0.0
+# B2.1 - LangGraph Runtime Integration
+langgraph==1.0.7
+langgraph-checkpoint-postgres==3.0.3
+# Explorer - Document Processing
+python-docx>=1.1.0
+openpyxl>=3.1.0
+PyMuPDF>=1.24.0
+python-multipart>=0.0.9

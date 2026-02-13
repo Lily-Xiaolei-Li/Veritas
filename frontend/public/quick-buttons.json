@@ -1,0 +1,24 @@
+{
+  "buttons": [
+    {
+      "id": "cite",
+      "label": "Find Citations",
+      "prompt": "Please find relevant academic citations for: "
+    },
+    {
+      "id": "harvard",
+      "label": "Harvard Format",
+      "prompt": "Please format this in Harvard reference style: "
+    },
+    {
+      "id": "summarize",
+      "label": "Summarize",
+      "prompt": "Please summarize the following: "
+    },
+    {
+      "id": "improve",
+      "label": "Improve Writing",
+      "prompt": "Please improve the academic writing of: "
+    }
+  ]
+}

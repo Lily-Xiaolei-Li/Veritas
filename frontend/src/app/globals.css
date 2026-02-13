@@ -1,0 +1,95 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 3.9%;
+  }
+
+  .dark {
+    --background: 222 47% 11%; /* slate-900-ish */
+    --foreground: 210 40% 98%; /* slate-50-ish */
+  }
+
+  * {
+    @apply border-gray-200;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+
+  /* Custom scrollbar styles */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+
+  /* Dark scrollbar for console panel */
+  .dark-scrollbar::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-gray-600;
+  }
+
+  .dark-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-500;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* Monaco Editor - Text Selection Highlight for LLM Context */
+.text-selection-highlight {
+  background-color: rgba(99, 102, 241, 0.15) !important; /* indigo with transparency */
+  border-left: 3px solid #6366f1 !important;
+}
+
+.text-selection-glyph {
+  background-color: #6366f1;
+  border-radius: 2px;
+  margin-left: 3px;
+}
+
+/* Dark mode adjustment */
+.dark .text-selection-highlight {
+  background-color: rgba(99, 102, 241, 0.25) !important;
+}
+
+/* Monaco Editor - Edit Target Selection Highlight (B1.7) */
+.edit-selection-highlight {
+  background-color: rgba(245, 158, 11, 0.15) !important; /* amber with transparency */
+  border-left: 3px solid #f59e0b !important;
+}
+
+.edit-selection-glyph {
+  background-color: #f59e0b;
+  border-radius: 2px;
+  margin-left: 3px;
+}
+
+/* Dark mode adjustment */
+.dark .edit-selection-highlight {
+  background-color: rgba(245, 158, 11, 0.25) !important;
+}
