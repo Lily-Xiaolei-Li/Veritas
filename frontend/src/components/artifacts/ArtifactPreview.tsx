@@ -1061,6 +1061,29 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                         )
                       );
 
+                      // Highlight selection in yellow
+                      menu.appendChild(
+                        createMenuItem(
+                          "🟡 Highlight",
+                          () => {
+                            if (!hasSelection || !selection || !model) return;
+                            const selectedText = model.getValueInRange(selection);
+                            // Wrap with HTML mark tag for yellow highlight
+                            const highlightedText = `<mark>${selectedText}</mark>`;
+                            editor.executeEdits("highlight", [
+                              {
+                                range: selection,
+                                text: highlightedText,
+                                forceMoveMarkers: true,
+                              },
+                            ]);
+                            // Update edit content state
+                            setEditContent(model.getValue());
+                          },
+                          !hasSelection
+                        )
+                      );
+
                       const divider2 = document.createElement("div");
                       divider2.className = "border-t border-gray-200 dark:border-gray-600 my-1";
                       menu.appendChild(divider2);
