@@ -276,6 +276,68 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     addLocalArtifact(localArtifact);
   };
 
+  // Append content to the current edit target artifact
+  const handleAppendToArtifact = async (content: string) => {
+    if (!editTargetArtifactId) return;
+    
+    try {
+      // Get current artifact content
+      let currentContent = "";
+      const localArt = localArtifacts.find((a) => a.id === editTargetArtifactId);
+      
+      if (localArt?.content) {
+        currentContent = localArt.content;
+      } else {
+        // Fetch from backend
+        const previewRes = await authFetch(`${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/preview`);
+        if (previewRes.ok) {
+          const preview = await previewRes.json();
+          currentContent = preview.text || preview.content || "";
+        }
+      }
+      
+      // Append new content with a separator
+      const newContent = currentContent.trim() + "\n\n---\n\n" + content;
+      
+      // Update the artifact via API
+      const updateRes = await authFetch(
+        `${API_BASE_URL}/api/v1/artifacts/${editTargetArtifactId}/content`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newContent }),
+        }
+      );
+      
+      if (updateRes.ok) {
+        // Invalidate caches to refresh preview
+        queryClient.invalidateQueries({ queryKey: ["artifact-preview", editTargetArtifactId] });
+        queryClient.invalidateQueries({ queryKey: ["artifact", editTargetArtifactId] });
+        queryClient.invalidateQueries({ queryKey: ["session-artifacts", currentSessionId] });
+        
+        // Show success message in chat
+        addMessage({
+          id: `append-success-${Date.now()}`,
+          session_id: currentSessionId || "",
+          role: "assistant",
+          content: "✅ Content appended to artifact",
+          created_at: new Date().toISOString(),
+        });
+      } else {
+        throw new Error("Failed to update artifact");
+      }
+    } catch (e) {
+      console.error("Failed to append to artifact:", e);
+      addMessage({
+        id: `append-error-${Date.now()}`,
+        session_id: currentSessionId || "",
+        role: "assistant",
+        content: "⚠️ Failed to append content to artifact",
+        created_at: new Date().toISOString(),
+      });
+    }
+  };
+
   // Helper to save message to database for conversation history
   const saveMessageToDb = async (role: "user" | "assistant" | "system", content: string) => {
     if (!currentSessionId) return;
@@ -878,6 +940,8 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             role={msg.role} 
             content={msg.content}
             onSaveAsArtifact={msg.role === "assistant" ? handleSaveAsArtifact : undefined}
+            onAppendToArtifact={msg.role === "assistant" ? handleAppendToArtifact : undefined}
+            editTargetArtifactId={editTargetArtifactId}
           />
         ))}
 
@@ -1012,14 +1076,17 @@ interface MessageBubbleProps {
   content: string;
   isStreaming?: boolean;
   onSaveAsArtifact?: (content: string, filename: string, extension: string) => void;
+  onAppendToArtifact?: (content: string) => void;
+  editTargetArtifactId?: string | null;
 }
 
-function MessageBubble({ role, content, isStreaming, onSaveAsArtifact }: MessageBubbleProps) {
+function MessageBubble({ role, content, isStreaming, onSaveAsArtifact, onAppendToArtifact, editTargetArtifactId }: MessageBubbleProps) {
   const isUser = role === "user";
   const isAssistant = role === "assistant";
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [filename, setFilename] = useState("");
   const [extension, setExtension] = useState("md");
+  const [isAppending, setIsAppending] = useState(false);
 
   const handleSave = () => {
     if (onSaveAsArtifact && filename.trim()) {
@@ -1043,16 +1110,38 @@ function MessageBubble({ role, content, isStreaming, onSaveAsArtifact }: Message
           </div>
         </div>
         
-        {/* Save as Artifact button - only for assistant messages, not streaming */}
+        {/* Action buttons - only for assistant messages, not streaming */}
         {isAssistant && !isStreaming && content && (
-          <button
-            onClick={() => setShowSaveModal(true)}
-            className="self-start flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
-            title="Save as Artifact"
-          >
-            <FileText className="h-3 w-3" />
-            Save as Artifact
-          </button>
+          <div className="self-start flex items-center gap-2">
+            <button
+              onClick={() => setShowSaveModal(true)}
+              className="flex items-center gap-1 px-2 py-1 text-xs text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors"
+              title="Save as Artifact"
+            >
+              <FileText className="h-3 w-3" />
+              Save as Artifact
+            </button>
+            
+            {/* Append to Artifact - only when Edit Mode is on */}
+            {editTargetArtifactId && onAppendToArtifact && (
+              <button
+                onClick={async () => {
+                  setIsAppending(true);
+                  try {
+                    await onAppendToArtifact(content);
+                  } finally {
+                    setIsAppending(false);
+                  }
+                }}
+                disabled={isAppending}
+                className="flex items-center gap-1 px-2 py-1 text-xs text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 hover:bg-orange-50 dark:hover:bg-orange-900/20 rounded transition-colors disabled:opacity-50"
+                title="Append to current Edit Target artifact"
+              >
+                <ChevronRight className="h-3 w-3" />
+                {isAppending ? "Appending..." : "Append to Artifact"}
+              </button>
+            )}
+          </div>
         )}
 
         {/* Save Modal */}
