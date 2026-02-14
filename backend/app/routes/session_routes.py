@@ -2,7 +2,9 @@
 Session Management API routes (B0.3).
 """
 
+import shutil
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import List, Optional
 from uuid import uuid4
 
@@ -14,7 +16,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.database import get_session
 from app.logging_config import get_logger
 from app.metrics import SESSIONS_CREATED_TOTAL
-from app.models import Artifact, AuditLog, Message, Session
+from app.models import Artifact, AuditLog, Message, Run, Session
 from app.routes.auth_routes import require_auth
 
 router = APIRouter()
@@ -588,4 +590,154 @@ async def terminate_session_run(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to terminate: {str(e)}",
+        )
+
+
+# =============================================================================
+# Session Duplicate
+# =============================================================================
+
+
+class DuplicateSessionResponse(BaseModel):
+    """Response for session duplication."""
+    id: str
+    title: str
+    source_session_id: str
+    artifacts_copied: int
+
+
+@router.post(
+    "/sessions/{session_id}/duplicate",
+    response_model=DuplicateSessionResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def duplicate_session(
+    session_id: str,
+    db_session: AsyncSession = Depends(get_session),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Duplicate a session: copies artifacts and config but NOT messages/conversations.
+
+    Creates a new session with:
+    - Same config and workspace_state
+    - All artifacts (physical files copied)
+    - No conversation history or run logs
+    """
+    from app.config import get_settings
+
+    try:
+        # 1. Find source session
+        result = await db_session.execute(select(Session).where(Session.id == session_id))
+        source = result.scalar_one_or_none()
+        if not source:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # 2. Create new session
+        new_session_id = str(uuid4())
+        new_title = f"{source.title or 'Session'} (Copy)"
+
+        new_session = Session(
+            id=new_session_id,
+            title=new_title,
+            mode=source.mode,
+            status="active",
+            config=source.config.copy() if source.config else None,
+            workspace_state=source.workspace_state.copy() if source.workspace_state else {},
+        )
+        db_session.add(new_session)
+
+        # 3. Create a placeholder run for duplicated artifacts
+        placeholder_run_id = str(uuid4())
+        placeholder_run = Run(
+            id=placeholder_run_id,
+            session_id=new_session_id,
+            status="completed",
+            task="Session duplicated from: " + session_id,
+            created_at=datetime.now(timezone.utc),
+            started_at=datetime.now(timezone.utc),
+            completed_at=datetime.now(timezone.utc),
+        )
+        db_session.add(placeholder_run)
+
+        # 4. Copy all non-deleted artifacts
+        artifacts_result = await db_session.execute(
+            select(Artifact).where(
+                Artifact.session_id == session_id,
+                Artifact.is_deleted == False,
+            )
+        )
+        source_artifacts = artifacts_result.scalars().all()
+
+        settings = get_settings()
+        artifacts_dir = Path(settings.artifacts_dir)
+        artifacts_copied = 0
+
+        for src_art in source_artifacts:
+            new_art_id = str(uuid4())
+            # New storage path: {new_session_id}/{placeholder_run_id}/{new_art_id}_{filename}
+            filename = src_art.display_name
+            new_storage_path = f"{new_session_id}/{placeholder_run_id}/{new_art_id}_{filename}"
+
+            # Copy physical file
+            src_full = artifacts_dir / src_art.storage_path
+            dst_full = artifacts_dir / new_storage_path
+
+            if src_full.exists():
+                dst_full.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(str(src_full), str(dst_full))
+
+                new_artifact = Artifact(
+                    id=new_art_id,
+                    run_id=placeholder_run_id,
+                    session_id=new_session_id,
+                    display_name=src_art.display_name,
+                    storage_path=new_storage_path,
+                    extension=src_art.extension,
+                    size_bytes=src_art.size_bytes,
+                    content_hash=src_art.content_hash,
+                    mime_type=src_art.mime_type,
+                    artifact_type=src_art.artifact_type,
+                    artifact_meta=src_art.artifact_meta.copy() if src_art.artifact_meta else None,
+                    is_deleted=False,
+                )
+                db_session.add(new_artifact)
+                artifacts_copied += 1
+            else:
+                logger.warning(
+                    f"Source artifact file not found during duplicate: {src_full}",
+                    extra={"artifact_id": src_art.id, "storage_path": src_art.storage_path},
+                )
+
+        await db_session.commit()
+
+        SESSIONS_CREATED_TOTAL.inc()
+
+        logger.info(
+            f"Session duplicated: {session_id} -> {new_session_id} ({artifacts_copied} artifacts)",
+            extra={
+                "source_session_id": session_id,
+                "new_session_id": new_session_id,
+                "artifacts_copied": artifacts_copied,
+                "user_id": current_user.get("user_id"),
+            },
+        )
+
+        return DuplicateSessionResponse(
+            id=new_session_id,
+            title=new_title,
+            source_session_id=session_id,
+            artifacts_copied=artifacts_copied,
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to duplicate session {session_id}: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to duplicate session: {str(e)}",
         )

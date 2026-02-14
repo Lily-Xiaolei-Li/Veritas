@@ -20,7 +20,7 @@ import { useWorkbenchStore, BrainEvent, useAuthStore } from "@/lib/store";
 import { useHealth } from "@/lib/hooks/useHealth";
 import { RunHistory } from "../runs/RunHistory";
 import { getPersonaById } from "@/components/chat/PersonaSelector";
-import { authGet } from "@/lib/api/authFetch";
+import { authGet, authFetch } from "@/lib/api/authFetch";
 import { API_BASE_URL } from "@/lib/utils/constants";
 
 type ConsoleTab = "events" | "conversation" | "history" | "status" | "logs";
@@ -466,6 +466,24 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
     );
   }
 
+  const handleClearConversation = async () => {
+    if (!sessionId) return;
+    if (!confirm("Clear all conversation history for this session?")) return;
+    try {
+      const resp = await authFetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}/messages`, {
+        method: "DELETE",
+      });
+      if (!resp.ok && resp.status !== 204) {
+        const errText = await resp.text();
+        throw new Error(errText || `HTTP ${resp.status}`);
+      }
+      setMessages([]);
+    } catch (err) {
+      console.error("Failed to clear conversation:", err);
+      alert("Failed to clear conversation: " + (err instanceof Error ? err.message : String(err)));
+    }
+  };
+
   if (messages.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center p-4">
@@ -477,6 +495,16 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
   return (
     <>
       <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        {/* Clear conversation button */}
+        <div className="flex justify-end mb-1">
+          <button
+            onClick={handleClearConversation}
+            className="text-xs text-gray-500 hover:text-red-400 transition-colors px-2 py-1 rounded hover:bg-gray-800"
+            title="Clear conversation history"
+          >
+            🗑️ Clear
+          </button>
+        </div>
         {messages.map((msg) => (
           <div
             key={msg.id}

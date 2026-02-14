@@ -4,7 +4,11 @@ import os
 import sys
 
 from .contract import success_envelope
-from .state_store import load_state, state_file
+from .state_store import (
+    load_state, state_file,
+    get_sessions_api, get_personas_api,
+    get_session_artifacts_api, get_session_runs_api,
+)
 
 DISTRIBUTION_MODE = "bundled-backend-v1"
 
@@ -14,10 +18,23 @@ def status_show(args):
     path = state_file()
 
     sessions = state.get("sessions", [])
-    runs = state.get("runs", [])
     sources = state.get("sources", [])
-    artifacts = state.get("artifacts", [])
     personas = state.get("personas", [])
+
+    # Aggregate runs and artifacts across all sessions from API
+    all_runs = []
+    all_artifacts = []
+    for sess in sessions:
+        sid = sess.get("id")
+        if sid:
+            sess_runs = get_session_runs_api(sid)
+            if sess_runs:
+                all_runs.extend(sess_runs)
+            sess_arts = get_session_artifacts_api(sid)
+            if sess_arts:
+                all_artifacts.extend(sess_arts)
+    runs = all_runs if all_runs else state.get("runs", [])
+    artifacts = all_artifacts if all_artifacts else state.get("artifacts", [])
 
     return success_envelope(
         result="ok",

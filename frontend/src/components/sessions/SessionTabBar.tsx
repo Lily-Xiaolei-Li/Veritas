@@ -29,7 +29,7 @@ import {
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Plus, X, GripVertical, ChevronDown, ChevronUp } from "lucide-react";
+import { Plus, X, GripVertical, ChevronDown, ChevronUp, Copy, Pencil, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
 export interface Session {
@@ -46,6 +46,7 @@ interface SessionTabBarProps {
   onSessionCreate: () => void;
   onSessionRename: (sessionId: string, newTitle: string) => void;
   onSessionDelete: (sessionId: string) => void;
+  onSessionDuplicate: (sessionId: string) => void;
   onSessionReorder: (sessions: Session[]) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -58,12 +59,14 @@ function SortableTab({
   onSelect,
   onRename,
   onDelete,
+  onDuplicate,
 }: {
   session: Session;
   isActive: boolean;
   onSelect: () => void;
   onRename: (newTitle: string) => void;
   onDelete: () => void;
+  onDuplicate: () => void;
 }) {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(session.title);
@@ -197,22 +200,35 @@ function SortableTab({
           style={{ left: contextMenuPos.x, top: contextMenuPos.y }}
         >
           <button
-            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100"
+            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 flex items-center gap-2"
             onClick={() => {
               setShowContextMenu(false);
               setEditValue(session.title);
               setIsEditing(true);
             }}
           >
+            <Pencil className="h-3.5 w-3.5" />
             Rename
           </button>
           <button
-            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-red-600"
+            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 flex items-center gap-2"
+            onClick={() => {
+              setShowContextMenu(false);
+              onDuplicate();
+            }}
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Duplicate
+          </button>
+          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+          <button
+            className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-red-600 flex items-center gap-2"
             onClick={() => {
               setShowContextMenu(false);
               onDelete();
             }}
           >
+            <Trash2 className="h-3.5 w-3.5" />
             Delete
           </button>
         </div>
@@ -228,6 +244,7 @@ export function SessionTabBar({
   onSessionCreate,
   onSessionRename,
   onSessionDelete,
+  onSessionDuplicate,
   onSessionReorder,
   collapsed = false,
   onToggleCollapse,
@@ -285,6 +302,7 @@ export function SessionTabBar({
               onSelect={() => onSessionSelect(session.id)}
               onRename={(newTitle) => onSessionRename(session.id, newTitle)}
               onDelete={() => onSessionDelete(session.id)}
+              onDuplicate={() => onSessionDuplicate(session.id)}
             />
           ))}
         </SortableContext>

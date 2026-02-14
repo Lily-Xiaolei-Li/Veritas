@@ -37,7 +37,7 @@ import { ReasoningPanel } from "./ReasoningPanel";
 import { ArtifactsPanel } from "./ArtifactsPanel";
 import { ConsolePanel } from "./ConsolePanel";
 import { SessionTabBar, type Session } from "@/components/sessions/SessionTabBar";
-import { useSessions, useCreateSession, useUpdateSession, useDeleteSession } from "@/lib/hooks/useSessions";
+import { useSessions, useCreateSession, useUpdateSession, useDeleteSession, useDuplicateSession } from "@/lib/hooks/useSessions";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWorkbenchStore } from "@/lib/store";
 import { cn } from "@/lib/utils/cn";
@@ -66,6 +66,7 @@ export function WorkbenchLayout() {
   const createSession = useCreateSession();
   const updateSession = useUpdateSession();
   const deleteSession = useDeleteSession();
+  const duplicateSession = useDuplicateSession();
   
   // Current session from store
   const currentSessionId = useWorkbenchStore((s) => s.currentSessionId);
@@ -336,6 +337,10 @@ export function WorkbenchLayout() {
     }
   }, [deleteSession, orderedSessions, currentSessionId, setCurrentSession, saveSessionOrder]);
 
+  const handleSessionDuplicate = useCallback(async (sessionId: string) => {
+    await duplicateSession.mutateAsync(sessionId);
+  }, [duplicateSession]);
+
   const handleSessionReorder = useCallback((newOrder: Session[]) => {
     setOrderedSessions(newOrder);
     saveSessionOrder(newOrder);
@@ -407,6 +412,7 @@ export function WorkbenchLayout() {
               onSessionCreate={handleSessionCreate}
               onSessionRename={handleSessionRename}
               onSessionDelete={handleSessionDelete}
+              onSessionDuplicate={handleSessionDuplicate}
               onSessionReorder={handleSessionReorder}
               collapsed={isSessionBarCollapsed}
               onToggleCollapse={() => setIsSessionBarCollapsed(!isSessionBarCollapsed)}

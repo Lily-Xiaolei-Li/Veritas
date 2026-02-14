@@ -383,6 +383,54 @@ class MessageSaveRequest(BaseModel):
     content: str = Field(..., min_length=1, description="Message content")
 
 
+@router.delete(
+    "/sessions/{session_id}/messages",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def clear_messages(
+    session_id: str,
+    db_session: AsyncSession = Depends(get_session),
+    current_user: dict = Depends(require_auth),
+):
+    """
+    Clear all messages for a session (conversation history only).
+    Does NOT delete artifacts or runs.
+    """
+    from sqlalchemy import delete as sql_delete
+
+    try:
+        # Verify session exists
+        result = await db_session.execute(
+            select(Session).where(Session.id == session_id)
+        )
+        session = result.scalar_one_or_none()
+        if not session:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Session not found: {session_id}",
+            )
+
+        # Delete all messages for this session
+        await db_session.execute(
+            sql_delete(Message).where(Message.session_id == session_id)
+        )
+        await db_session.commit()
+
+        logger.info(
+            f"Cleared messages for session {session_id}",
+            extra={"session_id": session_id, "user_id": current_user.get("user_id")},
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to clear messages: {e}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to clear messages: {str(e)}",
+        )
+
+
 @router.post(
     "/sessions/{session_id}/messages/save",
     response_model=MessageResponse,

@@ -20,6 +20,7 @@ from .run_routes import router as run_router
 from .session_routes import router as session_router
 from .tool_routes import router as tool_router
 from .workspace_export_import import router as workspace_xfer_router
+from .paper_routes import router as paper_router
 from .workspace_routes import router as workspace_router
 
 # Main API router
@@ -41,6 +42,7 @@ api_router.include_router(tool_router, tags=["tools"])
 api_router.include_router(rag_router, tags=["rag"])
 api_router.include_router(knowledge_router, tags=["knowledge"])
 api_router.include_router(persona_router, tags=["personas"])
+api_router.include_router(paper_router, tags=["papers"])
 api_router.include_router(workspace_router, tags=["workspace"])
 api_router.include_router(workspace_xfer_router, tags=["workspace"])
 

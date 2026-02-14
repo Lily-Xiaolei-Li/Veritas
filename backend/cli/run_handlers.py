@@ -3,7 +3,7 @@ from __future__ import annotations
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import load_state, now_iso, save_state
+from .state_store import get_session_runs_api, load_state, now_iso, save_state
 
 
 def _find_run(state: dict, run_id: str):
@@ -11,6 +11,14 @@ def _find_run(state: dict, run_id: str):
 
 
 def run_list(args):
+    # Try API first if session specified
+    if args.session:
+        api_runs = get_session_runs_api(args.session)
+        if api_runs is not None:
+            runs = sorted(api_runs, key=lambda r: (r.get("started_at", r.get("created_at", "")), r.get("id", "")))
+            return success_envelope(result="ok", data={"runs": runs, "session_id": args.session})
+
+    # Fallback to local state
     state = load_state()
     runs = state.get("runs", [])
     if args.session:

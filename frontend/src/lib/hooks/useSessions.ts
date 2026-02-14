@@ -53,6 +53,19 @@ async function deleteSession(sessionId: string): Promise<void> {
   }
 }
 
+async function duplicateSession(sessionId: string): Promise<Session> {
+  const response = await authFetch(`${API_BASE_URL}/api/v1/sessions/${sessionId}/duplicate`, {
+    method: "POST",
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.detail || `Failed to duplicate session: ${response.statusText}`);
+  }
+
+  return response.json();
+}
+
 async function updateSession({
   sessionId,
   data,
@@ -140,6 +153,22 @@ export function useUpdateSession() {
     onSuccess: () => {
       // Invalidate sessions list
       queryClient.invalidateQueries({ queryKey: ["sessions"] });
+    },
+  });
+}
+
+/**
+ * Hook to duplicate a session (copies artifacts + config, not conversations).
+ */
+export function useDuplicateSession() {
+  const queryClient = useQueryClient();
+  const { setCurrentSession } = useWorkbenchStore();
+
+  return useMutation({
+    mutationFn: duplicateSession,
+    onSuccess: (newSession) => {
+      queryClient.invalidateQueries({ queryKey: ["sessions"] });
+      setCurrentSession(newSession.id);
     },
   });
 }

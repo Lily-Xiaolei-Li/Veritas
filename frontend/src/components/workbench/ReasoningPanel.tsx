@@ -25,6 +25,7 @@ import { authFetch } from "@/lib/api/authFetch";
 import { API_BASE_URL } from "@/lib/utils/constants";
 import type { ArtifactPreviewKind } from "@/lib/api/types";
 import type { LocalArtifact } from "@/lib/artifacts/types";
+import type { Message } from "@/lib/api/types";
 
 interface ReasoningPanelProps {
   onCollapse?: () => void;
@@ -91,6 +92,27 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     // Conversation refresh
     bumpConversationRefresh,
   } = useWorkbenchStore();
+
+  // Load messages from DB when session changes
+  const { setMessages } = useWorkbenchStore();
+  useEffect(() => {
+    if (!currentSessionId) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const resp = await authFetch(`${API_BASE_URL}/api/v1/sessions/${currentSessionId}/messages`);
+        if (resp.ok && !cancelled) {
+          const dbMessages: Message[] = await resp.json();
+          if (dbMessages.length > 0) {
+            setMessages(dbMessages);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load messages from DB:", e);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [currentSessionId]);
 
   // Provider config (Phase 2)
   const { data: openrouterCfg } = useLLMProviderConfig("openrouter");

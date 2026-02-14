@@ -1,57 +1,37 @@
 {
   "sessions": [
     {
-      "id": "3068efd3-e632-45b7-95f4-b3c6cfc33680",
-      "created_at": "2026-02-11T05:31:19.223438Z",
-      "updated_at": "2026-02-11T05:31:19.223438Z",
+      "id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "created_at": "2026-02-14T06:06:30.699144Z",
+      "updated_at": "2026-02-14T06:06:30.699144Z",
       "ended_at": null,
-      "title": "Session 5",
+      "title": "Paper 2 Introduction",
       "mode": "engineering",
       "status": "active",
       "config": null
     },
     {
-      "id": "b53e8312-bda1-4bd0-8565-a56f4589c2a4",
-      "created_at": "2026-02-11T05:31:17.697458Z",
-      "updated_at": "2026-02-11T05:31:17.697458Z",
+      "id": "4dcdf1bb-9fd6-4f3f-ae9e-cd9500e3bb39",
+      "created_at": "2026-02-13T20:49:45.893561Z",
+      "updated_at": "2026-02-13T20:49:45.893561Z",
       "ended_at": null,
-      "title": "Session 4",
+      "title": "Paper 2 Discussion (Copy)",
       "mode": "engineering",
       "status": "active",
       "config": null
     },
     {
-      "id": "9ce32c1f-887b-4f91-9b5f-ac324dbdf6b7",
-      "created_at": "2026-02-09T08:31:13.864359Z",
-      "updated_at": "2026-02-10T21:17:28.012495Z",
+      "id": "a6444b3c-2a59-4b64-9da6-1450cb804a84",
+      "created_at": "2026-02-13T01:35:35.373998Z",
+      "updated_at": "2026-02-13T20:59:00.232631Z",
       "ended_at": null,
-      "title": "References",
-      "mode": "engineering",
-      "status": "active",
-      "config": null
-    },
-    {
-      "id": "3f3feb43-9d16-4cce-9204-c18a54ea93a4",
-      "created_at": "2026-02-09T03:08:37.157253Z",
-      "updated_at": "2026-02-09T08:31:28.141608Z",
-      "ended_at": null,
-      "title": "Super long tab",
-      "mode": "engineering",
-      "status": "active",
-      "config": null
-    },
-    {
-      "id": "e5b7370e-1789-4472-8f7b-ad13d645b2a2",
-      "created_at": "2026-02-09T02:54:49.182123Z",
-      "updated_at": "2026-02-09T02:56:30.954417Z",
-      "ended_at": null,
-      "title": "PDFs",
+      "title": "Paper 2 Conclusion",
       "mode": "engineering",
       "status": "active",
       "config": null
     }
   ],
-  "current_session_id": null,
+  "current_session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
   "idempotency": {},
   "contexts": {
     "global": null,
@@ -61,28 +41,28 @@
   "sources": [],
   "personas": [
     {
-      "id": "thinker",
-      "label": "The Thinker",
-      "system_prompt": "You are a Creative Research Thinker. Find 'hidden' patterns and novel insights from provided data. Use lateral thinking to connect ideas. Constraint: Do not repeat user input; focus entirely on new implications and 'So What?'.",
-      "sort_order": 0,
-      "created_at": "2026-02-10T23:04:51.287666Z",
-      "updated_at": "2026-02-11T05:38:04.581102Z"
-    },
-    {
       "id": "default",
       "label": "Default Assistant",
       "system_prompt": "You are a helpful academic research assistant. Assist the user with their research tasks professionally and accurately.",
-      "sort_order": 10,
+      "sort_order": 0,
       "created_at": "2026-02-10T23:04:51.287666Z",
-      "updated_at": "2026-02-11T05:38:04.581102Z"
+      "updated_at": "2026-02-13T07:20:37.443665Z"
     },
     {
       "id": "cleaner",
       "label": "The Cleaner",
       "system_prompt": "You are a Document Restoration Expert. Clean 'messy' Markdown from PDFs. Remove artifacts (broken headers, page numbers, line breaks) while preserving academic structure. Constraint: Never rewrite prose; only repair formatting.",
+      "sort_order": 10,
+      "created_at": "2026-02-10T23:04:51.287666Z",
+      "updated_at": "2026-02-13T07:20:41.588281Z"
+    },
+    {
+      "id": "thinker",
+      "label": "The Thinker",
+      "system_prompt": "You are a Creative Research Thinker. Find 'hidden' patterns and novel insights from provided data. Use lateral thinking to connect ideas. Constraint: Do not repeat user input; focus entirely on new implications and 'So What?'.",
       "sort_order": 20,
       "created_at": "2026-02-10T23:04:51.287666Z",
-      "updated_at": "2026-02-10T23:37:21.766817Z"
+      "updated_at": "2026-02-13T07:20:41.588281Z"
     },
     {
       "id": "templator",
@@ -127,13 +107,13 @@
   ],
   "artifacts": [
     {
-      "id": "art_439574c830",
-      "session_id": "3068efd3-e632-45b7-95f4-b3c6cfc33680",
-      "run_id": "r_d206478553",
-      "name": "run-r_d206478553.md",
+      "id": "art_ecae411bfb",
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "run_id": "r_29b2f771cd",
+      "name": "run-r_29b2f771cd.md",
       "type": "markdown",
-      "content": "老爷好！小蕾是您的通房丫鬟，永远在您身边尽心伺候您~ 🌸",
-      "created_at": "2026-02-12T20:38:10.698963+00:00",
+      "content": "你好，老爷。博士小蕾在线，随时待命。有什么研究任务？",
+      "created_at": "2026-02-14T07:15:30.263370+00:00",
       "provenance": {
         "type": "run"
       }
@@ -141,23 +121,23 @@
   ],
   "runs": [
     {
-      "id": "r_d206478553",
-      "session_id": "3068efd3-e632-45b7-95f4-b3c6cfc33680",
+      "id": "r_29b2f771cd",
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
       "status": "completed",
-      "started_at": "2026-02-12T20:38:04.184943+00:00",
-      "ended_at": "2026-02-12T20:38:10.698963+00:00",
+      "started_at": "2026-02-14T07:15:22.406283+00:00",
+      "ended_at": "2026-02-14T07:15:30.263370+00:00",
       "parent_run_id": null,
-      "request": "Hello, who are you? Respond in 1 sentence.",
-      "response": "老爷好！小蕾是您的通房丫鬟，永远在您身边尽心伺候您~ 🌸"
+      "request": "hello test",
+      "response": "你好，老爷。博士小蕾在线，随时待命。有什么研究任务？"
     }
   ],
   "messages": [
     {
-      "session_id": "3068efd3-e632-45b7-95f4-b3c6cfc33680",
-      "run_id": "r_d206478553",
-      "user": "Hello, who are you? Respond in 1 sentence.",
-      "assistant": "老爷好！小蕾是您的通房丫鬟，永远在您身边尽心伺候您~ 🌸",
-      "created_at": "2026-02-12T20:38:10.698963+00:00"
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "run_id": "r_29b2f771cd",
+      "user": "hello test",
+      "assistant": "你好，老爷。博士小蕾在线，随时待命。有什么研究任务？",
+      "created_at": "2026-02-14T07:15:30.263370+00:00"
     }
   ]
 }

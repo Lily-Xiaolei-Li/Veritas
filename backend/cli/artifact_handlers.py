@@ -4,7 +4,7 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import create_artifact_api, load_state, now_iso, save_state
+from .state_store import create_artifact_api, get_session_artifacts_api, load_state, now_iso, save_state
 
 
 def _session_exists(state: dict, session_id: str) -> bool:
@@ -87,9 +87,17 @@ def artifact_create(args):
 
 
 def artifact_list(args):
-    state = load_state()
     if not args.session:
         raise CLIBusinessError(code="ARTIFACT_SESSION_REQUIRED", message="--session is required")
+
+    # Try API first (has all artifacts including those created via GUI)
+    api_artifacts = get_session_artifacts_api(args.session)
+    if api_artifacts is not None:
+        artifacts = sorted(api_artifacts, key=lambda a: (a.get("created_at", ""), a.get("id", "")))
+        return success_envelope(result="ok", data={"session_id": args.session, "artifacts": artifacts})
+
+    # Fallback to local state
+    state = load_state()
     if not _session_exists(state, args.session):
         raise CLIBusinessError(code="SESSION_NOT_FOUND", message="Session not found", details={"session": args.session})
 

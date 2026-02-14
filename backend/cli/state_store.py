@@ -13,7 +13,7 @@ import httpx
 # =============================================================================
 
 DEFAULT_STATE_FILE = Path(__file__).resolve().parents[1] / ".agentb_cli_state.json"
-API_BASE_URL = os.getenv("AGENTB_API_URL", "http://localhost:8000/api/v1")
+API_BASE_URL = os.getenv("AGENTB_API_URL", "http://localhost:8001/api/v1")
 API_TIMEOUT = 10.0
 
 # Set to True to use Backend API (shared with GUI)
@@ -81,8 +81,10 @@ def _fetch_from_api(endpoint: str) -> Optional[list]:
                 if isinstance(data, list):
                     return data
                 elif isinstance(data, dict):
-                    # Try common keys
-                    for key in [endpoint, "items", "data", "results"]:
+                    # Try common keys (including plural resource names)
+                    for key in [endpoint, "items", "data", "results",
+                                "sessions", "artifacts", "runs", "messages",
+                                "personas", "sources"]:
                         if key in data and isinstance(data[key], list):
                             return data[key]
                     return [data] if data else []
@@ -244,6 +246,20 @@ def get_session_artifacts_api(session_id: str) -> Optional[list]:
     """Get artifacts for a session via API."""
     if USE_API_MODE and _api_available():
         return _fetch_from_api(f"sessions/{session_id}/artifacts")
+    return None
+
+
+def get_session_runs_api(session_id: str) -> Optional[list]:
+    """Get runs for a session via API."""
+    if USE_API_MODE and _api_available():
+        return _fetch_from_api(f"sessions/{session_id}/runs")
+    return None
+
+
+def get_chat_history_api(session_id: str) -> Optional[list]:
+    """Get chat messages for a session via API."""
+    if USE_API_MODE and _api_available():
+        return _fetch_from_api(f"sessions/{session_id}/messages")
     return None
 
 

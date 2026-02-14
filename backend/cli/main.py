@@ -254,6 +254,10 @@ def _configure_action_parser(resource: str, action: str, action_parser: argparse
     elif resource == "chat" and action == "send":
         action_parser.add_argument("--session", default=None, help="Session ID")
         action_parser.add_argument("--message", default=None, help="Message content")
+        action_parser.add_argument("--persona", default=None, help="Persona ID (e.g. templator, drafter)")
+        action_parser.add_argument("--artifacts", default=None, help="Comma-separated artifact IDs to include as context")
+        action_parser.add_argument("--rag", default=None, help="Comma-separated RAG sources to search (e.g. library,interviews)")
+        action_parser.add_argument("--rag-top-k", type=int, default=5, help="Number of RAG results per source (default: 5)")
         action_parser.add_argument("--stream", action="store_true", help="Stream token output")
 
     elif resource == "chat" and action == "history":
@@ -519,7 +523,8 @@ def main(argv: Optional[list[str]] = None) -> int:
         command = _command_name(args)
         log_format = _arg_value(arg_list, "--log-format", "text") or "text"
         log_file = _arg_value(arg_list, "--log-file", None)
-        to_stderr = "--quiet" not in arg_list
+        # Suppress stderr logs in JSON mode to avoid PowerShell treating stderr as errors
+        to_stderr = "--quiet" not in arg_list and "--json" not in arg_list
 
         api_version = _arg_value(arg_list, "--api-version", str(getattr(args, "api_version", "1")))
         if api_version not in {"1", "1.0"}:
