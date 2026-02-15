@@ -78,10 +78,10 @@ function ThemeCard({
 
       {/* Theme name */}
       <div
-        className="text-xs font-medium leading-tight whitespace-normal break-words pr-5"
+        className="text-xs font-medium leading-tight whitespace-normal"
         style={{ color: t.text }}
       >
-        {t.label}
+        {name === "catppuccin" ? "Catpp" : t.label}
       </div>
 
       {/* Selected indicator */}
