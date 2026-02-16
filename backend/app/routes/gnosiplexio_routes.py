@@ -5,6 +5,8 @@ All routes prefix: /api/v1/gnosiplexio
 """
 from __future__ import annotations
 
+import json
+import threading
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -91,6 +93,7 @@ class StatsResponse(BaseModel):
     connected_components: int = 0
     largest_component_size: int = 0
     density: float
+    avg_degree: Optional[float] = None
     total_network_citations: int = 0
     nodes_with_credibility: int = 0
 
@@ -125,35 +128,38 @@ class IngestAllResponse(BaseModel):
 # ---------------------------------------------------------------------------
 
 _engine_instance = None
+_engine_lock = threading.Lock()
 
 
 def _get_engine():
     """Get or create the singleton GnosiplexioEngine."""
     global _engine_instance
     if _engine_instance is None:
-        from app.services.gnosiplexio.engine import GnosiplexioEngine
-        from pathlib import Path
-        import os
+        with _engine_lock:
+            if _engine_instance is None:
+                from app.services.gnosiplexio.engine import GnosiplexioEngine
+                from pathlib import Path
+                import os
 
-        # Default graph path
-        data_dir = Path(os.getenv("GNOSIPLEXIO_DATA_DIR", "data/gnosiplexio"))
-        graph_path = data_dir / "graph.json"
+                # Default graph path
+                data_dir = Path(os.getenv("GNOSIPLEXIO_DATA_DIR", "data/gnosiplexio"))
+                graph_path = data_dir / "graph.json"
 
-        # Try to set up VF adapter if available
-        adapter = None
-        try:
-            from app.services.gnosiplexio.adapters.vf_adapter import VFAdapter
-            adapter = VFAdapter()
-            logger.info("VF adapter initialized")
-        except Exception as e:
-            logger.warning("VF adapter not available, starting without adapter: %s", e)
+                # Try to set up VF adapter if available
+                adapter = None
+                try:
+                    from app.services.gnosiplexio.adapters.vf_adapter import VFAdapter
+                    adapter = VFAdapter()
+                    logger.info("VF adapter initialized")
+                except Exception as e:
+                    logger.warning("VF adapter not available, starting without adapter: %s", e)
 
-        _engine_instance = GnosiplexioEngine(
-            adapter=adapter,
-            graph_path=graph_path,
-            auto_save=True,
-        )
-        logger.info("GnosiplexioEngine singleton created")
+                _engine_instance = GnosiplexioEngine(
+                    adapter=adapter,
+                    graph_path=graph_path,
+                    auto_save=True,
+                )
+                logger.info("GnosiplexioEngine singleton created")
 
     return _engine_instance
 
@@ -181,32 +187,34 @@ def ingest_paper(request: IngestRequest):
                 duration_ms=result.duration_ms,
             )
         elif request.data:
-            # Inline data: create a temporary GenericAdapter
-            import json
+            # Inline data: create a temporary engine with a GenericAdapter
             from app.services.gnosiplexio.adapters.generic_adapter import GenericAdapter
+            from app.services.gnosiplexio.engine import GnosiplexioEngine
 
             data = json.loads(request.data)
             if isinstance(data, dict):
                 data = [data]
-            tmp_adapter = GenericAdapter(data=data)
-            old_adapter = engine._adapter
-            engine._adapter = tmp_adapter
 
-            try:
-                total = engine.ingest_all()
-                # Return first work_id or "batch"
-                first_id = data[0].get("id", "unknown") if data else "unknown"
-                return IngestResponse(
-                    node_id=first_id,
-                    ingested_count=total.ingested_count,
-                    nodes_created=total.new_nodes,
-                    edges_created=total.new_edges,
-                    enriched_nodes=total.enriched_nodes,
-                    errors=total.errors,
-                    duration_ms=total.duration_ms,
-                )
-            finally:
-                engine._adapter = old_adapter
+            tmp_engine = GnosiplexioEngine(
+                adapter=GenericAdapter(data=data),
+                graph_path=None,
+                auto_save=False,
+            )
+            # Reuse singleton graph to avoid adapter mutation on shared engine
+            tmp_engine._graph = engine.graph
+
+            total = tmp_engine.ingest_all()
+            # Return first work_id or "batch"
+            first_id = data[0].get("id", "unknown") if data else "unknown"
+            return IngestResponse(
+                node_id=first_id,
+                ingested_count=total.ingested_count,
+                nodes_created=total.new_nodes,
+                edges_created=total.new_edges,
+                enriched_nodes=total.enriched_nodes,
+                errors=total.errors,
+                duration_ms=total.duration_ms,
+            )
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -259,13 +267,17 @@ def get_node(node_id: str):
 
 
 @router.get("/neighborhood/{node_id}", response_model=GraphExportResponse)
-def get_neighborhood(node_id: str, hops: int = Query(2, ge=1, le=5)):
+def get_neighborhood(
+    node_id: str,
+    hops: int = Query(2, ge=1, le=5),
+    max_nodes: int = Query(500, ge=1, le=5000),
+):
     """Get the ego network around a node within a given number of hops."""
     engine = _get_engine()
     if engine.graph.get_node(node_id) is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Node {node_id} not found")
 
-    result = engine.get_neighborhood(node_id, hops=hops)
+    result = engine.get_neighborhood(node_id, hops=hops, max_nodes=max_nodes)
     return GraphExportResponse(
         format="ego",
         nodes=result.get("nodes", []),
@@ -351,6 +363,11 @@ def get_stats():
     """Get network statistics."""
     engine = _get_engine()
     stats = engine.get_stats()
+
+    total_nodes = stats.get("total_nodes", 0)
+    total_edges = stats.get("total_edges", 0)
+    stats["avg_degree"] = round((2 * total_edges) / total_nodes, 4) if total_nodes > 0 else None
+
     return StatsResponse(**stats)
 
 

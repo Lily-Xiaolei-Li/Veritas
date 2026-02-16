@@ -242,13 +242,14 @@ class GraphStore:
             if self._graph.edges[work_id, v].get("edge_type") in ("CITES", "CITED_FOR", "EXTENDS", "CHALLENGES")
         ]
 
-    def get_neighborhood(self, node_id: str, hops: int = 2) -> Dict[str, Any]:
+    def get_neighborhood(self, node_id: str, hops: int = 2, max_nodes: int = 500) -> Dict[str, Any]:
         """
         Get the ego network (neighborhood) around a node.
 
         Args:
             node_id: Center node.
             hops: Number of hops (default 2).
+            max_nodes: Maximum number of nodes to return (default 500).
 
         Returns:
             Dict with 'nodes' and 'edges' for the subgraph.
@@ -259,6 +260,11 @@ class GraphStore:
         # Get all nodes within N hops
         ego = nx.ego_graph(self._graph.to_undirected(), node_id, radius=hops)
         ego_nodes = set(ego.nodes())
+
+        # Safety cap to avoid massive payloads
+        if len(ego_nodes) > max_nodes:
+            ordered_nodes = [node_id] + sorted(n for n in ego_nodes if n != node_id)
+            ego_nodes = set(ordered_nodes[:max_nodes])
 
         nodes = []
         for n in ego_nodes:
@@ -428,13 +434,15 @@ class GraphStore:
         self._graph.clear()
 
         for node in data.get("nodes", []):
-            node_id = node.pop("id")
-            self._graph.add_node(node_id, **node)
+            node_id = node["id"]
+            node_attrs = {k: v for k, v in node.items() if k != "id"}
+            self._graph.add_node(node_id, **node_attrs)
 
         for edge in data.get("edges", []):
-            source = edge.pop("source")
-            target = edge.pop("target")
-            self._graph.add_edge(source, target, **edge)
+            source = edge["source"]
+            target = edge["target"]
+            edge_attrs = {k: v for k, v in edge.items() if k not in ("source", "target")}
+            self._graph.add_edge(source, target, **edge_attrs)
 
     # -- Internal ------------------------------------------------------------
 

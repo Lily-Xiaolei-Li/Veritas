@@ -195,8 +195,16 @@ class NetworkEnricher:
             node = self._graph.get_node(cited_id)
             if node is not None:
                 existing_cp = node.get("cross_perspectives", [])
-                existing_cp.append(cp.to_dict())
-                self._graph.add_node(cited_id, cross_perspectives=existing_cp)
+                cp_dict = cp.to_dict()
+                duplicate = any(
+                    p.get("source_work_id") == cp_dict.get("source_work_id")
+                    and p.get("perspective_type") == cp_dict.get("perspective_type")
+                    and p.get("description", "") == cp_dict.get("description", "")
+                    for p in existing_cp
+                )
+                if not duplicate:
+                    existing_cp.append(cp_dict)
+                    self._graph.add_node(cited_id, cross_perspectives=existing_cp)
 
     def _determine_edge_type(self, citation: Dict[str, Any]) -> str:
         """Determine the edge type based on citation sentiment and context."""

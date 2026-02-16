@@ -1090,6 +1090,28 @@ All 6 files use `get_qdrant_client()` from `qdrant_factory.py`:
 
 ---
 
+## PM2 Ghost Process (Backend Won't Start)
+
+**Symptom:** Backend crashes immediately after migration with exit code 1, no error message. Restarting always fails.
+
+**Root cause:** PM2 has `agentb-be` configured with `--reload` flag. Even after manually killing python processes, PM2 auto-restarts them with the old config, occupying port 8001.
+
+**Diagnosis:**
+```powershell
+npx pm2 list
+Get-CimInstance Win32_Process | Where-Object { $_.Name -eq 'python.exe' } | Select-Object ProcessId, ParentProcessId, CommandLine
+```
+
+**Fix:**
+1. `npx pm2 stop agentb-be && npx pm2 delete agentb-be`
+2. `taskkill /F /IM python.exe`
+3. Wait 5s, verify port 8001 is free
+4. Restart backend (manually or `npx pm2 start ecosystem.config.js --only agentb-be`)
+
+**Prevention:** `ecosystem.config.js` fixed — no `--reload`, added `OMP_NUM_THREADS=1`, `MKL_NUM_THREADS=1`, `-X faulthandler`.
+
+---
+
 ## ⚠️ CRITICAL: "Exec Failed" ≠ Process Crashed!
 
 **This is the #1 misdiagnosis trap when running long processes via OpenClaw.**

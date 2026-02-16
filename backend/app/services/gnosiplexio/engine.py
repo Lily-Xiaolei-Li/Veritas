@@ -233,6 +233,10 @@ class GnosiplexioEngine:
             result.new_nodes += enrich_result.get("new_nodes", 0)
             result.errors.extend(enrich_result.get("errors", []))
 
+            # Graph changed -> invalidate cached topology calculations
+            if self._position_calc is not None:
+                self._position_calc.invalidate_cache()
+
             result.ingested_count = 1
 
             # Auto-save if configured
@@ -335,18 +339,19 @@ class GnosiplexioEngine:
 
         return nk
 
-    def get_neighborhood(self, node_id: str, hops: int = 2) -> Dict[str, Any]:
+    def get_neighborhood(self, node_id: str, hops: int = 2, max_nodes: int = 500) -> Dict[str, Any]:
         """
         Get the ego network around a node.
 
         Args:
             node_id: Center node.
             hops: Number of hops (default 2).
+            max_nodes: Maximum number of nodes to return.
 
         Returns:
             Dict with 'nodes' and 'edges' suitable for Cytoscape.js rendering.
         """
-        return self._graph.get_neighborhood(node_id, hops=hops)
+        return self._graph.get_neighborhood(node_id, hops=hops, max_nodes=max_nodes)
 
     def search(self, query: str, node_type: Optional[str] = None, top_k: int = 20) -> QueryResult:
         """

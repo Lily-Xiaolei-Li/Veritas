@@ -5,6 +5,7 @@ All routes prefix: /api/v1/gnosiplexio/growth
 """
 from __future__ import annotations
 
+import threading
 from typing import Any, Dict, List, Optional
 
 from fastapi import APIRouter, HTTPException, Query, status
@@ -126,6 +127,9 @@ class SchedulerStatus(BaseModel):
 _growth_engine = None
 _drift_detector = None
 _scheduler = None
+_growth_lock = threading.Lock()
+_drift_lock = threading.Lock()
+_scheduler_lock = threading.Lock()
 
 
 def _get_graph_store():
@@ -138,8 +142,10 @@ def _get_growth_engine():
     """Get or create the SelfGrowthEngine singleton."""
     global _growth_engine
     if _growth_engine is None:
-        from app.services.gnosiplexio.self_growth import SelfGrowthEngine
-        _growth_engine = SelfGrowthEngine(_get_graph_store())
+        with _growth_lock:
+            if _growth_engine is None:
+                from app.services.gnosiplexio.self_growth import SelfGrowthEngine
+                _growth_engine = SelfGrowthEngine(_get_graph_store())
     return _growth_engine
 
 
@@ -147,8 +153,10 @@ def _get_drift_detector():
     """Get or create the ConceptDriftDetector singleton."""
     global _drift_detector
     if _drift_detector is None:
-        from app.services.gnosiplexio.concept_drift import ConceptDriftDetector
-        _drift_detector = ConceptDriftDetector(_get_graph_store())
+        with _drift_lock:
+            if _drift_detector is None:
+                from app.services.gnosiplexio.concept_drift import ConceptDriftDetector
+                _drift_detector = ConceptDriftDetector(_get_graph_store())
     return _drift_detector
 
 
@@ -156,9 +164,11 @@ def _get_scheduler():
     """Get or create the GnosiplexioScheduler singleton."""
     global _scheduler
     if _scheduler is None:
-        from app.services.gnosiplexio.scheduler import GnosiplexioScheduler
-        from app.routes.gnosiplexio_routes import _get_engine
-        _scheduler = GnosiplexioScheduler(_get_engine())
+        with _scheduler_lock:
+            if _scheduler is None:
+                from app.services.gnosiplexio.scheduler import GnosiplexioScheduler
+                from app.routes.gnosiplexio_routes import _get_engine
+                _scheduler = GnosiplexioScheduler(_get_engine())
     return _scheduler
 
 
