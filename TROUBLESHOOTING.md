@@ -1004,4 +1004,137 @@ docker exec <container-name> ollama pull llama3
 
 ---
 
-**Last Updated:** 2026-01-26 (B2.0 - LLM Provider testing issues)
+---
+
+## Qdrant Vector Store
+
+### ⚠️ CRITICAL: Use Qdrant Server Mode, NOT Embedded Mode
+
+**Problem:** Qdrant embedded mode (`QdrantClient(path=...)`) causes `.lock` file conflicts, `WinError 10054` connection resets, and HTTP 500 errors when multiple processes (backend + batch scripts) access the same storage directory.
+
+**Symptoms:**
+- Backend crashes after processing ~40-50 papers
+- `ConnectionResetError: [WinError 10054]`
+- HTTP 500 from Qdrant with `.lock` file errors
+- Backend needs repeated restarts during batch operations
+
+**Root Cause:** Embedded Qdrant runs inside each Python process. Multiple processes sharing the same `qdrant_data/` directory fight over the `.lock` file.
+
+**Solution: Qdrant Server Mode (MANDATORY)**
+
+All Qdrant access goes through `backend/app/services/qdrant_factory.py`:
+```python
+from app.services.qdrant_factory import get_qdrant_client
+client = get_qdrant_client()  # Returns QdrantClient(url="http://localhost:6333")
+```
+
+**Never** use `QdrantClient(path=...)` directly. Always use the factory.
+
+### Starting Qdrant Server
+
+Qdrant server binary: `C:\Users\Barry Li (UoN)\clawd\tools\qdrant\qdrant.exe`
+
+```powershell
+cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+.\qdrant.exe --config-path config\config.yaml
+```
+
+Config (`tools/qdrant/config/config.yaml`):
+```yaml
+storage:
+  storage_path: C:\Users\Barry Li (UoN)\clawd\projects\library-rag\qdrant_data
+service:
+  host: 127.0.0.1
+  http_port: 6333
+  grpc_port: 6334
+telemetry_disabled: true
+```
+
+**Verify server is running:**
+```powershell
+Invoke-RestMethod -Uri "http://localhost:6333/collections"
+```
+
+### Collections
+
+| Collection | Purpose | Vectors |
+|-----------|---------|---------|
+| `academic_papers` | Library RAG (paper chunks for semantic search) | ~16,000+ |
+| `vf_profiles` | VF Middleware (structured paper profiles, 8 chunks each) | Growing |
+
+### VF Batch Profile Generation
+
+Script: `vf_batch_400.py` (in workspace)
+- Reads parsed `.md` files from `library-rag/data/parsed/` and `parsed_stream_b/`
+- Calls backend API `/api/v1/vf/generate` for each paper
+- Auto-skips papers that already have profiles (idempotent)
+- Uses GPT-5.3 via OpenClaw Gateway (configured in `profile_generator.py`)
+
+**Pre-flight checklist before running batch:**
+1. ✅ Qdrant server running on localhost:6333
+2. ✅ Backend running on localhost:8001
+3. ✅ PostgreSQL service running (`net start postgresql-x64-16`)
+4. ✅ Verify: `Invoke-RestMethod -Uri "http://localhost:6333/collections"`
+
+### Files Using Qdrant (via factory)
+
+All 6 files use `get_qdrant_client()` from `qdrant_factory.py`:
+- `app/routes/knowledge_routes.py` (3 call sites)
+- `app/services/checker/rag_searcher.py`
+- `app/services/knowledge_source/paper_processor.py`
+- `app/services/vf_middleware/profile_store.py`
+
+**DO NOT add `QdrantClient(path=...)` anywhere.** Always import from `qdrant_factory`.
+
+---
+
+---
+
+## ⚠️ CRITICAL: "Exec Failed" ≠ Process Crashed!
+
+**This is the #1 misdiagnosis trap when running long processes via OpenClaw.**
+
+### The Problem
+OpenClaw's `exec` tool creates a monitoring session for background processes. This session can disconnect due to:
+- Output buffer overflow (lots of logging)
+- Session timeout
+- Connection issues
+
+When this happens, you see: `Exec failed (session-name, code 1)`
+
+**BUT THE ACTUAL PROCESS MAY STILL BE RUNNING PERFECTLY FINE.**
+
+### The Costly Mistake
+If you see "Exec failed" and immediately `taskkill /F /IM python.exe` + restart, you are **killing a healthy process** and causing the very "crash" you're trying to fix.
+
+### How to Actually Check Process Health
+
+**ALWAYS verify before restarting:**
+
+```powershell
+# 1. Check if the process is alive
+Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, StartTime, WorkingSet64
+
+# 2. Check backend health endpoint
+Invoke-RestMethod -Uri "http://localhost:8001/health" -TimeoutSec 5
+
+# 3. Check Qdrant health
+Invoke-RestMethod -Uri "http://localhost:6333/collections"
+
+# 4. Check batch progress log (if running batch)
+Get-Content "path\to\log.json" -Tail 5
+```
+
+**Only restart if:**
+- Health endpoint returns error/timeout AND
+- Process is not in process list AND/OR
+- Port is not listening: `netstat -ano | findstr :8001`
+
+### Rule of Thumb
+```
+"Exec failed" notification → CHECK process health first → Only restart if actually dead
+```
+
+---
+
+**Last Updated:** 2026-02-16 (Qdrant server mode, VF batch processing, exec-failed misdiagnosis fix)

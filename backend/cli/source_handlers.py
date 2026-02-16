@@ -3,6 +3,10 @@ from __future__ import annotations
 import hashlib
 from pathlib import Path
 from urllib.parse import urlparse
+import json
+import urllib.request
+import urllib.parse
+from datetime import datetime
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
@@ -176,3 +180,133 @@ def source_tag(args):
     src["updated_at"] = now_iso()
     save_state(state)
     return success_envelope(result="updated", data={"source": src})
+
+API_BASE = "http://localhost:8001/api/v1/knowledge"
+
+
+def _api_call(path: str, method: str = "GET", payload: dict | None = None):
+    url = f"{API_BASE}{path}"
+    data = None
+    headers = {"Accept": "application/json"}
+    if payload is not None:
+        data = json.dumps(payload).encode("utf-8")
+        headers["Content-Type"] = "application/json"
+    req = urllib.request.Request(url, data=data, headers=headers, method=method)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def source_search(args):
+    if not args.query:
+        raise CLIBusinessError(code="SOURCE_QUERY_REQUIRED", message="query is required")
+    data = _api_call(f"/search?q={urllib.parse.quote(args.query)}")
+    return success_envelope(result="ok", data=data)
+
+
+def source_download(args):
+    if not any([args.doi, args.title, args.url]):
+        raise CLIBusinessError(code="SOURCE_INPUT_REQUIRED", message="Provide --doi/--title/--url")
+    data = _api_call("/download", method="POST", payload={"doi": args.doi, "title": args.title, "url": args.url})
+    return success_envelope(result="queued", data=data)
+
+
+def source_upload(args):
+    from app.services.knowledge_source import knowledge_queue
+
+    if not args.path:
+        raise CLIBusinessError(code="SOURCE_PATH_REQUIRED", message="path is required")
+    p = Path(args.path)
+    if not p.exists():
+        raise CLIBusinessError(code="SOURCE_PATH_NOT_FOUND", message="Path not found", details={"path": args.path})
+
+    files = [p] if p.is_file() else list(p.glob("*.pdf"))
+    if not files:
+        raise CLIBusinessError(code="SOURCE_NO_PDF_FOUND", message="No PDF files found", details={"path": args.path})
+
+    task_id = knowledge_queue.enqueue_upload([str(x.resolve()) for x in files])
+    return success_envelope(result="queued", data={"task_id": task_id, "count": len(files)})
+
+
+def source_batch(args):
+    payload = {"csv_data": None, "dois": None, "bibtex": None}
+    if args.csv:
+        payload["csv_data"] = Path(args.csv).read_text(encoding="utf-8")
+    if args.dois:
+        payload["dois"] = Path(args.dois).read_text(encoding="utf-8")
+    if args.bibtex:
+        payload["bibtex"] = Path(args.bibtex).read_text(encoding="utf-8")
+    if not any(payload.values()):
+        raise CLIBusinessError(code="SOURCE_BATCH_INPUT_REQUIRED", message="Provide --csv/--dois/--bibtex")
+    data = _api_call("/batch", method="POST", payload=payload)
+    return success_envelope(result="queued", data=data)
+
+
+def source_queue(args):
+    data = _api_call("/queue")
+    return success_envelope(result="ok", data=data)
+
+
+def source_stats(args):
+    data = _api_call("/stats")
+    return success_envelope(result="ok", data=data)
+
+
+def source_proxy_download(args):
+    doi_list = []
+    if args.doi_list:
+        p = Path(args.doi_list)
+        if not p.exists():
+            raise CLIBusinessError(code="SOURCE_DOI_LIST_NOT_FOUND", message="DOI list file not found", details={"path": args.doi_list})
+        raw = p.read_text(encoding="utf-8")
+        doi_list.extend([d.strip() for d in raw.replace("\n", ",").split(",") if d.strip()])
+
+    if args.doi:
+        doi_list.extend([d.strip() for d in args.doi if d and d.strip()])
+
+    if not doi_list:
+        raise CLIBusinessError(code="SOURCE_DOI_REQUIRED", message="Provide --doi or --doi-list")
+
+    # de-dup while preserving order
+    seen = set()
+    dois = []
+    for d in doi_list:
+        if d not in seen:
+            dois.append(d)
+            seen.add(d)
+
+    queue_path = Path(args.out or "data/downloads/knowledge/proxy_queue.json")
+    queue_path.parent.mkdir(parents=True, exist_ok=True)
+
+    current = []
+    if queue_path.exists():
+        try:
+            current = json.loads(queue_path.read_text(encoding="utf-8"))
+        except Exception:
+            current = []
+
+    existing = {item.get("doi") for item in current if isinstance(item, dict)}
+    added = []
+    for doi in dois:
+        if doi in existing:
+            continue
+        task = {
+            "doi": doi,
+            "proxy_url": f"https://ezproxy.newcastle.edu.au/login?url=https://doi.org/{urllib.parse.quote(doi, safe='')}",
+            "status": "needs_proxy",
+            "created_at": datetime.now().isoformat(),
+            "instructions": "Open with OpenClaw browser profile=chrome; locate PDF link; fetch PDF in-browser (JS) and save as base64.",
+        }
+        current.append(task)
+        added.append(task)
+
+    queue_path.write_text(json.dumps(current, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    return success_envelope(
+        result="queued",
+        data={
+            "added": len(added),
+            "total": len(current),
+            "queue_path": str(queue_path),
+            "items": added,
+        },
+    )

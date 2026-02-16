@@ -5,13 +5,23 @@ import sys
 from typing import Callable, Optional
 
 from .artifact_handlers import (
+    artifact_copy,
     artifact_create,
     artifact_delete,
+    artifact_draft_save,
+    artifact_draft_show,
     artifact_export,
     artifact_list,
+    artifact_preview,
+    artifact_rename,
     artifact_show,
+    artifact_update,
 )
 from .chat_handlers import chat_history, chat_send
+from .checker_handlers import checker_results, checker_run, checker_status
+from .citalio_handlers import citalio_results, citalio_run, citalio_status
+from .proliferomaxima_handlers import proliferomaxima_results, proliferomaxima_run, proliferomaxima_status
+from .vf_middleware_handlers import vf_batch, vf_delete, vf_generate, vf_list, vf_lookup, vf_stats, vf_sync
 from .context_handlers import context_clear, context_get, context_resolve, context_set
 from .contract import (
     CLIBusinessError,
@@ -42,7 +52,20 @@ from .session_handlers import (
     session_show,
     session_use,
 )
-from .source_handlers import source_add, source_list, source_remove, source_show, source_tag
+from .source_handlers import (
+    source_add,
+    source_batch,
+    source_download,
+    source_list,
+    source_queue,
+    source_remove,
+    source_search,
+    source_show,
+    source_stats,
+    source_tag,
+    source_upload,
+    source_proxy_download,
+)
 from .status_handlers import status_doctor, status_show
 
 Handler = Callable[[argparse.Namespace], dict]
@@ -126,15 +149,25 @@ def _resource_actions() -> dict[str, list[str]]:
     return {
         "session": ["create", "list", "show", "update", "archive", "restore", "delete", "use", "current"],
         "context": ["set", "get", "clear", "resolve"],
-        "source": ["add", "list", "show", "remove", "tag"],
+        "source": ["add", "list", "show", "remove", "tag", "search", "download", "upload", "batch", "queue", "stats", "proxy-download"],
         "persona": ["create", "list", "show", "update", "version", "select", "export", "import"],
         "chat": ["send", "history", "retry"],
-        "artifact": ["create", "list", "show", "export", "delete"],
+        "artifact": ["create", "list", "show", "export", "delete", "rename", "copy", "update", "preview", "draft"],
         "run": ["list", "show", "retry", "resume", "cancel"],
         "config": ["get", "set", "list"],
         "status": ["show", "doctor"],
+        "checker": ["run", "status", "results"],
+        "citalio": ["run", "status", "results"],
+        "proliferomaxima": ["run", "status", "results"],
+        "vf": ["generate", "batch", "lookup", "stats", "list", "delete", "sync"],
         "log": ["stream", "recent"],
     }
+
+
+def _artifact_draft_dispatch(args):
+    if getattr(args, "save", False):
+        return artifact_draft_save(args)
+    return artifact_draft_show(args)
 
 
 def _handler_for(resource: str, action: str) -> Handler:
@@ -173,6 +206,20 @@ def _handler_for(resource: str, action: str) -> Handler:
         return source_remove
     if resource == "source" and action == "tag":
         return source_tag
+    if resource == "source" and action == "search":
+        return source_search
+    if resource == "source" and action == "download":
+        return source_download
+    if resource == "source" and action == "upload":
+        return source_upload
+    if resource == "source" and action == "batch":
+        return source_batch
+    if resource == "source" and action == "queue":
+        return source_queue
+    if resource == "source" and action == "stats":
+        return source_stats
+    if resource == "source" and action == "proxy-download":
+        return source_proxy_download
 
     if resource == "persona" and action == "create":
         return persona_create
@@ -201,6 +248,16 @@ def _handler_for(resource: str, action: str) -> Handler:
         return artifact_export
     if resource == "artifact" and action == "delete":
         return artifact_delete
+    if resource == "artifact" and action == "rename":
+        return artifact_rename
+    if resource == "artifact" and action == "copy":
+        return artifact_copy
+    if resource == "artifact" and action == "update":
+        return artifact_update
+    if resource == "artifact" and action == "preview":
+        return artifact_preview
+    if resource == "artifact" and action == "draft":
+        return _artifact_draft_dispatch
 
     if resource == "run" and action == "list":
         return run_list
@@ -217,6 +274,42 @@ def _handler_for(resource: str, action: str) -> Handler:
         return status_show
     if resource == "status" and action == "doctor":
         return status_doctor
+
+    if resource == "checker" and action == "run":
+        return checker_run
+    if resource == "checker" and action == "status":
+        return checker_status
+    if resource == "checker" and action == "results":
+        return checker_results
+
+    if resource == "citalio" and action == "run":
+        return citalio_run
+    if resource == "citalio" and action == "status":
+        return citalio_status
+    if resource == "citalio" and action == "results":
+        return citalio_results
+
+    if resource == "proliferomaxima" and action == "run":
+        return proliferomaxima_run
+    if resource == "proliferomaxima" and action == "status":
+        return proliferomaxima_status
+    if resource == "proliferomaxima" and action == "results":
+        return proliferomaxima_results
+
+    if resource == "vf" and action == "generate":
+        return vf_generate
+    if resource == "vf" and action == "batch":
+        return vf_batch
+    if resource == "vf" and action == "lookup":
+        return vf_lookup
+    if resource == "vf" and action == "stats":
+        return vf_stats
+    if resource == "vf" and action == "list":
+        return vf_list
+    if resource == "vf" and action == "delete":
+        return vf_delete
+    if resource == "vf" and action == "sync":
+        return vf_sync
 
     if resource == "log" and action == "stream":
         return log_stream
@@ -276,6 +369,22 @@ def _configure_action_parser(resource: str, action: str, action_parser: argparse
         action_parser.add_argument("--source", default=None, help="Source ID")
         if action == "tag":
             action_parser.add_argument("--tag", default=None, help="Tag text")
+    elif resource == "source" and action == "search":
+        action_parser.add_argument("query", nargs="?", default=None, help="Search query")
+    elif resource == "source" and action == "download":
+        action_parser.add_argument("--doi", default=None)
+        action_parser.add_argument("--title", default=None)
+        action_parser.add_argument("--url", default=None)
+    elif resource == "source" and action == "upload":
+        action_parser.add_argument("path", nargs="?", default=None, help="PDF file or folder path")
+    elif resource == "source" and action == "batch":
+        action_parser.add_argument("--csv", default=None, help="CSV file path")
+        action_parser.add_argument("--dois", default=None, help="DOI list file path")
+        action_parser.add_argument("--bibtex", default=None, help="BibTeX file path")
+    elif resource == "source" and action == "proxy-download":
+        action_parser.add_argument("--doi", action="append", default=None, help="Single DOI (repeatable)")
+        action_parser.add_argument("--doi-list", default=None, help="Text file containing DOI list")
+        action_parser.add_argument("--out", default=None, help="Output queue JSON path (default: data/downloads/knowledge/proxy_queue.json)")
 
     elif resource == "persona" and action == "create":
         action_parser.add_argument("--name", required=True, help="Persona name")
@@ -308,11 +417,88 @@ def _configure_action_parser(resource: str, action: str, action_parser: argparse
         action_parser.add_argument("--artifact", default=None, help="Artifact ID")
         if action == "export":
             action_parser.add_argument("--out", default=None, help="Output file path")
+    elif resource == "artifact" and action == "rename":
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID")
+        action_parser.add_argument("--name", required=True, help="New name for the artifact")
+    elif resource == "artifact" and action == "copy":
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID to copy")
+    elif resource == "artifact" and action == "update":
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID")
+        action_parser.add_argument("--content", default=None, help="New content (inline)")
+        action_parser.add_argument("--file", default=None, help="File path with new content")
+    elif resource == "artifact" and action == "preview":
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID")
+    elif resource == "artifact" and action == "draft":
+        # Draft is a sub-resource with show/save sub-actions
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID")
+        action_parser.add_argument("--save", action="store_true", help="Save draft (default: show draft)")
+        action_parser.add_argument("--content", default=None, help="Draft content (for --save)")
+        action_parser.add_argument("--file", default=None, help="File path with draft content (for --save)")
+        action_parser.add_argument("--clear", action="store_true", help="Clear draft (for --save)")
 
     elif resource == "run" and action == "list":
         action_parser.add_argument("--session", default=None, help="Optional session ID")
     elif resource == "run" and action in {"show", "retry", "resume", "cancel"}:
         action_parser.add_argument("--run", default=None, help="Run ID")
+
+    elif resource == "checker" and action == "run":
+        action_parser.add_argument("--session", required=True, help="Session ID")
+        action_parser.add_argument("--artifact", required=True, help="Artifact ID to check")
+        action_parser.add_argument("--no-citations", action="store_true", help="Skip citation checking")
+        action_parser.add_argument("--no-ai", action="store_true", help="Skip AI pattern detection")
+        action_parser.add_argument("--no-flow", action="store_true", help="Skip flow analysis")
+    elif resource == "checker" and action == "status":
+        action_parser.add_argument("run_id", help="Checker run ID")
+    elif resource == "checker" and action == "results":
+        action_parser.add_argument("run_id", help="Checker run ID")
+
+    elif resource == "citalio" and action == "run":
+        action_parser.add_argument("--session", default=None, help="Session ID")
+        action_parser.add_argument("--artifact", default=None, help="Artifact ID as input")
+        action_parser.add_argument("--text", default=None, help="Inline text input")
+        action_parser.add_argument("--min-confidence", type=float, default=0.5, help="Min relevance confidence")
+        action_parser.add_argument("--max-citations-per-sentence", type=int, default=3, help="Maximum citations to insert per sentence")
+        action_parser.add_argument("--include-common-knowledge", action="store_true", help="Also suggest citations for COMMON sentences")
+    elif resource == "citalio" and action == "status":
+        action_parser.add_argument("run_id", help="Citalio run ID")
+    elif resource == "citalio" and action == "results":
+        action_parser.add_argument("run_id", help="Citalio run ID")
+
+    elif resource == "proliferomaxima" and action == "run":
+        action_parser.add_argument("--library-path", default=None, help="Override parsed markdown directory")
+        action_parser.add_argument("--max-files", type=int, default=None, help="Limit number of markdown files")
+        action_parser.add_argument("--max-items", type=int, default=None, help="Limit number of references")
+        action_parser.add_argument("--wait", action="store_true", help="Wait for completion and fetch results")
+    elif resource == "proliferomaxima" and action in {"status", "results"}:
+        action_parser.add_argument("run_id", help="Proliferomaxima run ID")
+
+    elif resource == "vf" and action == "generate":
+        action_parser.add_argument("--paper-id", required=True, help="Canonical paper ID, e.g. Power_1997")
+        action_parser.add_argument("--metadata-json", default=None, help="Metadata JSON string")
+        action_parser.add_argument("--abstract", default=None, help="Abstract text")
+        action_parser.add_argument("--abstract-file", default=None, help="Path to abstract text file")
+        action_parser.add_argument("--full-text", default=None, help="Full text for in-library generation")
+        action_parser.add_argument("--full-text-file", default=None, help="Path to full text file")
+        action_parser.add_argument("--external", action="store_true", help="Mark profile as external (in_library=false)")
+        action_parser.add_argument("--agent", default="helper", help="Agent name: helper/dr-xiaolei/asst-xiaolei")
+    elif resource == "vf" and action == "batch":
+        action_parser.add_argument("--file", required=True, help="JSON file containing {'items':[...]} batch payload")
+    elif resource == "vf" and action == "lookup":
+        action_parser.add_argument("--paper-id", default=None, help="Lookup exact profile by paper ID")
+        action_parser.add_argument("--author", default=None, help="Author surname for exact match")
+        action_parser.add_argument("--year", type=int, default=None, help="Publication year for exact match")
+    elif resource == "vf" and action == "stats":
+        pass
+    elif resource == "vf" and action == "list":
+        action_parser.add_argument("--limit", type=int, default=50, help="List limit")
+        action_parser.add_argument("--offset", type=int, default=0, help="List offset")
+    elif resource == "vf" and action == "delete":
+        action_parser.add_argument("--paper-id", required=True, help="Delete profile by paper ID")
+    elif resource == "vf" and action == "sync":
+        action_parser.add_argument("--library-path", default=None, help="Parsed library path")
+        action_parser.add_argument("--agent", default="helper", help="Agent name: helper/dr-xiaolei/asst-xiaolei")
+        action_parser.add_argument("--dry-run", action="store_true", help="Preview new papers only")
+        action_parser.add_argument("--concurrency", type=int, default=1, help="Concurrency (reserved, currently sequential)")
 
     elif resource == "log" and action == "stream":
         action_parser.add_argument("--level", default=None, help="Filter by log level (DEBUG, INFO, WARNING, ERROR)")

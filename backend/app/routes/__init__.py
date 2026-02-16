@@ -11,6 +11,7 @@ from .exec_routes import router as exec_router
 from .explorer_routes import router as explorer_router
 from .file_routes import router as file_router
 from .knowledge_routes import router as knowledge_router
+from .knowledge_source_routes import router as knowledge_source_router
 from .llm_provider_config_routes import router as llm_provider_config_router
 from .llm_routes import router as llm_router
 from .message_routes import router as message_router
@@ -22,6 +23,10 @@ from .tool_routes import router as tool_router
 from .workspace_export_import import router as workspace_xfer_router
 from .paper_routes import router as paper_router
 from .workspace_routes import router as workspace_router
+from .checker_routes import router as checker_router
+from .vf_middleware_routes import router as vf_middleware_router
+from .citalio_routes import router as citalio_router
+from .proliferomaxima_routes import router as proliferomaxima_router
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")
@@ -41,9 +46,14 @@ api_router.include_router(document_router, tags=["documents"])
 api_router.include_router(tool_router, tags=["tools"])
 api_router.include_router(rag_router, tags=["rag"])
 api_router.include_router(knowledge_router, tags=["knowledge"])
+api_router.include_router(knowledge_source_router, tags=["knowledge-source"])
 api_router.include_router(persona_router, tags=["personas"])
 api_router.include_router(paper_router, tags=["papers"])
 api_router.include_router(workspace_router, tags=["workspace"])
 api_router.include_router(workspace_xfer_router, tags=["workspace"])
+api_router.include_router(checker_router, tags=["checker"])
+api_router.include_router(vf_middleware_router, tags=["vf_middleware"])
+api_router.include_router(citalio_router, tags=["citalio"])
+api_router.include_router(proliferomaxima_router, tags=["proliferomaxima"])
 
 __all__ = ["api_router"]

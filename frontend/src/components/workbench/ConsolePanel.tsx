@@ -22,8 +22,12 @@ import { RunHistory } from "../runs/RunHistory";
 import { getPersonaById } from "@/components/chat/PersonaSelector";
 import { authGet, authFetch } from "@/lib/api/authFetch";
 import { API_BASE_URL } from "@/lib/utils/constants";
+import { CheckerPanel } from "@/components/checker";
+import { CitalioPanel } from "@/components/citalio";
+import { useArtifactPreview } from "@/lib/hooks/useArtifacts";
+import { isLocalArtifact } from "@/lib/artifacts/types";
 
-type ConsoleTab = "events" | "conversation" | "history" | "status" | "logs";
+type ConsoleTab = "events" | "conversation" | "history" | "status" | "logs" | "checker" | "citalio";
 
 // Placeholder for conversation messages - will be populated by backend
 interface ConversationMessage {
@@ -56,8 +60,8 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
   return (
     <div className="flex flex-col h-full bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100">
       {/* Header with tabs */}
-      <div className="flex items-center justify-between px-4 py-2 border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
-        <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between px-3 py-1 border-b border-gray-200 bg-gray-50 dark:border-gray-700 dark:bg-gray-800">
+        <div className="flex items-center gap-3">
           {/* Tab buttons */}
           <button
             onClick={() => setActiveTab("events")}
@@ -113,6 +117,36 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
           >
             <ScrollText className="h-4 w-4" />
             Log
+          </button>
+          <button
+            onClick={() => setActiveTab("checker")}
+            className={`flex items-center gap-1.5 px-2 py-1 text-sm rounded ${
+              activeTab === "checker"
+                ? "bg-gray-700 text-gray-100"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            🪄
+            Veritafactum
+          </button>
+          <button
+            onClick={() => setActiveTab("citalio")}
+            className={`flex items-center gap-1.5 px-2 py-1 text-sm rounded ${
+              activeTab === "citalio"
+                ? "bg-gray-700 text-gray-100"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
+          >
+            ✨
+            Citalio
+          </button>
+          <button
+            onClick={() => window.open("/vf-middleware", "_blank")}
+            className="flex items-center gap-1.5 px-2 py-1 text-sm rounded text-gray-400 hover:text-gray-200"
+            title="Open VF Middleware Manager"
+          >
+            📚
+            VF Manager
           </button>
         </div>
 
@@ -220,6 +254,14 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
       ) : activeTab === "logs" ? (
         <div className="flex-1 overflow-hidden">
           <LogTab />
+        </div>
+      ) : activeTab === "checker" ? (
+        <div className="flex-1 overflow-hidden">
+          <CheckerTabWrapper />
+        </div>
+      ) : activeTab === "citalio" ? (
+        <div className="flex-1 overflow-hidden">
+          <CitalioTabWrapper />
         </div>
       ) : (
         <StatusTab />
@@ -628,6 +670,63 @@ function ConversationTab({ sessionId }: ConversationTabProps) {
 // =============================================================================
 // Status Tab Component
 // =============================================================================
+
+/**
+ * CheckerTabWrapper — wraps CheckerPanel, providing getText from the current artifact.
+ */
+function CheckerTabWrapper() {
+  const selectedArtifactId = useWorkbenchStore((s) => s.selectedArtifactId);
+  const artifactEdits = useWorkbenchStore((s) => s.artifactEdits);
+  const localArtifacts = useWorkbenchStore((s) => s.localArtifacts);
+
+  // For remote artifacts, fetch preview to get text content
+  const localArtifact = localArtifacts.find((a) => a.id === selectedArtifactId);
+  const isLocal = localArtifact ? isLocalArtifact(localArtifact) : false;
+  const remoteId = selectedArtifactId && !isLocal ? selectedArtifactId : null;
+  const { data: preview } = useArtifactPreview(remoteId);
+
+  const getText = React.useCallback(() => {
+    if (!selectedArtifactId) return "";
+    if (artifactEdits[selectedArtifactId]) return artifactEdits[selectedArtifactId];
+    if (localArtifact?.content) return localArtifact.content;
+    if (preview?.text) return preview.text;
+    return "";
+  }, [selectedArtifactId, artifactEdits, localArtifact, preview]);
+
+  return (
+    <CheckerPanel
+      getText={getText}
+      artifactId={selectedArtifactId || undefined}
+    />
+  );
+}
+
+function CitalioTabWrapper() {
+  const selectedArtifactId = useWorkbenchStore((s) => s.selectedArtifactId);
+  const artifactEdits = useWorkbenchStore((s) => s.artifactEdits);
+  const localArtifacts = useWorkbenchStore((s) => s.localArtifacts);
+  const updateArtifactEdit = useWorkbenchStore((s) => s.updateArtifactEdit);
+
+  const localArtifact = localArtifacts.find((a) => a.id === selectedArtifactId);
+  const isLocal = localArtifact ? isLocalArtifact(localArtifact) : false;
+  const remoteId = selectedArtifactId && !isLocal ? selectedArtifactId : null;
+  const { data: preview } = useArtifactPreview(remoteId);
+
+  const getText = React.useCallback(() => {
+    if (!selectedArtifactId) return "";
+    if (artifactEdits[selectedArtifactId]) return artifactEdits[selectedArtifactId];
+    if (localArtifact?.content) return localArtifact.content;
+    if (preview?.text) return preview.text;
+    return "";
+  }, [selectedArtifactId, artifactEdits, localArtifact, preview]);
+
+  const handleApplyAll = React.useCallback((updatedText: string) => {
+    if (!selectedArtifactId) return;
+    updateArtifactEdit(selectedArtifactId, updatedText);
+  }, [selectedArtifactId, updateArtifactEdit]);
+
+  return <CitalioPanel getText={getText} artifactId={selectedArtifactId || undefined} onApplyAll={handleApplyAll} />;
+}
 
 function StatusTab() {
   const { authStatus } = useAuthStore();

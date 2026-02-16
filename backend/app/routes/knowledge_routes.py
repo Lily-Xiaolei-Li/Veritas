@@ -54,12 +54,9 @@ class DocumentsResponse(BaseModel):
 def get_qdrant_stats(qdrant_path: Path, collection_name: str) -> dict:
     """Get stats from a local Qdrant collection."""
     try:
-        from qdrant_client import QdrantClient
+        from app.services.qdrant_factory import get_qdrant_client
 
-        if not qdrant_path.exists():
-            return {"status": "offline", "error": f"Path not found: {qdrant_path}"}
-
-        client = QdrantClient(path=str(qdrant_path))
+        client = get_qdrant_client()
 
         # Check if collection exists
         collections = client.get_collections().collections
@@ -126,12 +123,9 @@ def get_qdrant_documents(qdrant_path: Path, collection_name: str, *, limit: int 
     """
 
     try:
-        from qdrant_client import QdrantClient
+        from app.services.qdrant_factory import get_qdrant_client
 
-        if not qdrant_path.exists():
-            return []
-
-        client = QdrantClient(path=str(qdrant_path))
+        client = get_qdrant_client()
 
         # Ensure collection exists
         collections = client.get_collections().collections
@@ -291,14 +285,10 @@ def search_qdrant(
 ) -> list[SearchResult]:
     """Search a Qdrant collection using sentence-transformers embeddings."""
     try:
-        from qdrant_client import QdrantClient
+        from app.services.qdrant_factory import get_qdrant_client
         from sentence_transformers import SentenceTransformer
 
-        if not qdrant_path.exists():
-            logger.warning(f"Qdrant path not found: {qdrant_path}")
-            return []
-
-        client = QdrantClient(path=str(qdrant_path))
+        client = get_qdrant_client()
 
         # Check collection exists
         collections = client.get_collections().collections

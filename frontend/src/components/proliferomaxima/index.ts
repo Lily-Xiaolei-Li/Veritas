@@ -1,0 +1,1 @@
+export { ProliferomaximaPanel } from "./ProliferomaximaPanel";

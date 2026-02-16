@@ -263,6 +263,82 @@ def get_chat_history_api(session_id: str) -> Optional[list]:
     return None
 
 
+def _patch_to_api(endpoint: str, data: dict) -> Optional[dict]:
+    """Patch data to Backend API."""
+    try:
+        with httpx.Client(timeout=API_TIMEOUT) as client:
+            response = client.patch(f"{API_BASE_URL}/{endpoint}", json=data)
+            if response.status_code == 200:
+                return response.json()
+            return None
+    except Exception:
+        return None
+
+
+def _get_from_api(endpoint: str) -> Optional[dict]:
+    """Get single object from Backend API."""
+    try:
+        with httpx.Client(timeout=API_TIMEOUT) as client:
+            response = client.get(f"{API_BASE_URL}/{endpoint}")
+            if response.status_code == 200:
+                return response.json()
+            return None
+    except Exception:
+        return None
+
+
+def rename_artifact_api(artifact_id: str, new_name: str) -> Optional[dict]:
+    """Rename artifact via API."""
+    if USE_API_MODE and _api_available():
+        return _patch_to_api(f"artifacts/{artifact_id}/rename", {"new_name": new_name})
+    return None
+
+
+def copy_artifact_api(artifact_id: str) -> Optional[dict]:
+    """Copy artifact via API."""
+    if USE_API_MODE and _api_available():
+        return _post_to_api(f"artifacts/{artifact_id}/copy", {})
+    return None
+
+
+def update_artifact_content_api(artifact_id: str, content: str) -> Optional[dict]:
+    """Update artifact content via API."""
+    if USE_API_MODE and _api_available():
+        return _put_to_api(f"artifacts/{artifact_id}/content", {"content": content})
+    return None
+
+
+def get_artifact_preview_api(artifact_id: str) -> Optional[dict]:
+    """Get artifact preview via API."""
+    if USE_API_MODE and _api_available():
+        return _get_from_api(f"artifacts/{artifact_id}/preview")
+    return None
+
+
+def get_artifact_api(artifact_id: str) -> Optional[dict]:
+    """Get single artifact via API."""
+    if USE_API_MODE and _api_available():
+        return _get_from_api(f"artifacts/{artifact_id}")
+    return None
+
+
+def get_artifact_draft_api(artifact_id: str) -> Optional[dict]:
+    """Get artifact draft via API."""
+    if USE_API_MODE and _api_available():
+        return _get_from_api(f"artifacts/{artifact_id}/draft")
+    return None
+
+
+def update_artifact_draft_api(artifact_id: str, draft_content: str, clear: bool = False) -> Optional[dict]:
+    """Update artifact draft via API."""
+    if USE_API_MODE and _api_available():
+        return _put_to_api(f"artifacts/{artifact_id}/draft", {
+            "draft_content": draft_content,
+            "clear": clear,
+        })
+    return None
+
+
 def create_artifact_api(session_id: str, run_id: str, name: str, content: str, artifact_type: str = "markdown") -> Optional[dict]:
     """Create artifact via API."""
     if USE_API_MODE and _api_available():

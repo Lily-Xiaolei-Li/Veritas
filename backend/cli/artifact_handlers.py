@@ -4,7 +4,20 @@ from pathlib import Path
 from uuid import uuid4
 
 from .contract import CLIBusinessError, success_envelope
-from .state_store import create_artifact_api, get_session_artifacts_api, load_state, now_iso, save_state
+from .state_store import (
+    copy_artifact_api,
+    create_artifact_api,
+    get_artifact_api,
+    get_artifact_draft_api,
+    get_artifact_preview_api,
+    get_session_artifacts_api,
+    load_state,
+    now_iso,
+    rename_artifact_api,
+    save_state,
+    update_artifact_content_api,
+    update_artifact_draft_api,
+)
 
 
 def _session_exists(state: dict, session_id: str) -> bool:
@@ -140,6 +153,79 @@ def artifact_export(args):
             "bytes": out.stat().st_size,
         },
     )
+
+
+def artifact_rename(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+    if not args.name:
+        raise CLIBusinessError(code="ARTIFACT_NAME_REQUIRED", message="--name is required")
+
+    result = rename_artifact_api(args.artifact, args.name)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_RENAME_FAILED", message="Failed to rename artifact (API unavailable or artifact not found)")
+
+    return success_envelope(result="renamed", data={"artifact": result})
+
+
+def artifact_copy(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+
+    result = copy_artifact_api(args.artifact)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_COPY_FAILED", message="Failed to copy artifact (API unavailable or artifact not found)")
+
+    return success_envelope(result="copied", data={"artifact": result})
+
+
+def artifact_update(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+
+    content, _ = _read_content_from_args(args)
+
+    result = update_artifact_content_api(args.artifact, content)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_UPDATE_FAILED", message="Failed to update artifact content (API unavailable or artifact not found)")
+
+    return success_envelope(result="updated", data={"artifact": result})
+
+
+def artifact_preview(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+
+    result = get_artifact_preview_api(args.artifact)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_PREVIEW_FAILED", message="Failed to get artifact preview (API unavailable or artifact not found)")
+
+    return success_envelope(result="ok", data={"preview": result})
+
+
+def artifact_draft_show(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+
+    result = get_artifact_draft_api(args.artifact)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_DRAFT_FAILED", message="Failed to get artifact draft (API unavailable or artifact not found)")
+
+    return success_envelope(result="ok", data={"draft": result})
+
+
+def artifact_draft_save(args):
+    if not args.artifact:
+        raise CLIBusinessError(code="ARTIFACT_ID_REQUIRED", message="--artifact is required")
+
+    content, _ = _read_content_from_args(args)
+    clear = getattr(args, "clear", False)
+
+    result = update_artifact_draft_api(args.artifact, content, clear=clear)
+    if result is None:
+        raise CLIBusinessError(code="ARTIFACT_DRAFT_SAVE_FAILED", message="Failed to save artifact draft (API unavailable or artifact not found)")
+
+    return success_envelope(result="saved", data={"draft": result})
 
 
 def artifact_delete(args):

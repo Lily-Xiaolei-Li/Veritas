@@ -8,8 +8,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { BookOpen, Users, Plus, Loader2, Database, X, FileText } from "lucide-react";
+import { BookOpen, Users, Plus, Loader2, Database, X, FileText, Search, Upload, ListChecks, Sparkles } from "lucide-react";
 import { ArtifactBrowser } from "../artifacts";
+import { ProliferomaximaPanel } from "@/components/proliferomaxima";
 import { cn } from "@/lib/utils/cn";
 import { API_BASE_URL } from "@/lib/utils/constants";
 import { authFetch } from "@/lib/api/authFetch";
@@ -300,37 +301,147 @@ function KnowledgeModal({
   );
 }
 
-// Add Sources Modal (placeholder for now)
+type AddTab = "upload" | "search" | "batch" | "queue";
+type SearchItem = { title?: string; authors?: string[]; year?: number; doi?: string; is_open_access?: boolean | null };
+type QueueItem = { id: string; kind: string; status: string; progress?: Record<string, string> };
+
 function AddSourcesModal({ onClose }: { onClose: () => void }) {
+  const [tab, setTab] = useState<AddTab>("upload");
+  const [files, setFiles] = useState<FileList | null>(null);
+  const [searchQ, setSearchQ] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const [batchInput, setBatchInput] = useState("");
+  const [queueItems, setQueueItems] = useState<QueueItem[]>([]);
+  const [busy, setBusy] = useState(false);
+
+  const refreshQueue = async () => {
+    const res = await authFetch(`${API_BASE_URL}/api/v1/knowledge/queue`);
+    if (res.ok) {
+      const data = await res.json();
+      setQueueItems(data.items || []);
+    }
+  };
+
+  React.useEffect(() => {
+    if (tab === "queue") {
+      refreshQueue();
+      const t = setInterval(refreshQueue, 3000);
+      return () => clearInterval(t);
+    }
+  }, [tab]);
+
+  const handleUpload = async () => {
+    if (!files || files.length === 0) return;
+    setBusy(true);
+    try {
+      const fd = new FormData();
+      Array.from(files).forEach((f) => fd.append("files", f));
+      await authFetch(`${API_BASE_URL}/api/v1/knowledge/upload`, { method: "POST", body: fd });
+      setTab("queue");
+      await refreshQueue();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSearch = async () => {
+    if (!searchQ.trim()) return;
+    setBusy(true);
+    try {
+      const res = await authFetch(`${API_BASE_URL}/api/v1/knowledge/search?q=${encodeURIComponent(searchQ)}`);
+      const data = await res.json();
+      setSearchResults(data.items || []);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const queueDownload = async (item: SearchItem) => {
+    setBusy(true);
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/knowledge/download`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ doi: item.doi, title: item.title }),
+      });
+      setTab("queue");
+      await refreshQueue();
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const submitBatch = async () => {
+    if (!batchInput.trim()) return;
+    setBusy(true);
+    try {
+      await authFetch(`${API_BASE_URL}/api/v1/knowledge/batch`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ dois: batchInput }),
+      });
+      setTab("queue");
+      await refreshQueue();
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={onClose}>
-      <div
-        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-md w-full mx-4"
-        onClick={(e) => e.stopPropagation()}
-      >
+      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-3xl w-full mx-4" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-2">
             <Plus className="h-5 w-5 text-blue-500" />
             <h3 className="font-semibold text-gray-900 dark:text-gray-100">Add Knowledge Source</h3>
           </div>
-          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
-            <X className="h-4 w-4 text-gray-500" />
-          </button>
+          <button onClick={onClose} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"><X className="h-4 w-4 text-gray-500" /></button>
         </div>
-        <div className="p-6 text-center">
-          <div className="text-4xl mb-3">🚧</div>
-          <p className="text-gray-600 dark:text-gray-400">Coming soon!</p>
-          <p className="text-sm text-gray-500 dark:text-gray-500 mt-2">
-            Import PDFs, documents, or connect external sources.
-          </p>
+
+        <div className="px-4 pt-3 flex gap-2 text-xs">
+          {([
+            ["upload", "Upload", Upload],
+            ["search", "Search", Search],
+            ["batch", "Batch Import", FileText],
+            ["queue", "Queue", ListChecks],
+          ] as Array<[AddTab, string, React.ElementType]>).map(([k, label, Icon]) => (
+            <button key={k} onClick={() => setTab(k)} className={cn("px-3 py-1 rounded flex items-center gap-1", tab === k ? "bg-blue-500 text-white" : "bg-gray-100 dark:bg-gray-700")}> <Icon className="h-3 w-3" /> {label}</button>
+          ))}
         </div>
+
+        <div className="p-4 min-h-[320px]">
+          {tab === "upload" && (
+            <div className="space-y-3">
+              <input type="file" multiple accept="application/pdf" onChange={(e) => setFiles(e.target.files)} />
+              <button onClick={handleUpload} disabled={busy} className="px-3 py-1.5 bg-blue-500 text-white rounded">Upload</button>
+            </div>
+          )}
+
+          {tab === "search" && (
+            <div className="space-y-3">
+              <div className="flex gap-2"><input value={searchQ} onChange={(e) => setSearchQ(e.target.value)} className="flex-1 border rounded px-2 py-1 dark:bg-gray-700" placeholder="Search paper title/keyword" /><button onClick={handleSearch} className="px-3 py-1.5 bg-blue-500 text-white rounded">Search</button></div>
+              <div className="max-h-[220px] overflow-auto space-y-2">
+                {searchResults.map((r, i) => <div key={i} className="border rounded p-2 text-sm"><div className="font-medium">{r.title}</div><div className="text-xs text-gray-500">{(r.authors || []).join(", ")} · {r.year || "N/A"} · DOI: {r.doi || "N/A"} · OA: {String(r.is_open_access ?? "unknown")}</div><button onClick={() => queueDownload(r)} className="mt-2 px-2 py-1 text-xs bg-green-500 text-white rounded">Download</button></div>)}
+              </div>
+            </div>
+          )}
+
+          {tab === "batch" && (
+            <div className="space-y-3">
+              <textarea value={batchInput} onChange={(e) => setBatchInput(e.target.value)} className="w-full h-40 border rounded p-2 dark:bg-gray-700" placeholder="Paste DOI list (one per line or comma separated)" />
+              <button onClick={submitBatch} className="px-3 py-1.5 bg-blue-500 text-white rounded">Start Batch</button>
+            </div>
+          )}
+
+          {tab === "queue" && (
+            <div className="space-y-2 max-h-[260px] overflow-auto">
+              {queueItems.map((q) => <div key={q.id} className="border rounded p-2 text-sm"><div className="font-medium">{q.kind} · {q.status}</div><div className="text-xs text-gray-500">Downloading: {q.progress?.downloading} → Parsing: {q.progress?.parsing} → Chunking: {q.progress?.chunking} → Embedding: {q.progress?.embedding} → Indexed: {q.progress?.indexing}</div></div>)}
+            </div>
+          )}
+        </div>
+
         <div className="px-4 py-3 border-t border-gray-200 dark:border-gray-700 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
-          >
-            Close
-          </button>
+          <button onClick={onClose} className="px-3 py-1.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Close</button>
         </div>
       </div>
     </div>
@@ -342,6 +453,7 @@ export function ArtifactsPanel() {
   const [loading, setLoading] = useState(false);
   const [selectedSource, setSelectedSource] = useState<KnowledgeSource | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showProliferomaxima, setShowProliferomaxima] = useState(false);
 
   // Fetch knowledge sources
   const fetchSources = async (): Promise<KnowledgeSource[]> => {
@@ -393,6 +505,11 @@ export function ArtifactsPanel() {
             onClick={() => setShowAddModal(true)}
             variant="primary"
           />
+          <KnowledgeButton
+            icon={Sparkles}
+            label="Proliferomaxima"
+            onClick={() => setShowProliferomaxima(true)}
+          />
         </>
       )}
     </>
@@ -420,6 +537,9 @@ export function ArtifactsPanel() {
       )}
       {showAddModal && (
         <AddSourcesModal onClose={() => setShowAddModal(false)} />
+      )}
+      {showProliferomaxima && (
+        <ProliferomaximaPanel onClose={() => setShowProliferomaxima(false)} />
       )}
     </div>
   );

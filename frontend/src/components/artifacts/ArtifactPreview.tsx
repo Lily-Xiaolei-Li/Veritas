@@ -164,6 +164,8 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
   const isEditorMaximized = useWorkbenchStore((s) => s.isEditorMaximized);
   const toggleEditorMaximized = useWorkbenchStore((s) => s.toggleEditorMaximized);
   const artifactFlashId = useWorkbenchStore((s) => s.artifactFlashId);
+  const checkerHighlightRequest = useWorkbenchStore((s) => s.checkerHighlightRequest);
+  const consumeCheckerHighlightRequest = useWorkbenchStore((s) => s.consumeCheckerHighlightRequest);
   
   // Flash effect when content is appended
   const isFlashing = artifact && artifactFlashId === artifact.id;
@@ -403,6 +405,48 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
       void refetch();
     }
   }, [isFlashing, isLocal, refetch]);
+
+  // Handle checker-driven highlight+comment requests.
+  useEffect(() => {
+    if (!checkerHighlightRequest || !artifact) return;
+    if (checkerHighlightRequest.artifactId && checkerHighlightRequest.artifactId !== artifact.id) return;
+
+    const supportsText = previewKind === "code" || previewKind === "markdown" || previewKind === "text";
+    if (!supportsText) {
+      consumeCheckerHighlightRequest();
+      return;
+    }
+
+    const sentence = checkerHighlightRequest.sentenceText?.trim();
+    if (!sentence) {
+      consumeCheckerHighlightRequest();
+      return;
+    }
+
+    const base = isEditing ? editContent : originalContent;
+    const idx = base.indexOf(sentence);
+    if (idx < 0) {
+      consumeCheckerHighlightRequest();
+      return;
+    }
+
+    const safeComment = checkerHighlightRequest.comment.replace(/-->/g, "--&gt;");
+    const highlighted = `<mark>${sentence}</mark><!-- ${safeComment} -->`;
+    const next = `${base.slice(0, idx)}${highlighted}${base.slice(idx + sentence.length)}`;
+
+    setEditContent(next);
+    setIsEditing(true);
+    setShowPreviewInEdit(true);
+    consumeCheckerHighlightRequest();
+  }, [
+    checkerHighlightRequest,
+    consumeCheckerHighlightRequest,
+    artifact,
+    previewKind,
+    isEditing,
+    editContent,
+    originalContent,
+  ]);
 
   // No artifact selected
   if (!artifact) {

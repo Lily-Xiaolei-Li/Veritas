@@ -15,7 +15,16 @@ Stable mode writes logs here:
 
 If the UI says Offline or the page won’t load, check these logs first.
 
+## Prerequisites
+**Qdrant server must be running** before starting Agent B:
+```powershell
+cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+.\qdrant.exe --config-path config\config.yaml
+```
+Verify: http://localhost:6333/collections
+
 ## Health endpoints
+- Qdrant: http://localhost:6333/collections
 - Backend health: http://localhost:8001/health
 - Tools list: http://localhost:8001/api/v1/tools
 

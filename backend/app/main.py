@@ -57,6 +57,8 @@ from .routes.log_routes import setup_websocket_log_handler
 from .routes.message_routes import get_session_event_queues
 from .routes.metrics_routes import router as metrics_router
 from .routes.xiaolei_chat_routes import router as xiaolei_chat_router
+from .routes.checker_routes import router as checker_router
+from .routes.citalio_routes import router as citalio_router
 from .services.llm_service import shutdown_llm_service
 
 # Load and validate configuration at module level
@@ -312,6 +314,8 @@ app.include_router(metrics_router)
 
 # Register log streaming endpoint
 app.include_router(log_router)
+app.include_router(checker_router, prefix="/api/v1")
+app.include_router(citalio_router, prefix="/api/v1")
 
 
 @app.get("/debug/headers")

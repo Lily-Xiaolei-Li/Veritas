@@ -16,6 +16,11 @@
 
 import { create } from "zustand";
 import type { LocalArtifact } from "@/lib/artifacts/types";
+import type { ThemeName } from "@/lib/themes";
+import type { CheckerResults } from "@/lib/api/checker";
+
+export type CheckerStatus = "idle" | "running" | "completed" | "error";
+export type CheckerFilter = "all" | "cite" | "own" | "ai" | "flow";
 
 // Re-export auth store for convenience
 export { useAuthStore, selectToken, selectAuthStatus, selectUser, selectIsAuthenticated, selectSessionExpiredShown } from "./authStore";
@@ -136,7 +141,7 @@ interface WorkbenchState {
   editTargetSelections: TextSelection[]; // specific sections to edit within the artifact
 
   // UI preferences
-  theme: "light" | "dark";
+  theme: ThemeName;
 
   localArtifacts: LocalArtifact[];
   artifactEdits: Record<string, string>;
@@ -214,7 +219,7 @@ interface WorkbenchState {
   clearCheckedArtifacts: () => void;
   focusCheckedArtifacts: () => void;
 
-  setTheme: (theme: "light" | "dark") => void;
+  setTheme: (theme: ThemeName) => void;
 
   addLocalArtifact: (artifact: LocalArtifact) => void;
   removeLocalArtifact: (artifactId: string) => void;
@@ -250,6 +255,34 @@ interface WorkbenchState {
   // Editor maximize state
   isEditorMaximized: boolean;
   toggleEditorMaximized: () => void;
+
+  // Checker state (Sentence-Level Academic Checker)
+  checkerRunId: string | null;
+  checkerStatus: CheckerStatus;
+  checkerResults: CheckerResults | null;
+  checkerFilter: CheckerFilter;
+  checkerDecisions: Record<number, "accepted" | "dismissed">;
+  checkerHighlightRequest: {
+    sentenceId: number;
+    sentenceText: string;
+    comment: string;
+    artifactId?: string;
+    requestAt: number;
+  } | null;
+  setCheckerRunId: (runId: string | null) => void;
+  setCheckerStatus: (status: CheckerStatus) => void;
+  setCheckerResults: (results: CheckerResults | null) => void;
+  setCheckerFilter: (filter: CheckerFilter) => void;
+  setCheckerDecision: (sentenceId: number, decision: "accepted" | "dismissed") => void;
+  clearCheckerDecision: (sentenceId: number) => void;
+  requestCheckerHighlight: (payload: {
+    sentenceId: number;
+    sentenceText: string;
+    comment: string;
+    artifactId?: string;
+  }) => void;
+  consumeCheckerHighlightRequest: () => void;
+  clearCheckerState: () => void;
 }
 
 // =============================================================================
@@ -731,4 +764,49 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
 
   // Editor maximize toggle
   toggleEditorMaximized: () => set((state) => ({ isEditorMaximized: !state.isEditorMaximized })),
+
+  // Checker state (Sentence-Level Academic Checker)
+  checkerRunId: null,
+  checkerStatus: "idle" as CheckerStatus,
+  checkerResults: null,
+  checkerFilter: "all" as CheckerFilter,
+  checkerDecisions: {},
+  checkerHighlightRequest: null,
+  setCheckerRunId: (runId) => set({ checkerRunId: runId }),
+  setCheckerStatus: (status) => set({ checkerStatus: status }),
+  setCheckerResults: (results) =>
+    set({
+      checkerResults: results,
+      checkerDecisions: {},
+    }),
+  setCheckerFilter: (filter) => set({ checkerFilter: filter }),
+  setCheckerDecision: (sentenceId, decision) =>
+    set((state) => ({
+      checkerDecisions: {
+        ...state.checkerDecisions,
+        [sentenceId]: decision,
+      },
+    })),
+  clearCheckerDecision: (sentenceId) =>
+    set((state) => {
+      const next = { ...state.checkerDecisions };
+      delete next[sentenceId];
+      return { checkerDecisions: next };
+    }),
+  requestCheckerHighlight: (payload) =>
+    set({
+      checkerHighlightRequest: {
+        ...payload,
+        requestAt: Date.now(),
+      },
+    }),
+  consumeCheckerHighlightRequest: () => set({ checkerHighlightRequest: null }),
+  clearCheckerState: () => set({
+    checkerRunId: null,
+    checkerStatus: "idle" as CheckerStatus,
+    checkerResults: null,
+    checkerFilter: "all" as CheckerFilter,
+    checkerDecisions: {},
+    checkerHighlightRequest: null,
+  }),
 }));

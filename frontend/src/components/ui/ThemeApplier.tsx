@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useWorkbenchStore } from "@/lib/store";
+import { themes, isValidTheme } from "@/lib/themes";
 
 export function ThemeApplier() {
   const theme = useWorkbenchStore((s) => s.theme);
@@ -11,10 +12,9 @@ export function ThemeApplier() {
   useEffect(() => {
     try {
       const saved = localStorage.getItem("agentb:theme");
-      if (saved === "light" || saved === "dark") {
+      if (isValidTheme(saved)) {
         setTheme(saved);
       } else {
-        // Default preference
         setTheme("dark");
       }
     } catch {
@@ -23,11 +23,35 @@ export function ThemeApplier() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Apply to <html> so Tailwind dark: works across app
+  // Apply theme: Tailwind dark class + CSS custom properties
   useEffect(() => {
     const root = document.documentElement;
-    if (theme === "dark") root.classList.add("dark");
-    else root.classList.remove("dark");
+    const colors = themes[theme];
+
+    // Tailwind dark mode class
+    if (colors.isDark) {
+      root.classList.add("dark");
+    } else {
+      root.classList.remove("dark");
+    }
+
+    // data-theme attribute for CSS selectors
+    root.setAttribute("data-theme", theme);
+
+    // Inject CSS custom properties
+    root.style.setProperty("--theme-bg", colors.bg);
+    root.style.setProperty("--theme-bg-secondary", colors.bgSecondary);
+    root.style.setProperty("--theme-text", colors.text);
+    root.style.setProperty("--theme-text-muted", colors.textMuted);
+    root.style.setProperty("--theme-accent", colors.accent);
+    root.style.setProperty("--theme-border", colors.border);
+
+    // Persist selection
+    try {
+      localStorage.setItem("agentb:theme", theme);
+    } catch {
+      // ignore
+    }
   }, [theme]);
 
   return null;

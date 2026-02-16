@@ -6,6 +6,7 @@ Goal: get Agent B running locally in **10–15 minutes**.
 - Python **3.12**
 - Node.js **18+**
 - PostgreSQL **16+** (optional for smoke/demo; required for full persistence)
+- **Qdrant server** (required for Library RAG and VF Middleware — see below)
 
 ## 2) Clone
 ```powershell
@@ -45,7 +46,24 @@ Stable mode writes logs here:
 - `./.run/frontend.out.log` + `./.run/frontend.err.log`
 - `./.run/backend.out.log` + `./.run/backend.err.log`
 
+## Qdrant Server (Required)
+
+Agent B uses Qdrant in **server mode** (NOT embedded). Start it before the backend:
+
+```powershell
+cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+.\qdrant.exe --config-path config\config.yaml
+```
+
+This starts Qdrant on `localhost:6333`. The backend connects via `QDRANT_URL` env var (defaults to `http://localhost:6333`).
+
+> ⚠️ **Never use Qdrant embedded mode** (`QdrantClient(path=...)`). It causes lock file conflicts when multiple processes access the same storage. See `TROUBLESHOOTING.md` for details.
+
 ## Quick sanity checks
+
+Qdrant health:
+- http://localhost:6333/collections
+
 Backend health:
 - http://localhost:8000/api/v1/health
 

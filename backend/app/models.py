@@ -770,3 +770,57 @@ class LLMUsage(Base):
         Index("ix_llm_usage_status", "status"),
         Index("ix_llm_usage_model", "model"),
     )
+
+
+class CheckerRun(Base):
+    """Sentence checker run record."""
+
+    __tablename__ = "checker_runs"
+
+    id: Mapped[str] = mapped_column(String(50), primary_key=True)
+    artifact_id: Mapped[str] = mapped_column(Text, nullable=False)
+    session_id: Mapped[str] = mapped_column(String(50), nullable=False, default="")
+    status: Mapped[str] = mapped_column(
+        String(20), nullable=False, default="queued"
+    )  # queued, running, completed, failed
+    options: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    summary: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+
+
+class CheckerAnnotation(Base):
+    """Individual sentence annotation from a checker run."""
+
+    __tablename__ = "checker_annotations"
+
+    id: Mapped[str] = mapped_column(
+        String(50), primary_key=True, default=lambda: str(uuid4())
+    )
+    run_id: Mapped[str] = mapped_column(
+        String(50), ForeignKey("checker_runs.id"), nullable=False, index=True
+    )
+    sentence_id: Mapped[int] = mapped_column(Integer, nullable=False)
+    sentence_text: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    start_offset: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    end_offset: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    type: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # CITE_NEEDED, COMMON, OWN_EMPIRICAL, OWN_CONTRIBUTION
+    confidence: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    colour: Mapped[Optional[str]] = mapped_column(String(10), nullable=True)
+    reasoning: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    suggested_citations: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    citation_verification: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    ai_flags: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    flow_check: Mapped[Optional[dict]] = mapped_column(JSON, nullable=True)
+    user_action: Mapped[Optional[str]] = mapped_column(
+        String(20), nullable=True
+    )  # null, accepted, dismissed, edited
+    user_action_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
