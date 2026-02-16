@@ -73,10 +73,12 @@ export interface IngestResponse {
 export interface CompareResult {
   node_id_1: string;
   node_id_2: string;
-  shared_neighbors: Record<string, unknown>[];
+  shared_citations: string[];
   shared_concepts: string[];
+  divergent_edges_a: Record<string, unknown>[];
+  divergent_edges_b: Record<string, unknown>[];
+  shortest_path?: string[] | null;
   similarity_score: number;
-  comparison: Record<string, unknown>;
 }
 
 // ---------------------------------------------------------------------------
