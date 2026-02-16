@@ -27,6 +27,8 @@ from .checker_routes import router as checker_router
 from .vf_middleware_routes import router as vf_middleware_router
 from .citalio_routes import router as citalio_router
 from .proliferomaxima_routes import router as proliferomaxima_router
+from .gnosiplexio_routes import router as gnosiplexio_router
+from .gnosiplexio_growth_routes import router as gnosiplexio_growth_router
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")
@@ -55,5 +57,7 @@ api_router.include_router(checker_router, tags=["checker"])
 api_router.include_router(vf_middleware_router, tags=["vf_middleware"])
 api_router.include_router(citalio_router, tags=["citalio"])
 api_router.include_router(proliferomaxima_router, tags=["proliferomaxima"])
+api_router.include_router(gnosiplexio_router, tags=["gnosiplexio"])
+api_router.include_router(gnosiplexio_growth_router, tags=["gnosiplexio-growth"])
 
 __all__ = ["api_router"]
