@@ -2,6 +2,7 @@
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import cytoscape, { type Core, type EventObject } from "cytoscape";
+import { useTranslations } from "next-intl";
 import {
   Network,
   Search,
@@ -47,6 +48,7 @@ const DEFAULT_COLOR = "#6b7280";
 // ---------------------------------------------------------------------------
 
 export function GnosiplexioPanel() {
+  const t = useTranslations("gnosiplexio");
   const containerRef = useRef<HTMLDivElement>(null);
   const cyRef = useRef<Core | null>(null);
 
@@ -192,7 +194,7 @@ export function GnosiplexioPanel() {
         }
         initCytoscape(elements);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to load graph");
+        setError(err instanceof Error ? err.message : t("errors.failedToLoadGraph"));
       } finally {
         setLoading(false);
       }
@@ -245,7 +247,7 @@ export function GnosiplexioPanel() {
         id: n.id(),
         title: String(n.data("label") ?? n.id()),
         year,
-        citations: n.indegree(),
+        citations: (n as cytoscape.NodeSingular).indegree(false),
         credibility: Number(n.data("credibility_score") ?? n.data("credibility") ?? 0.5),
       };
     });
@@ -291,20 +293,20 @@ export function GnosiplexioPanel() {
       <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
         <div className="flex items-center gap-2 text-sm font-semibold text-gray-800 dark:text-gray-200">
           <Network className="w-5 h-5 text-blue-500" />
-          Gnosiplexio Knowledge Graph
+          {t("title")}
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setShowTimeline((v) => !v)}
             className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 ${showTimeline ? "bg-gray-200 dark:bg-gray-800" : ""}`}
-            title="Timeline"
+            title={t("timeline.title")}
           >
             <BarChart3 className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
           <button
             onClick={() => { setCompareMode((v) => !v); setCompareSelection([]); setCompareResult(null); }}
             className={`p-1.5 rounded hover:bg-gray-200 dark:hover:bg-gray-800 ${compareMode ? "bg-blue-100 dark:bg-blue-900/40" : ""}`}
-            title="Compare mode"
+            title={t("compare.mode")}
           >
             <GitCompare className="w-4 h-4 text-gray-600 dark:text-gray-400" />
           </button>
@@ -320,12 +322,12 @@ export function GnosiplexioPanel() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-              placeholder="Search nodes..."
+              placeholder={t("search.placeholder")}
               className="w-full pl-8 pr-3 py-1.5 text-sm rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-800 dark:text-gray-200 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <button onClick={handleSearch} className="px-3 py-1.5 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700">
-            Search
+            {t("search.button")}
           </button>
         </div>
         {searchResults.length > 0 && (
@@ -350,11 +352,11 @@ export function GnosiplexioPanel() {
         <div className="px-4 py-2 bg-blue-50 dark:bg-blue-950/30 border-b border-blue-200 dark:border-blue-800 flex items-center gap-3 text-xs">
           <GitCompare className="w-4 h-4 text-blue-500" />
           <span className="text-gray-600 dark:text-gray-400">
-            Click two nodes to compare. Selected: {compareSelection.length}/2
+            {t("compare.hint", { selected: compareSelection.length })}
           </span>
           {compareSelection.length === 2 && (
             <button onClick={handleCompare} className="px-2 py-0.5 rounded bg-blue-600 text-white hover:bg-blue-700">
-              Compare
+              {t("compare.action")}
             </button>
           )}
         </div>
@@ -363,10 +365,10 @@ export function GnosiplexioPanel() {
       {/* Stats bar */}
       {stats && (
         <div className="px-4 py-1.5 border-b border-gray-200 dark:border-gray-800 flex items-center gap-4 text-xs text-gray-500 dark:text-gray-400">
-          <span>{stats.total_nodes} nodes</span>
-          <span>{stats.total_edges} edges</span>
-          <span>Density: {stats.density.toFixed(4)}</span>
-          <span>Avg degree: {stats.avg_degree.toFixed(1)}</span>
+          <span>{t("stats.nodes", { count: stats.total_nodes })}</span>
+          <span>{t("stats.edges", { count: stats.total_edges })}</span>
+          <span>{t("stats.density", { value: stats.density.toFixed(4) })}</span>
+          <span>{t("stats.avgDegree", { value: stats.avg_degree.toFixed(1) })}</span>
         </div>
       )}
 
@@ -431,7 +433,7 @@ export function GnosiplexioPanel() {
             </div>
             {selectedNode.network_citations.length > 0 && (
               <div className="mt-4">
-                <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Network Citations ({selectedNode.network_citations.length})</h4>
+                <h4 className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">{t("node.networkCitations", { count: selectedNode.network_citations.length })}</h4>
                 <div className="space-y-1 max-h-40 overflow-y-auto">
                   {selectedNode.network_citations.map((c, i) => (
                     <div key={i} className="text-xs text-gray-600 dark:text-gray-400 p-1.5 rounded bg-gray-50 dark:bg-gray-800">
@@ -448,18 +450,18 @@ export function GnosiplexioPanel() {
         {compareResult && (
           <div className="w-72 border-l border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 overflow-y-auto p-4">
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">Comparison</h3>
+              <h3 className="text-sm font-semibold text-gray-800 dark:text-gray-200">{t("compare.title")}</h3>
               <button onClick={() => setCompareResult(null)} className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded">
                 <X className="w-4 h-4 text-gray-400" />
               </button>
             </div>
             <div className="text-xs space-y-3">
               <div>
-                <span className="text-gray-400">Similarity</span>
+                <span className="text-gray-400">{t("compare.similarity")}</span>
                 <p className="text-lg font-bold text-blue-500">{(compareResult.similarity_score * 100).toFixed(1)}%</p>
               </div>
               <div>
-                <span className="text-gray-400">Shared concepts ({compareResult.shared_concepts.length})</span>
+                <span className="text-gray-400">{t("compare.sharedConcepts", { count: compareResult.shared_concepts.length })}</span>
                 <div className="flex flex-wrap gap-1 mt-1">
                   {compareResult.shared_concepts.map((c) => (
                     <span key={c} className="px-1.5 py-0.5 rounded bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 text-xs">{c}</span>
@@ -467,7 +469,7 @@ export function GnosiplexioPanel() {
                 </div>
               </div>
               <div>
-                <span className="text-gray-400">Shared citations ({compareResult.shared_citations.length})</span>
+                <span className="text-gray-400">{t("compare.sharedCitations", { count: compareResult.shared_citations.length })}</span>
                 <div className="space-y-1 mt-1 max-h-40 overflow-y-auto">
                   {compareResult.shared_citations.map((n, i) => (
                     <div key={i} className="text-xs p-1.5 rounded bg-gray-50 dark:bg-gray-800 text-gray-600 dark:text-gray-400">

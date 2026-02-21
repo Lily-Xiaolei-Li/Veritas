@@ -8,6 +8,7 @@
 "use client";
 
 import React from "react";
+import { useTranslations } from "next-intl";
 import { FileItem } from "./FileItem";
 import { Loader2, FolderOpen, AlertCircle } from "lucide-react";
 import type { FileIndex } from "@/lib/api/types";
@@ -27,12 +28,13 @@ export function FileList({
   isLoading,
   error,
 }: FileListProps) {
+  const t = useTranslations("files");
   // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-48 text-gray-500">
         <Loader2 className="h-8 w-8 animate-spin mb-2" />
-        <span className="text-sm">Loading files...</span>
+        <span className="text-sm">{t("loading")}</span>
       </div>
     );
   }
@@ -42,7 +44,7 @@ export function FileList({
     return (
       <div className="flex flex-col items-center justify-center h-48 text-red-500">
         <AlertCircle className="h-8 w-8 mb-2" />
-        <span className="text-sm font-medium">Failed to load files</span>
+        <span className="text-sm font-medium">{t("loadFailed")}</span>
         <span className="text-xs text-red-400 mt-1">{error}</span>
       </div>
     );
@@ -53,10 +55,8 @@ export function FileList({
     return (
       <div className="flex flex-col items-center justify-center h-48 text-gray-500">
         <FolderOpen className="h-12 w-12 mb-2 text-gray-300" />
-        <span className="text-sm font-medium">No files found</span>
-        <span className="text-xs text-gray-400 mt-1">
-          Add files to the workspace directory
-        </span>
+        <span className="text-sm font-medium">{t("emptyTitle")}</span>
+        <span className="text-xs text-gray-400 mt-1">{t("emptyHint")}</span>
       </div>
     );
   }

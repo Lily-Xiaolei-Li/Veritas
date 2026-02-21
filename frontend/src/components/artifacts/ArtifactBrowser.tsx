@@ -8,6 +8,7 @@
 
 import React, { useMemo, useRef, useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useTranslations } from "next-intl";
 import {
   Panel,
   PanelGroup,
@@ -44,6 +45,7 @@ interface ArtifactBrowserProps {
 }
 
 export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) {
+  const t = useTranslations("artifacts");
   const currentSessionId = useWorkbenchStore((s) => s.currentSessionId);
   const selectedArtifactId = useWorkbenchStore((s) => s.selectedArtifactId);
   const focusedArtifactIds = useWorkbenchStore((s) => s.focusedArtifactIds);
@@ -405,7 +407,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
           className="flex items-center justify-center gap-1.5 w-full px-3 py-2 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
         >
           <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide uppercase">Resources</span>
+          <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide uppercase">{t("resources")}</span>
         </button>
       ) : (
       <div className="flex items-center gap-2 px-3 py-1.5 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
@@ -442,7 +444,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             title={!currentSessionId ? "Select a session first" : "Create new blank artifact"}
           >
             <FilePlus className="h-3 w-3" />
-            <span>New</span>
+            <span>{t("new")}</span>
           </button>
 
           {/* Upload document */}
@@ -463,7 +465,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             }
           >
             <Plus className="h-3 w-3" />
-            <span>{uploading ? "..." : "Import"}</span>
+            <span>{uploading ? "..." : t("import")}</span>
           </button>
 
           <select
@@ -472,11 +474,11 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
               handleSortChange(e.target.value as ArtifactListParams["sort"])
             }
             className="text-[11px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            title="Sort order"
+            title={t("sortOrder")}
           >
-            <option value="created_desc">Newest first</option>
-            <option value="name_asc">Name A-Z</option>
-            <option value="size_desc">Largest first</option>
+            <option value="created_desc">{t("sort.newestFirst")}</option>
+            <option value="name_asc">{t("sort.nameAZ")}</option>
+            <option value="size_desc">{t("sort.largestFirst")}</option>
           </select>
 
           <Button
@@ -484,7 +486,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             size="sm"
             onClick={handleRefresh}
             disabled={isFetching}
-            title="Refresh"
+            title={t("refresh")}
             className="p-1"
           >
             <RefreshCw className={cn("h-3 w-3", isFetching && "animate-spin")} />
@@ -500,20 +502,20 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             value={artifactScope}
             onChange={(e) => setArtifactScope(e.target.value as "session" | "all_sessions")}
             className="text-[11px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            title="Artifacts scope"
+            title={t("scopeTitle")}
           >
-            <option value="session">This session</option>
-            <option value="all_sessions">All sessions</option>
+            <option value="session">{t("scope.thisSession")}</option>
+            <option value="all_sessions">{t("scope.allSessions")}</option>
           </select>
 
           <select
             value={focusMode}
             onChange={(e) => setFocusMode(e.target.value as "prefer" | "only")}
             className="text-[11px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
-            title="Focus mode"
+            title={t("focusModeTitle")}
           >
-            <option value="prefer">Prefer focused</option>
-            <option value="only">Only focused</option>
+            <option value="prefer">{t("focusMode.prefer")}</option>
+            <option value="only">{t("focusMode.only")}</option>
           </select>
 
           {/* Edit target indicator */}
@@ -533,7 +535,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                   setEditTarget(null);
                   clearEditTargetSelections();
                 }}
-                title="Cancel edit target"
+                title={t("cancelEditTarget")}
                 type="button"
               >
                 ×
@@ -557,7 +559,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                   clearFocusedArtifacts();
                   clearTextSelections();
                 }}
-                title="Clear all focused"
+                title={t("clearAllFocused")}
                 type="button"
               >
                 ×
@@ -577,7 +579,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             <button
               onClick={handleDownloadAll}
               className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500"
-              title="Download all as ZIP"
+              title={t("downloadAllZip")}
             >
               <Download className="h-3.5 w-3.5" />
             </button>
@@ -587,7 +589,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
           <button
             onClick={() => setIsToolbarCollapsed(true)}
             className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500"
-            title="Collapse toolbar"
+            title={t("collapseToolbar")}
           >
             <ChevronUp className="h-3 w-3" />
           </button>
@@ -625,7 +627,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                 "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               )}
               onClick={() => listPanelRef.current?.expand(30)}
-              title="Expand artifact list"
+              title={t("expandArtifactList")}
             >
               <div className="pt-3 text-gray-700 dark:text-gray-200">
                 <ChevronRight className="h-5 w-5" />
@@ -662,7 +664,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                     type="button"
                     className="p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-500"
                     onClick={() => listPanelRef.current?.collapse()}
-                    title="Collapse artifact list"
+                    title={t("collapseArtifactList")}
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
@@ -675,16 +677,16 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                   <button
                     className="text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => setCheckedArtifacts(combinedArtifacts.map((a) => a.id))}
-                    title="Select all"
+                    title={t("selectAll")}
                   >
-                    All
+                    {t("all")}
                   </button>
                   <button
                     className="text-[10px] px-1.5 py-0.5 rounded bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                     onClick={() => clearCheckedArtifacts()}
-                    title="Select none"
+                    title={t("selectNone")}
                   >
-                    None
+                    {t("none")}
                   </button>
                   <div className="flex-1" />
                   <button
@@ -803,7 +805,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-              New Artifact
+              {t("newArtifact")}
             </h3>
             <div className="space-y-4">
               <div>
@@ -814,7 +816,7 @@ export function ArtifactBrowser({ knowledgeSourcesSlot }: ArtifactBrowserProps) 
                   type="text"
                   value={newArtifactName}
                   onChange={(e) => setNewArtifactName(e.target.value)}
-                  placeholder="e.g., Literature Review"
+                  placeholder={t("namePlaceholder")}
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   autoFocus
                   onKeyDown={(e) => {

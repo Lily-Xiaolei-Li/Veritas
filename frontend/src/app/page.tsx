@@ -11,6 +11,7 @@
 
 import { useEffect, useState } from "react";
 import { LogOut, RotateCcw, Save, Undo2, Download, Upload, FolderOpen, FilePlus2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { WorkbenchLayout } from "@/components/workbench/WorkbenchLayout";
 import { HealthIndicator } from "@/components/health/HealthIndicator";
 import { KillSwitchButton } from "@/components/workbench/KillSwitchButton";
@@ -19,9 +20,12 @@ import { useLogout } from "@/lib/hooks/useAuth";
 import { useAuthStore, useWorkbenchStore } from "@/lib/store";
 import { APP_VERSION } from "@/lib/utils/constants";
 import { cn } from "@/lib/utils/cn";
+import { LanguageSwitcher } from "@/components/ui/LanguageSwitcher";
+import { ProliferomaximaProgressBar } from "@/components/proliferomaxima/ProgressBar";
 import { exportWorkspace, getUndoStack, importWorkspace, saveWorkspace, undoLatest, resetWorkspace } from "@/lib/api/workspace";
 
 export default function Home() {
+  const t = useTranslations();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isWorkspaceMenuOpen, setIsWorkspaceMenuOpen] = useState(false);
   const [saveStatus, setSaveStatus] = useState<string | null>(null);
@@ -47,41 +51,41 @@ export default function Home() {
 
   const doSave = async () => {
     if (!currentSessionId) {
-      alert("No active session to save.");
+      alert(t("toolbar.noActiveSessionSave"));
       return;
     }
 
     try {
       const resp = await saveWorkspace(currentSessionId);
-      const t = new Date(resp.saved_at);
-      setSaveStatus(`Saved ✓ ${t.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`);
+      const savedAt = new Date(resp.saved_at);
+      setSaveStatus(t("toolbar.savedAt", { time: savedAt.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }));
       // Clear after a bit
       window.setTimeout(() => setSaveStatus(null), 3000);
     } catch (e) {
-      alert(`Save failed: ${e instanceof Error ? e.message : String(e)}`);
+      alert(t("toolbar.saveFailed", { error: e instanceof Error ? e.message : String(e) }));
     }
   };
 
   const doUndo = async () => {
     if (!currentSessionId) {
-      alert("No active session.");
+      alert(t("toolbar.noActiveSession"));
       return;
     }
 
     try {
       const resp = await undoLatest(currentSessionId);
       if (!resp.ok) {
-        alert("Nothing to undo.");
+        alert(t("toolbar.nothingToUndo"));
       }
       await refreshUndo();
     } catch (e) {
-      alert(`Undo failed: ${e instanceof Error ? e.message : String(e)}`);
+      alert(t("toolbar.undoFailed", { error: e instanceof Error ? e.message : String(e) }));
     }
   };
 
   const doExport = async () => {
     if (!currentSessionId) {
-      alert("No active session.");
+      alert(t("toolbar.noActiveSession"));
       return;
     }
     try {
@@ -113,16 +117,16 @@ export default function Home() {
       try {
         data = JSON.parse(text);
       } catch {
-        alert("Invalid JSON file.");
+        alert(t("toolbar.invalidJsonFile"));
         return;
       }
 
-      const mode = (confirm("Import mode: OK = MERGE (safe) / Cancel = REPLACE (dangerous). Continue?") ? "merge" : "replace") as
+      const mode = (confirm(t("toolbar.importModeConfirm")) ? "merge" : "replace") as
         | "merge"
         | "replace";
 
       if (mode === "replace") {
-        const ok = confirm("REPLACE will wipe ALL existing sessions/messages/artifacts in the DB. Are you absolutely sure?");
+        const ok = confirm(t("toolbar.replaceWarn"));
         if (!ok) return;
       }
 
@@ -175,9 +179,7 @@ export default function Home() {
   }, [currentSessionId, undoCount]);
 
   const resetLayout = () => {
-    const ok = confirm(
-      "Reset layout to defaults? This will clear saved panel sizes and reload the page."
-    );
+    const ok = confirm(t("toolbar.resetLayoutConfirm"));
     if (!ok) return;
 
     const keys = [
@@ -210,6 +212,9 @@ export default function Home() {
           <span className="text-sm text-gray-500 dark:text-gray-400">v{APP_VERSION}</span>
         </div>
         <div className="flex items-center gap-2">
+          {/* Proliferomaxima Progress Bar */}
+          <ProliferomaximaProgressBar />
+
           {/* Kill Switch - always visible when execution is active */}
           <KillSwitchButton />
 
@@ -231,8 +236,8 @@ export default function Home() {
                 "focus:outline-none focus:ring-2 focus:ring-blue-500",
                 isWorkspaceMenuOpen && "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-200"
               )}
-              title="File menu (Save, Undo, Export, Import)"
-              aria-label="File menu"
+              title={t("toolbar.fileMenu")}
+              aria-label={t("toolbar.fileMenu")}
             >
               <FolderOpen className="h-5 w-5" />
             </button>
@@ -251,7 +256,7 @@ export default function Home() {
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Save className="h-4 w-4" />
-                    <span>Save</span>
+                    <span>{t("toolbar.save")}</span>
                     <span className="ml-auto text-xs text-gray-400">⌘S</span>
                   </button>
                   {saveStatus && (
@@ -264,7 +269,7 @@ export default function Home() {
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Undo2 className="h-4 w-4" />
-                    <span>Undo</span>
+                    <span>{t("toolbar.undo")}</span>
                     {undoCount > 0 ? (
                       <span className="ml-auto text-xs text-gray-500 dark:text-gray-300">{undoCount}</span>
                     ) : (
@@ -277,14 +282,14 @@ export default function Home() {
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Download className="h-4 w-4" />
-                    Export
+                    {t("toolbar.export")}
                   </button>
                   <button
                     onClick={async () => { await doImport(); setIsWorkspaceMenuOpen(false); }}
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-700"
                   >
                     <Upload className="h-4 w-4" />
-                    Import
+                    {t("toolbar.import")}
                   </button>
                   <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
                   <button
@@ -292,7 +297,7 @@ export default function Home() {
                     className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
                   >
                     <FilePlus2 className="h-4 w-4" />
-                    New Project
+                    {t("toolbar.newProject")}
                   </button>
                 </div>
               </>
@@ -315,13 +320,14 @@ export default function Home() {
               "hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors",
               "focus:outline-none focus:ring-2 focus:ring-blue-500"
             )}
-            title="Reset layout"
-            aria-label="Reset layout"
+            title={t("toolbar.resetLayout")}
+            aria-label={t("toolbar.resetLayout")}
           >
             <RotateCcw className="h-5 w-5" />
           </button>
 
-          {/* Settings button */}
+          {/* Language + Settings */}
+          <LanguageSwitcher />
           <SettingsButton onClick={() => setIsSettingsOpen(true)} />
 
           {/* User info and logout (only when auth enabled and authenticated) */}
@@ -339,7 +345,7 @@ export default function Home() {
                   "hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors",
                   "focus:outline-none focus:ring-2 focus:ring-blue-500"
                 )}
-                aria-label="Sign out"
+                aria-label={t("toolbar.signOut")}
               >
                 <LogOut className="h-5 w-5" />
               </button>
@@ -373,20 +379,20 @@ export default function Home() {
           {/* Dialog */}
           <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 max-w-md mx-4">
             <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-2">
-              Start New Project?
+              {t("toolbar.newProjectTitle")}
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-              This will <span className="font-semibold text-red-600 dark:text-red-400">permanently delete</span> all sessions, messages, and artifacts in the current workspace.
+              {t("toolbar.newProjectDesc1")}
             </p>
             <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-              This action cannot be undone. Make sure you have exported any important work.
+              {t("toolbar.newProjectDesc2")}
             </p>
             <div className="flex gap-3 justify-end">
               <button
                 onClick={() => setShowNewProjectConfirm(false)}
                 className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 onClick={async () => {
@@ -395,7 +401,7 @@ export default function Home() {
                 }}
                 className="px-4 py-2 text-sm bg-red-600 text-white hover:bg-red-700 rounded-md transition-colors"
               >
-                Delete Everything & Start Fresh
+                {t("toolbar.deleteAllStartFresh")}
               </button>
             </div>
           </div>

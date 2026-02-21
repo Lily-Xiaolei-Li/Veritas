@@ -35,9 +35,9 @@ export function DownloadButton({ doi, title, className = "", compact = false }: 
         setStatus("error");
         setErrorMsg(res.error || res.status);
       }
-    } catch (e: any) {
+    } catch (e: unknown) {
       setStatus("error");
-      setErrorMsg(e.message || "Download failed");
+      setErrorMsg((e as Error)?.message || "Download failed");
     }
   };
 

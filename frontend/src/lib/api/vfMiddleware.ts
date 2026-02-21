@@ -1,6 +1,7 @@
 import { authFetch } from "./authFetch";
+import { API_BASE_URL } from "@/lib/utils/constants";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8001";
+const VF_BASE = `${API_BASE_URL}/api/v1/vf`;
 
 export type VFAgent = {
   name: string;
@@ -18,31 +19,31 @@ export type VFGenerateRequest = {
 };
 
 export async function fetchVFStats() {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/stats`);
+  const res = await authFetch(`${VF_BASE}/stats`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function fetchVFList(limit = 50, offset = 0) {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/list?limit=${limit}&offset=${offset}`);
+  const res = await authFetch(`${VF_BASE}/list?limit=${limit}&offset=${offset}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function fetchVFAgents(): Promise<{ agents: VFAgent[] }> {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/agents`);
+  const res = await authFetch(`${VF_BASE}/agents`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function lookupVFProfile(paperId: string) {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/lookup?paper_id=${encodeURIComponent(paperId)}`);
+  const res = await authFetch(`${VF_BASE}/lookup?paper_id=${encodeURIComponent(paperId)}`);
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
 
 export async function generateVFProfile(req: VFGenerateRequest) {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/generate`, {
+  const res = await authFetch(`${VF_BASE}/generate`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
@@ -52,7 +53,7 @@ export async function generateVFProfile(req: VFGenerateRequest) {
 }
 
 export async function deleteVFProfile(paperId: string) {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/${encodeURIComponent(paperId)}`, { method: "DELETE" });
+  const res = await authFetch(`${VF_BASE}/${encodeURIComponent(paperId)}`, { method: "DELETE" });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }
@@ -61,7 +62,7 @@ export async function syncVFProfiles(
   body: { library_path?: string; agent?: string; dry_run?: boolean },
   onMessage: (event: Record<string, unknown>) => void,
 ) {
-  const res = await authFetch(`${API_BASE}/api/v1/vf/sync`, {
+  const res = await authFetch(`${VF_BASE}/sync`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),

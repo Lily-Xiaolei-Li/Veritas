@@ -10,6 +10,7 @@
 
 import React, { useState } from "react";
 import { Key, Settings as SettingsIcon, Theater } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Modal } from "@/components/ui/Modal";
 import { ApiKeysPage } from "./ApiKeysPage";
 import { PreferencesPage } from "./PreferencesPage";
@@ -40,17 +41,17 @@ interface TabConfig {
 const TABS: TabConfig[] = [
   {
     id: "llm-providers",
-    label: "LLM Providers",
+    label: "settings.llmProviders",
     icon: <Key className="h-4 w-4" />,
   },
   {
     id: "preferences",
-    label: "Preferences",
+    label: "settings.preferences",
     icon: <SettingsIcon className="h-4 w-4" />,
   },
   {
     id: "personas",
-    label: "Personas",
+    label: "settings.personas",
     icon: <Theater className="h-4 w-4" />,
   },
 ];
@@ -60,13 +61,14 @@ const TABS: TabConfig[] = [
 // =============================================================================
 
 export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
+  const t = useTranslations();
   const [activeTab, setActiveTab] = useState<SettingsTab>("llm-providers");
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title="Settings"
+      title={t("settings.title")}
       size="xl"
       className="max-h-[80vh] flex flex-col"
     >
@@ -86,7 +88,7 @@ export function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
               )}
             >
               {tab.icon}
-              {tab.label}
+              {t(tab.label)}
             </button>
           ))}
         </div>
@@ -112,6 +114,7 @@ interface SettingsButtonProps {
 }
 
 export function SettingsButton({ onClick, className }: SettingsButtonProps) {
+  const t = useTranslations();
   return (
     <button
       onClick={onClick}
@@ -121,7 +124,7 @@ export function SettingsButton({ onClick, className }: SettingsButtonProps) {
         "focus:outline-none focus:ring-2 focus:ring-blue-500",
         className
       )}
-      aria-label="Settings"
+      aria-label={t("settings.title")}
     >
       <SettingsIcon className="h-5 w-5" />
     </button>

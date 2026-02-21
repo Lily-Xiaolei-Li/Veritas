@@ -5,7 +5,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { Wand2, Loader2, AlertCircle, Sparkles } from "lucide-react";
+import { Wand2, Loader2, AlertCircle } from "lucide-react";
 import { useWorkbenchStore } from "@/lib/store";
 import { startCheckerRun, getCheckerStatus, getCheckerResults } from "@/lib/api/checker";
 import type { CheckerRunOptions } from "@/lib/api/checker";

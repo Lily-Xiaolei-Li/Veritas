@@ -129,7 +129,7 @@ async def vf_sync(req: VFSyncRequest):
         used_ids: Dict[str, int] = {}
 
         for file in files:
-            content_head = _read_head(file, lines=25)
+            content_head = _read_head(file)
             meta = _parse_md_metadata(content_head, fallback_name=file.stem)
             base_id = _build_paper_id(meta)
             used = used_ids.get(base_id, 0)
@@ -225,19 +225,7 @@ async def vf_delete(paper_id: str):
     }
 
 
-# ---------------------------------------------------------------------------
-# Metadata parsing helpers (improved — handles ## Title + author lines)
-# ---------------------------------------------------------------------------
-
-SKIP_HEADINGS = frozenset({
-    "ABSTRACT", "INTRODUCTION", "KEYWORDS", "RESEARCH ARTICLE",
-    "ORIGINAL ARTICLE", "ARTICLE", "ORIGINAL RESEARCH", "REVIEW",
-    "REVIEW ARTICLE", "SHORT COMMUNICATION", "LETTER", "NOTE",
-    "EDITORIAL", "COMMENTARY", "PERSPECTIVE", "DISCUSSION",
-})
-
-
-def _read_head(path: Path, lines: int = 25) -> str:
+def _read_head(path: Path, lines: int = 20) -> str:
     head: List[str] = []
     with path.open("r", encoding="utf-8", errors="ignore") as f:
         for i, line in enumerate(f):
@@ -248,77 +236,28 @@ def _read_head(path: Path, lines: int = 25) -> str:
 
 
 def _parse_md_metadata(head: str, fallback_name: str) -> Dict[str, Any]:
-    """Extract title, authors, year from parsed markdown — handles both
-    structured (Title:/Authors:) and Docling-style (## heading + author lines)."""
     title = ""
     authors: List[str] = []
     year: Optional[int] = None
-    title_line_idx = -1
 
-    lines = [l.strip() for l in head.splitlines() if l.strip() and not l.strip().startswith("<!--")]
-
-    for i, line in enumerate(lines):
-        # --- Title ---
-        # Try explicit "Title:" first
-        if line.lower().startswith("title:") and not title:
-            title = line.split(":", 1)[1].strip()
-            title_line_idx = i
-            continue
-
-        # Then ## headings (Docling format)
-        if line.startswith("## ") and not title:
-            candidate = line.lstrip("#").strip()
-            if candidate.upper() in SKIP_HEADINGS:
-                continue
-            if len(candidate.split()) <= 2 and candidate.upper() == candidate:
-                continue
-            if re.match(r"^\d+[\.\s]", candidate):
-                continue
-            title = candidate
-            title_line_idx = i
-            continue
-
-        # Also try single # heading
-        if line.startswith("# ") and not line.startswith("## ") and not title:
-            title = line[2:].strip()
-            title_line_idx = i
-            continue
-
-        # --- Authors ---
-        # Explicit Authors: line
-        if (line.lower().startswith("authors:") or line.lower().startswith("author:")) and not authors:
-            val = line.split(":", 1)[1].strip()
+    for line in head.splitlines()[:20]:
+        s = line.strip()
+        if s.startswith("# ") and not title:
+            title = s[2:].strip()
+        if s.lower().startswith("title:") and not title:
+            title = s.split(":", 1)[1].strip()
+        if s.lower().startswith("authors:") or s.lower().startswith("author:"):
+            val = s.split(":", 1)[1].strip()
             authors = [x.strip() for x in re.split(r"[,;]", val) if x.strip()]
-            continue
-
-        # Docling-style: author line after title (pipes, affiliation numbers)
-        if title and not authors and title_line_idx >= 0 and i > title_line_idx and i <= title_line_idx + 5:
-            if "|" in line and re.search(r"[A-Z][a-z]+", line):
-                raw_authors = [a.strip() for a in line.split("|") if a.strip()]
-                authors = [re.sub(r"[\d*†‡§¶]+", "", a).strip() for a in raw_authors if re.search(r"[A-Z][a-z]+", a)]
-                continue
-            if re.search(r"[A-Z][a-z]+ [A-Z][a-z]+\s*\d", line):
-                authors = [re.sub(r"[\d*†‡§¶]+", "", line).strip()]
-                continue
-
-        # --- Year ---
-        if not year:
-            # Explicit Year: line
-            if line.lower().startswith("year:"):
-                m = re.search(r"\b(19|20)\d{2}\b", line)
-                if m:
-                    year = int(m.group(0))
-                continue
-            # From Received/Accepted/Published dates
-            m = re.search(r"(?:Received|Accepted|Published|Revised)[:\s]*.*?(\d{4})", line)
-            if m:
-                year = int(m.group(1))
+        if s.lower().startswith("year:"):
+            y = re.findall(r"\b(19|20)\d{2}\b", s)
+            if y:
+                year = int(re.search(r"\b(19|20)\d{2}\b", s).group(0))
 
     if not title:
         title = fallback_name.replace("_", " ").strip()
-
     if not year:
-        m = re.search(r"\b(20[012]\d)\b", head + " " + fallback_name)
+        m = re.search(r"\b(19|20)\d{2}\b", head + " " + fallback_name)
         if m:
             year = int(m.group(0))
 
@@ -326,26 +265,10 @@ def _parse_md_metadata(head: str, fallback_name: str) -> Dict[str, Any]:
 
 
 def _build_paper_id(meta: Dict[str, Any]) -> str:
-    """Build paper_id as LastName_Year_short_title."""
     authors = meta.get("authors") if isinstance(meta.get("authors"), list) else []
     first = authors[0] if authors else "Unknown"
-    # Get surname (last word, or handle prefixes like De, Van, Al)
-    name_parts = first.split()
-    prefixes = {"de", "van", "von", "al", "el", "le", "la", "di", "del", "der"}
-    if len(name_parts) >= 2:
-        surname_parts = []
-        for j in range(len(name_parts) - 1, -1, -1):
-            surname_parts.insert(0, name_parts[j])
-            if j > 0 and name_parts[j - 1].lower() not in prefixes:
-                break
-        last_name = "_".join(surname_parts)
-    else:
-        last_name = name_parts[-1] if name_parts else "Unknown"
-    last_name = re.sub(r"[^a-zA-Z_]", "", last_name) or "Unknown"
-
+    last_name = re.sub(r"[^a-zA-Z0-9]", "", first.split()[-1]) or "Unknown"
     year = meta.get("year") or "0000"
     title = str(meta.get("title") or "untitled").lower()
-    # Take first 5 words for short title
-    words = re.sub(r"^(the|a|an)\s+", "", title, flags=re.IGNORECASE).split()[:5]
-    short_title = re.sub(r"[^a-z0-9_]+", "_", "_".join(words)).strip("_")[:40] or "untitled"
+    short_title = re.sub(r"[^a-z0-9]+", "_", title).strip("_")[:40] or "untitled"
     return f"{last_name}{year}_{short_title}"

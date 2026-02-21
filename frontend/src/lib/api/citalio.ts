@@ -74,3 +74,70 @@ export async function getCitalioResults(runId: string): Promise<{ run_id: string
   if (!res.ok && res.status !== 202) throw new Error(`Citalio results failed: ${res.status}`);
   return res.json();
 }
+
+// ============================================================================
+// MANUAL MODE - Citalio 手动模式
+// ============================================================================
+
+export interface CitalioManualFilters {
+  year_min?: number;
+  year_max?: number;
+  paper_type?: string;
+  primary_method?: string;
+  keywords?: string[];
+  journal?: string;
+  authors?: string[];
+  in_library?: boolean;
+  empirical_context?: string;
+}
+
+export interface CitalioManualResult {
+  paper_id: string;
+  authors: string[];
+  year?: number;
+  title: string;
+  journal?: string;
+  matched_chunk_type: string;
+  matched_text: string;
+  relevance_score: number;
+  cite_intext: string;
+  cite_full: string;
+  meta: Record<string, unknown>;
+}
+
+export interface CitalioManualSearchResponse {
+  query: string;
+  results: CitalioManualResult[];
+  total_found: number;
+  filters_applied: Record<string, unknown>;
+}
+
+export interface CitalioFilterOptions {
+  paper_types: string[];
+  primary_methods: string[];
+  journals: string[];
+  year_range: { min: number | null; max: number | null };
+  empirical_contexts: string[];
+  chunk_types: string[];
+}
+
+export async function citalioManualSearch(payload: {
+  query: string;
+  chunk_types?: string[];
+  limit?: number;
+  filters?: CitalioManualFilters;
+}): Promise<CitalioManualSearchResponse> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/citalio/manual/search`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+  if (!res.ok) throw new Error(`Citalio manual search failed: ${res.status}`);
+  return res.json();
+}
+
+export async function getCitalioFilterOptions(): Promise<CitalioFilterOptions> {
+  const res = await authFetch(`${API_BASE_URL}/api/v1/citalio/manual/filter-options`);
+  if (!res.ok) throw new Error(`Citalio filter options failed: ${res.status}`);
+  return res.json();
+}

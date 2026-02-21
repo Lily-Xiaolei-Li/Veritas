@@ -13,6 +13,7 @@
 
 import React from "react";
 import { Loader2, WifiOff } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { LoginScreen } from "./LoginScreen";
 import { useAuthStatus } from "@/lib/hooks/useAuth";
 import { cn } from "@/lib/utils/cn";
@@ -31,24 +32,26 @@ interface AuthGuardProps {
 // =============================================================================
 
 function CheckingState() {
+  const t = useTranslations("auth");
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
       <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-      <p className="mt-4 text-gray-600">Connecting...</p>
+      <p className="mt-4 text-gray-600">{t("connecting")}</p>
     </div>
   );
 }
 
 function OfflineState({ onRetry }: { onRetry: () => void }) {
+  const t = useTranslations("auth");
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="text-center">
         <WifiOff className="h-12 w-12 text-red-500 mx-auto" />
         <h2 className="mt-4 text-xl font-semibold text-gray-900">
-          Cannot connect to backend
+          {t("cannotConnectBackend")}
         </h2>
         <p className="mt-2 text-gray-600 max-w-sm">
-          Please make sure the backend server is running and reachable at: {API_BASE_URL}
+          {t("backendReachableAt", { url: API_BASE_URL })}
         </p>
         <button
           onClick={onRetry}
@@ -59,7 +62,7 @@ function OfflineState({ onRetry }: { onRetry: () => void }) {
             "transition-colors"
           )}
         >
-          Retry connection
+          {t("retryConnection")}
         </button>
       </div>
     </div>

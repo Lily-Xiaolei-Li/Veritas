@@ -5,10 +5,12 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { Upload, FileText, Loader2, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
+import { Upload, Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { importCsv, getBatchStatus, BatchStatusResponse } from "@/lib/api/papers";
 
 export function BatchImport() {
+  const t = useTranslations("batchImport");
   const [dragOver, setDragOver] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [jobId, setJobId] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function BatchImport() {
         if (status.status === "completed") {
           if (pollRef.current) clearInterval(pollRef.current);
         }
-      } catch (e) {
+      } catch {
         // ignore poll errors
       }
     };
@@ -43,7 +45,7 @@ export function BatchImport() {
   const handleFile = useCallback(async (file: File) => {
     const ext = file.name.split(".").pop()?.toLowerCase();
     if (!["csv", "bib", "bibtex", "txt"].includes(ext || "")) {
-      setError("Please upload a CSV or BibTeX file");
+      setError(t("invalidFileType"));
       return;
     }
 
@@ -55,12 +57,12 @@ export function BatchImport() {
     try {
       const result = await importCsv(file);
       setJobId(result.job_id);
-    } catch (e: any) {
-      setError(e.message || "Import failed");
+    } catch (e: unknown) {
+      setError((e as Error)?.message || "Import failed");
     } finally {
       setUploading(false);
     }
-  }, []);
+  }, [t]);
 
   const onDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -106,7 +108,7 @@ export function BatchImport() {
           <Upload className="mx-auto w-10 h-10 text-gray-400" />
         )}
         <p className="mt-3 text-sm font-medium text-gray-600 dark:text-gray-300">
-          {uploading ? "Uploading..." : "Drop CSV or BibTeX file here"}
+          {uploading ? t("uploading") : t("dropHint")}
         </p>
         <p className="mt-1 text-xs text-gray-400">
           Google Scholar export, or any CSV with Title/DOI columns
@@ -126,14 +128,14 @@ export function BatchImport() {
         <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-4 space-y-3">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-200">
-              Batch Download
+              {t("batchDownload")}
             </h3>
             <span className={`text-xs px-2 py-0.5 rounded-full font-medium
               ${batchStatus.status === "completed"
                 ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
                 : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
               }`}>
-              {batchStatus.status === "completed" ? "Done" : "Running..."}
+              {batchStatus.status === "completed" ? t("done") : t("running")}
             </span>
           </div>
 

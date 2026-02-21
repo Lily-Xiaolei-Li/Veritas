@@ -29,6 +29,7 @@ from .citalio_routes import router as citalio_router
 from .proliferomaxima_routes import router as proliferomaxima_router
 from .gnosiplexio_routes import router as gnosiplexio_router
 from .gnosiplexio_growth_routes import router as gnosiplexio_growth_router
+from .library_routes import router as library_router
 
 # Main API router
 api_router = APIRouter(prefix="/api/v1")
@@ -59,5 +60,6 @@ api_router.include_router(citalio_router, tags=["citalio"])
 api_router.include_router(proliferomaxima_router, tags=["proliferomaxima"])
 api_router.include_router(gnosiplexio_router, tags=["gnosiplexio"])
 api_router.include_router(gnosiplexio_growth_router, tags=["gnosiplexio-growth"])
+api_router.include_router(library_router, tags=["library"])
 
 __all__ = ["api_router"]

@@ -19,8 +19,15 @@ from .artifact_handlers import (
 )
 from .chat_handlers import chat_history, chat_send
 from .checker_handlers import checker_results, checker_run, checker_status
-from .citalio_handlers import citalio_results, citalio_run, citalio_status
-from .proliferomaxima_handlers import proliferomaxima_results, proliferomaxima_run, proliferomaxima_status
+from .library_handlers import (
+    library_check,
+    library_export,
+    library_fix,
+    library_gaps,
+    library_match,
+    library_status,
+    library_vf_status,
+)
 from .vf_middleware_handlers import vf_batch, vf_delete, vf_generate, vf_list, vf_lookup, vf_stats, vf_sync
 from .context_handlers import context_clear, context_get, context_resolve, context_set
 from .contract import (
@@ -157,9 +164,8 @@ def _resource_actions() -> dict[str, list[str]]:
         "config": ["get", "set", "list"],
         "status": ["show", "doctor"],
         "checker": ["run", "status", "results"],
-        "citalio": ["run", "status", "results"],
-        "proliferomaxima": ["run", "status", "results"],
         "vf": ["generate", "batch", "lookup", "stats", "list", "delete", "sync"],
+        "library": ["status", "check", "gaps", "match", "vf-status", "fix", "export"],
         "log": ["stream", "recent"],
     }
 
@@ -282,20 +288,6 @@ def _handler_for(resource: str, action: str) -> Handler:
     if resource == "checker" and action == "results":
         return checker_results
 
-    if resource == "citalio" and action == "run":
-        return citalio_run
-    if resource == "citalio" and action == "status":
-        return citalio_status
-    if resource == "citalio" and action == "results":
-        return citalio_results
-
-    if resource == "proliferomaxima" and action == "run":
-        return proliferomaxima_run
-    if resource == "proliferomaxima" and action == "status":
-        return proliferomaxima_status
-    if resource == "proliferomaxima" and action == "results":
-        return proliferomaxima_results
-
     if resource == "vf" and action == "generate":
         return vf_generate
     if resource == "vf" and action == "batch":
@@ -315,6 +307,21 @@ def _handler_for(resource: str, action: str) -> Handler:
         return log_stream
     if resource == "log" and action == "recent":
         return log_recent
+
+    if resource == "library" and action == "status":
+        return library_status
+    if resource == "library" and action == "check":
+        return library_check
+    if resource == "library" and action == "gaps":
+        return library_gaps
+    if resource == "library" and action == "match":
+        return library_match
+    if resource == "library" and action == "vf-status":
+        return library_vf_status
+    if resource == "library" and action == "fix":
+        return library_fix
+    if resource == "library" and action == "export":
+        return library_export
 
     return noop_handler
 
@@ -452,26 +459,6 @@ def _configure_action_parser(resource: str, action: str, action_parser: argparse
     elif resource == "checker" and action == "results":
         action_parser.add_argument("run_id", help="Checker run ID")
 
-    elif resource == "citalio" and action == "run":
-        action_parser.add_argument("--session", default=None, help="Session ID")
-        action_parser.add_argument("--artifact", default=None, help="Artifact ID as input")
-        action_parser.add_argument("--text", default=None, help="Inline text input")
-        action_parser.add_argument("--min-confidence", type=float, default=0.5, help="Min relevance confidence")
-        action_parser.add_argument("--max-citations-per-sentence", type=int, default=3, help="Maximum citations to insert per sentence")
-        action_parser.add_argument("--include-common-knowledge", action="store_true", help="Also suggest citations for COMMON sentences")
-    elif resource == "citalio" and action == "status":
-        action_parser.add_argument("run_id", help="Citalio run ID")
-    elif resource == "citalio" and action == "results":
-        action_parser.add_argument("run_id", help="Citalio run ID")
-
-    elif resource == "proliferomaxima" and action == "run":
-        action_parser.add_argument("--library-path", default=None, help="Override parsed markdown directory")
-        action_parser.add_argument("--max-files", type=int, default=None, help="Limit number of markdown files")
-        action_parser.add_argument("--max-items", type=int, default=None, help="Limit number of references")
-        action_parser.add_argument("--wait", action="store_true", help="Wait for completion and fetch results")
-    elif resource == "proliferomaxima" and action in {"status", "results"}:
-        action_parser.add_argument("run_id", help="Proliferomaxima run ID")
-
     elif resource == "vf" and action == "generate":
         action_parser.add_argument("--paper-id", required=True, help="Canonical paper ID, e.g. Power_1997")
         action_parser.add_argument("--metadata-json", default=None, help="Metadata JSON string")
@@ -506,6 +493,19 @@ def _configure_action_parser(resource: str, action: str, action_parser: argparse
     elif resource == "log" and action == "recent":
         action_parser.add_argument("--limit", type=int, default=100, help="Number of log entries (default: 100)")
         action_parser.add_argument("--level", default=None, help="Filter by log level")
+
+    # Library commands
+    elif resource == "library" and action == "gaps":
+        action_parser.add_argument("--priority", type=int, default=None, help="Filter by priority (1-3)")
+    elif resource == "library" and action == "match":
+        action_parser.add_argument("--paper-id", required=True, help="Paper ID to check")
+    elif resource == "library" and action == "fix":
+        action_parser.add_argument("--priority", type=int, required=True, help="Priority level to fix (1-3)")
+        action_parser.add_argument("--dry-run", action="store_true", help="Show plan without executing")
+    elif resource == "library" and action == "export":
+        action_parser.add_argument("--output", default=None, help="Output file path (default: auto-generated with timestamp)")
+        action_parser.add_argument("--format", choices=["csv", "json"], default="csv", help="Output format (default: csv)")
+        action_parser.add_argument("--include-paths", action="store_true", help="Include file path columns (pdf_filename, chunks_folder)")
 
 
 def build_parser() -> argparse.ArgumentParser:

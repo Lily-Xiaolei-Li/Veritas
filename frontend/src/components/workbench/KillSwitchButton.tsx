@@ -10,6 +10,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { Square, Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { useKillSwitch } from "@/lib/hooks/useKillSwitch";
 import { cn } from "@/lib/utils/cn";
 
@@ -18,6 +19,7 @@ interface KillSwitchButtonProps {
 }
 
 export function KillSwitchButton({ className }: KillSwitchButtonProps) {
+  const t = useTranslations("killSwitch");
   const { terminate, isTerminating, canTerminate } = useKillSwitch();
   const [isPrimed, setIsPrimed] = useState(false);
   const [confirmTimeout, setConfirmTimeout] = useState<NodeJS.Timeout | null>(
@@ -88,26 +90,26 @@ export function KillSwitchButton({ className }: KillSwitchButtonProps) {
       )}
       title={
         isTerminating
-          ? "Stopping..."
+          ? t("stopping")
           : isPrimed
-            ? "Click again to confirm stop"
-            : "Stop the current execution"
+            ? t("confirmHint")
+            : t("stopHint")
       }
     >
       {isTerminating ? (
         <>
           <Loader2 className="h-4 w-4 animate-spin" />
-          <span>Stopping...</span>
+          <span>{t("stopping")}</span>
         </>
       ) : isPrimed ? (
         <>
           <Square className="h-4 w-4 fill-current" />
-          <span>Confirm Stop</span>
+          <span>{t("confirmStop")}</span>
         </>
       ) : (
         <>
           <Square className="h-4 w-4" />
-          <span>Stop</span>
+          <span>{t("stop")}</span>
         </>
       )}
     </button>

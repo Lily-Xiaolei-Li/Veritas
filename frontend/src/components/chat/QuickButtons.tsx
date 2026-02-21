@@ -7,6 +7,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 interface QuickButtonConfig {
   id: string;
@@ -24,31 +25,15 @@ interface QuickButtonsProps {
   disabled?: boolean;
 }
 
-const fallbackButtons: QuickButtonConfig[] = [
-  {
-    id: "cite",
-    label: "Find Citations",
-    prompt: "Please find relevant academic citations for: ",
-  },
-  {
-    id: "harvard",
-    label: "Harvard Format",
-    prompt: "Please format this in Harvard reference style: ",
-  },
-  {
-    id: "summarize",
-    label: "Summarize",
-    prompt: "Please summarize the following: ",
-  },
-  {
-    id: "improve",
-    label: "Improve Writing",
-    prompt: "Please improve the academic writing of: ",
-  },
-];
-
 export function QuickButtons({ onSend, getSelectedText, disabled = false }: QuickButtonsProps) {
-  const [buttons, setButtons] = useState<QuickButtonConfig[]>(fallbackButtons);
+  const t = useTranslations("quickButtons");
+  const localizedFallbackButtons: QuickButtonConfig[] = [
+    { id: "cite", label: t("cite.label"), prompt: t("cite.prompt") },
+    { id: "harvard", label: t("harvard.label"), prompt: t("harvard.prompt") },
+    { id: "summarize", label: t("summarize.label"), prompt: t("summarize.prompt") },
+    { id: "improve", label: t("improve.label"), prompt: t("improve.prompt") },
+  ];
+  const [buttons, setButtons] = useState<QuickButtonConfig[]>(localizedFallbackButtons);
 
   useEffect(() => {
     let active = true;
@@ -87,7 +72,7 @@ export function QuickButtons({ onSend, getSelectedText, disabled = false }: Quic
   return (
     <div className="mt-3">
       <div className="text-[11px] uppercase tracking-wide text-gray-400 dark:text-gray-500 mb-2">
-        Quick actions
+        {t("title")}
       </div>
       <div className="flex flex-wrap gap-2">
         {buttons.map((button) => (

@@ -38,24 +38,21 @@ META_KEYS = [
     "in_library",
 ]
 
-# Agent definitions — model can be overridden via XIAOLEI_DEFAULT_MODEL env var
-_DEFAULT_MODEL = os.getenv("XIAOLEI_DEFAULT_MODEL", "openai-codex/gpt-5.3-codex")
-
 AGENTS: Dict[str, Dict[str, str]] = {
     "helper": {
         "description": "默认通用助手",
-        "model": _DEFAULT_MODEL,
+        "model": "anthropic/claude-sonnet-4-20250514",
         "persona": "General academic analysis assistant.",
     },
     "dr-xiaolei": {
         "description": "博士小蕾（学术深度分析）",
-        "model": _DEFAULT_MODEL,
-        "persona": "You are Dr. Xiaolei, a rigorous academic researcher with deep expertise in qualitative methodology, critical accounting, and social theory. Provide thorough, methodologically strict analysis.",
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "persona": "You are Dr. Xiaolei, rigorous and methodologically strict.",
     },
     "asst-xiaolei": {
         "description": "助手小蕾（轻量快速处理）",
-        "model": _DEFAULT_MODEL,
-        "persona": "You are Assistant Xiaolei, concise and practical. Focus on extracting key information efficiently without excessive elaboration.",
+        "model": "anthropic/claude-sonnet-4-20250514",
+        "persona": "You are Assistant Xiaolei, concise and practical.",
     },
 }
 
@@ -113,10 +110,7 @@ class VFProfileGenerator:
         if not isinstance(chunks, dict):
             raise ValueError("LLM response missing 'chunks' object")
 
-        normalized_meta = self._normalize_meta(
-            chunks.get("meta") if isinstance(chunks.get("meta"), dict) else metadata,
-            in_library=in_library,
-        )
+        normalized_meta = self._normalize_meta(chunks.get("meta") if isinstance(chunks.get("meta"), dict) else metadata, in_library=in_library)
         normalized_chunks: Dict[str, str] = {"meta": json.dumps(normalized_meta, ensure_ascii=False)}
 
         for chunk_id in CHUNK_IDS[1:]:
@@ -142,8 +136,6 @@ class VFProfileGenerator:
         headers = {"Content-Type": "application/json"}
         if self.auth_token:
             headers["Authorization"] = f"Bearer {self.auth_token}"
-        # Route to helper agent (GPT-5.3) — never use Anthropic for VF generation
-        headers["x-openclaw-agent-id"] = "helper"
 
         conf = AGENTS.get(agent, AGENTS["helper"])
 
@@ -215,41 +207,7 @@ class VFProfileGenerator:
     def _system_prompt(*, in_library: bool, agent: str) -> str:
         mode = "FULL TEXT AVAILABLE" if in_library else "ABSTRACT-ONLY INFERENCE"
         persona = AGENTS.get(agent, AGENTS["helper"])["persona"]
-        return (
-            f"You generate Veritafactum citation profiles for academic works.\n\n"
-            f"Persona: {persona}\n"
-            f"Mode: {mode}\n\n"
-            f"Return STRICT JSON only, with this schema:\n"
-            "{\n"
-            '  "chunks": {\n'
-            '    "meta": {\n'
-            '      "authors": ["..."],\n'
-            '      "year": 2020,\n'
-            '      "title": "...",\n'
-            '      "journal": null,\n'
-            '      "volume": null,\n'
-            '      "issue": null,\n'
-            '      "pages": null,\n'
-            '      "paper_type": "...",\n'
-            '      "primary_method": "...",\n'
-            '      "secondary_methods": ["..."],\n'
-            '      "empirical_context": "...",\n'
-            '      "keywords_author": ["..."],\n'
-            '      "keywords_inferred": ["..."],\n'
-            f'      "in_library": {str(in_library).lower()}\n'
-            "    },\n"
-            '    "abstract": "verbatim abstract",\n'
-            '    "theory": "...",\n'
-            '    "literature": "...",\n'
-            '    "research_questions": "...",\n'
-            '    "contributions": "...",\n'
-            '    "key_concepts": "...",\n'
-            '    "cited_for": "..."\n'
-            "  }\n"
-            "}\n\n"
-            "No markdown. No extra keys.\n"
-            "For chunks 3-8: content-determined length, usually 100-300 words, no hard cap."
-        )
+        return f"""You generate Veritafactum citation profiles for academic works.\n\nPersona: {persona}\nMode: {mode}\n\nReturn STRICT JSON only, with this schema:\n{{\n  \"chunks\": {{\n    \"meta\": {{\n      \"authors\": [\"...\"],\n      \"year\": 2020,\n      \"title\": \"...\",\n      \"journal\": null,\n      \"volume\": null,\n      \"issue\": null,\n      \"pages\": null,\n      \"paper_type\": \"...\",\n      \"primary_method\": \"...\",\n      \"secondary_methods\": [\"...\"],\n      \"empirical_context\": \"...\",\n      \"keywords_author\": [\"...\"],\n      \"keywords_inferred\": [\"...\"],\n      \"in_library\": {str(in_library).lower()}\n    }},\n    \"abstract\": \"verbatim abstract\",\n    \"theory\": \"...\",\n    \"literature\": \"...\",\n    \"research_questions\": \"...\",\n    \"contributions\": \"...\",\n    \"key_concepts\": \"...\",\n    \"cited_for\": \"...\"\n  }}\n}}\n\nNo markdown. No extra keys.\nFor chunks 3-8: content-determined length, usually 100-300 words, no hard cap."""
 
     @staticmethod
     def _user_prompt(*, metadata: Dict[str, Any], abstract: str, full_text: Optional[str], in_library: bool) -> str:

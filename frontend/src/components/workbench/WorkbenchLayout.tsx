@@ -21,6 +21,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useTranslations } from "next-intl";
 import {
   Panel,
   PanelGroup,
@@ -49,6 +50,7 @@ import { useArtifactCacheHelpers } from "@/lib/hooks/useArtifacts";
 const SESSION_ORDER_KEY = "agent-b-session-order";
 
 export function WorkbenchLayout() {
+  const t = useTranslations();
   // IDE-style defaults: slim sidebars + slim bottom bar + big editor
   const [isTerminalOpen, setIsTerminalOpen] = useState(true);
   const [terminalSize, setTerminalSize] = useState(20);
@@ -313,16 +315,16 @@ export function WorkbenchLayout() {
   }, [setCurrentSession]);
 
   const handleSessionCreate = useCallback(async () => {
-    const title = `Session ${orderedSessions.length + 1}`;
+    const title = `${t("workbench.session")} ${orderedSessions.length + 1}`;
     await createSession.mutateAsync({ title });
-  }, [createSession, orderedSessions.length]);
+  }, [createSession, orderedSessions.length, t]);
 
   const handleSessionRename = useCallback(async (sessionId: string, newTitle: string) => {
     await updateSession.mutateAsync({ sessionId, data: { title: newTitle } });
   }, [updateSession]);
 
   const handleSessionDelete = useCallback(async (sessionId: string) => {
-    if (!confirm("Delete this session and all its contents?")) return;
+    if (!confirm(t("workbench.deleteSessionConfirm"))) return;
     
     await deleteSession.mutateAsync(sessionId);
     
@@ -335,7 +337,7 @@ export function WorkbenchLayout() {
     if (currentSessionId === sessionId && newOrder.length > 0) {
       setCurrentSession(newOrder[0].id);
     }
-  }, [deleteSession, orderedSessions, currentSessionId, setCurrentSession, saveSessionOrder]);
+  }, [deleteSession, orderedSessions, currentSessionId, setCurrentSession, saveSessionOrder, t]);
 
   const handleSessionDuplicate = useCallback(async (sessionId: string) => {
     await duplicateSession.mutateAsync(sessionId);
@@ -379,13 +381,13 @@ export function WorkbenchLayout() {
                 "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               )}
               onClick={() => explorerPanelRef.current?.expand(12)}
-              title="Expand Explorer"
+              title={t("workbench.expandExplorer")}
             >
               <div className="pt-3 text-gray-700 dark:text-gray-200">
                 <ChevronRight className="h-5 w-5" />
               </div>
               <div className="mt-3 text-xs font-semibold text-gray-700 dark:text-gray-200 [writing-mode:vertical-rl] rotate-180 tracking-wide">
-                Explorer
+                {t("workbench.explorer")}
               </div>
             </button>
           ) : (
@@ -463,7 +465,7 @@ export function WorkbenchLayout() {
                     onClick={toggleTerminal}
                   >
                     <ChevronUp className="h-4 w-4 mr-1" />
-                    <span className="text-xs">Show Console</span>
+                    <span className="text-xs">{t("workbench.showConsole")}</span>
                   </div>
                 )}
               </PanelGroup>
@@ -496,13 +498,13 @@ export function WorkbenchLayout() {
                 "hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               )}
               onClick={() => chatPanelRef.current?.expand(22)}
-              title="Expand Chat"
+              title={t("workbench.expandChat")}
             >
               <div className="pt-3 text-gray-700 dark:text-gray-200">
                 <ChevronLeft className="h-5 w-5" />
               </div>
               <div className="mt-3 text-xs font-semibold text-gray-700 dark:text-gray-200 [writing-mode:vertical-rl] rotate-180 tracking-wide">
-                Chat
+                {t("workbench.chat")}
               </div>
             </button>
           ) : (

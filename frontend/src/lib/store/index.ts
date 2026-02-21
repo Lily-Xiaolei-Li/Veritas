@@ -18,6 +18,7 @@ import { create } from "zustand";
 import type { LocalArtifact } from "@/lib/artifacts/types";
 import type { ThemeName } from "@/lib/themes";
 import type { CheckerResults } from "@/lib/api/checker";
+import type { Locale } from "@/i18n/config";
 
 export type CheckerStatus = "idle" | "running" | "completed" | "error";
 export type CheckerFilter = "all" | "cite" | "own" | "ai" | "flow";
@@ -142,6 +143,7 @@ interface WorkbenchState {
 
   // UI preferences
   theme: ThemeName;
+  locale: Locale;
 
   localArtifacts: LocalArtifact[];
   artifactEdits: Record<string, string>;
@@ -220,6 +222,7 @@ interface WorkbenchState {
   focusCheckedArtifacts: () => void;
 
   setTheme: (theme: ThemeName) => void;
+  setLocale: (locale: Locale) => void;
 
   addLocalArtifact: (artifact: LocalArtifact) => void;
   removeLocalArtifact: (artifactId: string) => void;
@@ -309,6 +312,7 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
   editTargetArtifactId: null,
   editTargetSelections: [],
   theme: "dark",
+  locale: "en",
   localArtifacts: [],
   artifactEdits: {},
   // Execution state (B1.4)
@@ -600,6 +604,7 @@ export const useWorkbenchStore = create<WorkbenchState>((set, get) => ({
     }),
 
   setTheme: (theme) => set({ theme }),
+  setLocale: (locale) => set({ locale }),
   addLocalArtifact: (artifact) =>
     set((state) => ({
       localArtifacts: [artifact, ...state.localArtifacts],

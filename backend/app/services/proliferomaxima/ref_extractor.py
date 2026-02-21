@@ -7,35 +7,40 @@ from typing import Dict, List, Optional
 REFERENCE_HEADINGS = ("references", "bibliography", "works cited", "reference list")
 DOI_RE = re.compile(r"10\.\d{4,9}/[^\s)\];,]+", re.IGNORECASE)
 YEAR_RE = re.compile(r"\b(19|20)\d{2}\b")
+CITATION_MENTION_RE = re.compile(r"\b([A-Z][A-Za-z\-']+)\s*\((19|20)\d{2}\)")
 
 
 class ReferenceExtractor:
     def __init__(self, parsed_dir: Path | str):
         self.parsed_dir = Path(parsed_dir)
 
-    def extract_all(self, max_files: Optional[int] = None) -> List[Dict]:
-        refs: List[Dict] = []
+    def extract_all(self, max_files: Optional[int] = None, max_refs_per_paper: Optional[int] = None) -> List[Dict]:
         files = sorted(self.parsed_dir.rglob("*.md"))
         if max_files is not None:
             files = files[: max(0, int(max_files))]
+        return self.extract_from_files(files, max_refs_per_paper=max_refs_per_paper)
 
-        for file in files:
+    def extract_from_files(self, file_paths: List[Path | str], max_refs_per_paper: Optional[int] = None) -> List[Dict]:
+        refs: List[Dict] = []
+        cap = max(0, int(max_refs_per_paper)) if max_refs_per_paper is not None else None
+
+        for file in file_paths:
             try:
-                refs.extend(self.extract_from_file(file))
+                paper_refs = self.extract_from_file(Path(file))
             except Exception:
                 continue
+            if cap is not None:
+                paper_refs = paper_refs[:cap]
+            refs.extend(paper_refs)
         return refs
 
     def extract_from_file(self, path: Path) -> List[Dict]:
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        lines = text.splitlines()
-
-        section_start = self._find_reference_start(lines)
-        if section_start is None:
+        raw_section = self.extract_raw_reference_section(path)
+        if not raw_section.strip():
             return []
 
-        block = lines[section_start:]
-        entries = self._split_entries(block)
+        lines = raw_section.splitlines()
+        entries = self._split_entries(lines)
         out: List[Dict] = []
         for raw in entries:
             parsed = self._parse_entry(raw)
@@ -43,6 +48,56 @@ class ReferenceExtractor:
                 continue
             parsed["source_paper"] = path.name
             out.append(parsed)
+        return out
+
+    def extract_raw_reference_section(self, path: Path) -> str:
+        """Return raw references section body between heading and next heading/end."""
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        # Normalize HTML entities common in parsed PDFs
+        text = text.replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+        lines = text.splitlines()
+
+        section_start = self._find_reference_start(lines)
+        if section_start is None:
+            return ""
+
+        block: List[str] = []
+        for line in lines[section_start:]:
+            if line.strip().startswith("#"):
+                break
+            block.append(line)
+
+        return "\n".join(block).strip()
+
+    def extract_from_text_mentions(self, text: str, source_paper: str, max_refs: Optional[int] = None) -> List[Dict]:
+        """Fallback extractor for prose chunks (e.g., cited_for) using Author(Year) mentions."""
+        out: List[Dict] = []
+        seen = set()
+        cap = max(0, int(max_refs)) if max_refs is not None else None
+
+        for m in CITATION_MENTION_RE.finditer(text or ""):
+            author = m.group(1)
+            ym = YEAR_RE.search(m.group(0))
+            if not ym:
+                continue
+            year = int(ym.group(0))
+            key = (author.lower(), year)
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(
+                {
+                    "raw_text": m.group(0),
+                    "title": f"{author} ({year})",
+                    "authors": [author],
+                    "year": year,
+                    "doi": None,
+                    "cited_for": "inferred_from_vf_chunk",
+                    "source_paper": source_paper,
+                }
+            )
+            if cap is not None and len(out) >= cap:
+                break
         return out
 
     def _find_reference_start(self, lines: List[str]) -> Optional[int]:
@@ -56,6 +111,11 @@ class ReferenceExtractor:
         entries: List[str] = []
         current: List[str] = []
 
+        # Patterns that start a new reference entry
+        NUMBERED_RE = re.compile(r"^((\[\d+\])|(\d+\.)|(\(\d+\)))\s+")
+        # Markdown bullet: - or * followed by space (common in parsed PDFs)
+        BULLET_RE = re.compile(r"^[-*]\s+")
+
         for raw in lines:
             line = raw.strip()
             if not line:
@@ -67,10 +127,21 @@ class ReferenceExtractor:
             if line.startswith("#"):
                 break
 
-            is_new_item = bool(re.match(r"^((\[\d+\])|(\d+\.)|(\(\d+\)))\s+", line))
+            numbered_match = NUMBERED_RE.match(line)
+            bullet_match = BULLET_RE.match(line)
+            is_new_item = bool(numbered_match or bullet_match)
+
             if is_new_item and current:
                 entries.append(" ".join(current).strip())
-                current = [re.sub(r"^((\[\d+\])|(\d+\.)|(\(\d+\)))\s+", "", line).strip()]
+                if numbered_match:
+                    current = [NUMBERED_RE.sub("", line).strip()]
+                else:
+                    current = [BULLET_RE.sub("", line).strip()]
+            elif is_new_item and not current:
+                if numbered_match:
+                    current = [NUMBERED_RE.sub("", line).strip()]
+                else:
+                    current = [BULLET_RE.sub("", line).strip()]
             else:
                 current.append(line)
 

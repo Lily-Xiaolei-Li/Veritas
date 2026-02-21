@@ -1,42 +1,24 @@
 from __future__ import annotations
 
-import hashlib
-import json
-from pathlib import Path
-from typing import Any, Dict, Iterable, Set, Tuple
+from typing import Any, Dict, Tuple
 
 from app.services.vf_middleware.metadata_index import VFMetadataIndex
 
 
 class ProliferomaximaDedup:
-    def __init__(self, scanned_path: Path | str):
-        self.scanned_path = Path(scanned_path)
-        self.scanned_path.parent.mkdir(parents=True, exist_ok=True)
+    """
+    Deduplication against VF Store (source of truth).
+    No temporary files - queries Qdrant directly.
+    """
+
+    def __init__(self):
         self.index = VFMetadataIndex()
-        self.scanned_keys: Set[str] = set()
         self.by_doi: Dict[str, Dict[str, Any]] = {}
         self.by_title_year: Dict[Tuple[str, int | None], Dict[str, Any]] = {}
-        self._load_scanned()
         self._load_existing_profiles()
 
-    def _load_scanned(self) -> None:
-        if not self.scanned_path.exists():
-            self.scanned_keys = set()
-            return
-        try:
-            data = json.loads(self.scanned_path.read_text(encoding="utf-8"))
-            if isinstance(data, list):
-                self.scanned_keys = set(str(x) for x in data)
-            else:
-                self.scanned_keys = set(str(x) for x in data.get("keys", []))
-        except Exception:
-            self.scanned_keys = set()
-
-    def save_scanned(self) -> None:
-        payload = {"keys": sorted(self.scanned_keys)}
-        self.scanned_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
-
     def _load_existing_profiles(self) -> None:
+        """Load all existing VF profiles from Qdrant for fast lookup."""
         rows = self.index.list(limit=300000, offset=0)
         for row in rows:
             meta = row.get("meta") or {}
@@ -48,30 +30,32 @@ class ProliferomaximaDedup:
             if title_key:
                 self.by_title_year[(title_key, year)] = row
 
-    def key_for_ref(self, ref: Dict[str, Any]) -> str:
-        doi = (ref.get("doi") or "").strip().lower()
-        if doi:
-            return f"doi:{doi}"
-        title = self._norm_title(ref.get("title"))
-        year = ref.get("year")
-        token = f"{title}|{year or ''}"
-        h = hashlib.sha1(token.encode("utf-8")).hexdigest()
-        return f"ty:{h}"
-
-    def is_scanned(self, ref: Dict[str, Any]) -> bool:
-        return self.key_for_ref(ref) in self.scanned_keys
-
-    def mark_scanned(self, refs: Iterable[Dict[str, Any]]) -> None:
-        for ref in refs:
-            self.scanned_keys.add(self.key_for_ref(ref))
+    def refresh(self) -> None:
+        """Refresh the cache from VF Store."""
+        self.by_doi.clear()
+        self.by_title_year.clear()
+        self._load_existing_profiles()
 
     def existing_profile(self, ref: Dict[str, Any]) -> Dict[str, Any] | None:
+        """Check if reference already has a VF profile in the store."""
+        # Try DOI match first (most reliable)
         doi = (ref.get("doi") or "").strip().lower()
         if doi and doi in self.by_doi:
             return self.by_doi[doi]
 
+        # Fall back to title + year match
         key = (self._norm_title(ref.get("title")), ref.get("year"))
         return self.by_title_year.get(key)
+
+    def register_new(self, ref: Dict[str, Any], profile: Dict[str, Any]) -> None:
+        """Register a newly created profile in the cache (avoid re-querying Qdrant)."""
+        doi = (ref.get("doi") or "").strip().lower()
+        if doi:
+            self.by_doi[doi] = profile
+        title_key = self._norm_title(ref.get("title"))
+        year = ref.get("year")
+        if title_key:
+            self.by_title_year[(title_key, year)] = profile
 
     @staticmethod
     def _norm_title(text: Any) -> str:

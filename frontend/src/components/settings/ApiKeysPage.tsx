@@ -14,6 +14,7 @@
 
 import React, { useMemo, useState } from "react";
 import { AlertCircle, Check, Eye, EyeOff, Loader2, Save } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/Input";
 import { cn } from "@/lib/utils/cn";
 import { useAuthStore } from "@/lib/store";
@@ -42,6 +43,7 @@ const DEFAULT_OPENROUTER_MODELS_EXAMPLE = {
 };
 
 export function ApiKeysPage() {
+  const t = useTranslations("apiKeys");
   const authStatus = useAuthStore((s) => s.authStatus);
 
   const provider = "openrouter";
@@ -85,30 +87,30 @@ export function ApiKeysPage() {
         <AlertCircle className="h-4 w-4 mt-0.5 flex-shrink-0" />
         <div className="text-sm">
           <div className="font-medium">
-            {authStatus === "disabled" ? "Authentication is OFF" : "Authentication is ON"}
+            {authStatus === "disabled" ? t("authOff") : t("authOn")}
           </div>
           <div className="text-xs opacity-90">
-            Provider API keys are stored in the backend database in plaintext (no encryption). Anyone with access to this machine can manage them.
+            {t("plaintextWarning")}
           </div>
         </div>
       </div>
 
       <div>
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">OpenRouter</div>
-        <div className="text-xs text-gray-500 dark:text-gray-400">Configure base URL, API key, and available models.</div>
+        <div className="text-sm font-semibold text-gray-900 dark:text-gray-100">{t("openRouter")}</div>
+        <div className="text-xs text-gray-500 dark:text-gray-400">{t("openRouterDesc")}</div>
       </div>
 
       {isLoading ? (
         <div className="flex items-center gap-2 text-sm text-gray-500">
           <Loader2 className="h-4 w-4 animate-spin" />
-          Loading...
+          {t("loading")}
         </div>
       ) : isError ? (
-        <div className="text-sm text-red-600">{(error as Error)?.message || "Failed to load"}</div>
+        <div className="text-sm text-red-600">{(error as Error)?.message || t("loadFailed")}</div>
       ) : (
         <div className="space-y-4">
           <Input
-            label="Base URL"
+            label={t("baseUrl")}
             value={baseUrl}
             onChange={(e) => setBaseUrl(e.target.value)}
             placeholder="https://openrouter.ai/api/v1"
@@ -116,25 +118,25 @@ export function ApiKeysPage() {
 
           <div className="relative">
             <Input
-              label="API Key"
+              label={t("apiKey")}
               type={showKey ? "text" : "password"}
               value={apiKey}
               onChange={(e) => setApiKey(e.target.value)}
               placeholder="sk-or-..."
-              helperText="Stored in backend (no encryption)"
+              helperText={t("storedPlaintext")}
             />
             <button
               type="button"
               className="absolute right-3 top-9 text-gray-400 hover:text-gray-700 dark:hover:text-gray-200"
               onClick={() => setShowKey((v) => !v)}
-              title={showKey ? "Hide" : "Show"}
+              title={showKey ? t("hide") : t("show")}
             >
               {showKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">Models</label>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200 mb-1">{t("models")}</label>
             <textarea
               value={modelsJson}
               onChange={(e) => setModelsJson(e.target.value)}
@@ -169,7 +171,7 @@ export function ApiKeysPage() {
                 try {
                   parsed = modelsJson ? (JSON.parse(modelsJson) as unknown) : ({ models: [] } as unknown);
                 } catch {
-                  setLocalError("Models JSON is invalid");
+                  setLocalError(t("modelsInvalid"));
                   return;
                 }
 
@@ -178,7 +180,7 @@ export function ApiKeysPage() {
                     ? (parsed as Record<string, unknown>).models
                     : null;
                 if (!Array.isArray(models)) {
-                  setLocalError("Models JSON must be an object with a 'models' array");
+                  setLocalError(t("modelsObjectRequired"));
                   return;
                 }
 
@@ -204,13 +206,13 @@ export function ApiKeysPage() {
               )}
             >
               {upsert.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              Save
+              {t("save")}
             </button>
 
             {savedOk && (
               <div className="flex items-center gap-1 text-sm text-green-700 dark:text-green-400">
                 <Check className="h-4 w-4" />
-                Saved
+                {t("saved")}
               </div>
             )}
           </div>

@@ -2,12 +2,14 @@
 
 import React, { useMemo, useState } from "react";
 import { Plus, Trash2, Save, GripVertical } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { cn } from "@/lib/utils/cn";
 import { usePersonas, useCreatePersona, useUpdatePersona, useDeletePersona } from "@/lib/hooks/usePersonas";
 import { useReorderPersonas } from "@/lib/hooks/usePersonaReorder";
 import type { Persona } from "@/lib/personas/registry";
 
 export function PersonasPage() {
+  const t = useTranslations("personas");
   const { data, isLoading, isError, error } = usePersonas();
   const createMutation = useCreatePersona();
   const updateMutation = useUpdatePersona();
@@ -64,7 +66,7 @@ export function PersonasPage() {
   };
 
   const remove = async (id: string) => {
-    const ok = confirm(`Delete persona '${id}'?`);
+    const ok = confirm(t("deleteConfirm", { id }));
     if (!ok) return;
     await deleteMutation.mutateAsync(id);
     if (editingId === id) cancelEdit();
@@ -97,9 +99,9 @@ export function PersonasPage() {
   return (
     <div className="p-4 space-y-6">
       <div>
-        <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">Personas</div>
+        <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">{t("title")}</div>
         <div className="text-sm text-gray-600 dark:text-gray-300 mt-1">
-          Manage named system prompts used by the Persona dropdown.
+          {t("description")}
         </div>
       </div>
 
@@ -107,7 +109,7 @@ export function PersonasPage() {
       <div className="border border-gray-200 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-900">
         <div className="flex items-center gap-2 mb-3">
           <Plus className="h-4 w-4 text-blue-600" />
-          <div className="font-medium text-gray-900 dark:text-gray-100">Add Persona</div>
+          <div className="font-medium text-gray-900 dark:text-gray-100">{t("addPersona")}</div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -118,7 +120,7 @@ export function PersonasPage() {
             <input
               value={draftId}
               onChange={(e) => setDraftId(e.target.value)}
-              placeholder="e.g., my-persona"
+              placeholder={t("idPlaceholder")}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100"
               disabled={busy}
             />
@@ -130,7 +132,7 @@ export function PersonasPage() {
             <input
               value={draftLabel}
               onChange={(e) => setDraftLabel(e.target.value)}
-              placeholder="Display name"
+              placeholder={t("labelPlaceholder")}
               className="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100"
               disabled={busy}
             />
@@ -144,7 +146,7 @@ export function PersonasPage() {
           <textarea
             value={draftPrompt}
             onChange={(e) => setDraftPrompt(e.target.value)}
-            placeholder="You are ..."
+            placeholder={t("promptPlaceholder")}
             className="w-full min-h-[120px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100"
             disabled={busy}
           />
@@ -177,7 +179,7 @@ export function PersonasPage() {
           Existing personas ({personas.length})
         </div>
 
-        {isLoading && <div className="text-sm text-gray-500">Loading…</div>}
+        {isLoading && <div className="text-sm text-gray-500">{t("loading")}</div>}
         {isError && (
           <div className="text-sm text-red-600">
             Failed to load personas: {(error as Error)?.message}
@@ -185,7 +187,7 @@ export function PersonasPage() {
         )}
 
         {!isLoading && !isError && personas.length === 0 && (
-          <div className="text-sm text-gray-500">No personas yet. Add one above.</div>
+          <div className="text-sm text-gray-500">{t("empty")}</div>
         )}
 
         {personas.map((p) => {
@@ -237,7 +239,7 @@ export function PersonasPage() {
                 "select-none",
                 isOver && "ring-1 ring-blue-500/40"
               )}
-              title="Drag the handle to reorder"
+              title={t("dragHandleToReorder")}
             >
               {/* Insertion line hints */}
               {showAbove && (
@@ -275,8 +277,8 @@ export function PersonasPage() {
                       busy && "opacity-50 cursor-not-allowed"
                     )}
                     disabled={busy}
-                    title="Drag to reorder"
-                    aria-label="Drag to reorder"
+                    title={t("dragToReorder")}
+                    aria-label={t("dragToReorder")}
                   >
                     <GripVertical className="h-4 w-4" />
                   </button>
@@ -326,7 +328,7 @@ export function PersonasPage() {
                     onClick={() => void remove(p.id)}
                     className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded border border-red-300 text-red-700 hover:bg-red-50 disabled:opacity-50"
                     disabled={busy}
-                    title="Delete persona"
+                    title={t("deletePersona")}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                     Delete

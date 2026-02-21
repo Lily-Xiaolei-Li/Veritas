@@ -12,6 +12,7 @@
 "use client";
 
 import React, { useState, useRef, useEffect } from "react";
+import { useTranslations } from "next-intl";
 import {
   DndContext,
   closestCenter,
@@ -68,6 +69,7 @@ function SortableTab({
   onDelete: () => void;
   onDuplicate: () => void;
 }) {
+  const t = useTranslations("sessionTabs");
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(session.title);
   const [showContextMenu, setShowContextMenu] = useState(false);
@@ -186,7 +188,7 @@ function SortableTab({
               e.stopPropagation();
               onDelete();
             }}
-            title="Close session"
+            title={t("closeSession")}
           >
             <X className="h-3 w-3" />
           </button>
@@ -208,7 +210,7 @@ function SortableTab({
             }}
           >
             <Pencil className="h-3.5 w-3.5" />
-            Rename
+            {t("rename")}
           </button>
           <button
             className="w-full px-4 py-1.5 text-sm text-left hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-900 dark:text-gray-100 flex items-center gap-2"
@@ -218,7 +220,7 @@ function SortableTab({
             }}
           >
             <Copy className="h-3.5 w-3.5" />
-            Duplicate
+            {t("duplicate")}
           </button>
           <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
           <button
@@ -229,7 +231,7 @@ function SortableTab({
             }}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            Delete
+            {t("delete")}
           </button>
         </div>
       )}
@@ -249,6 +251,7 @@ export function SessionTabBar({
   collapsed = false,
   onToggleCollapse,
 }: SessionTabBarProps) {
+  const t = useTranslations("sessionTabs");
   const sensors = useSensors(
     useSensor(PointerSensor, {
       activationConstraint: {
@@ -278,7 +281,7 @@ export function SessionTabBar({
         className="flex items-center justify-center gap-1.5 w-full px-3 py-2 bg-gray-50 dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
       >
         <ChevronDown className="h-5 w-5 text-gray-700 dark:text-gray-200" />
-        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide uppercase">Sessions</span>
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-200 tracking-wide uppercase">{t("sessions")}</span>
       </button>
     );
   }
@@ -316,7 +319,7 @@ export function SessionTabBar({
           "hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
         )}
         onClick={onSessionCreate}
-        title="New Session"
+        title={t("newSession")}
       >
         <Plus className="h-4 w-4 text-gray-600 dark:text-gray-200" />
       </button>
@@ -329,7 +332,7 @@ export function SessionTabBar({
         <button
           onClick={onToggleCollapse}
           className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded text-gray-500 mb-1"
-          title="Collapse sessions"
+          title={t("collapseSessions")}
         >
           <ChevronUp className="h-3 w-3" />
         </button>

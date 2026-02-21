@@ -3,6 +3,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import * as d3 from "d3";
 import { Clock } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type WorkDot = {
   id: string;
@@ -32,6 +33,7 @@ function credColor(score: number): string {
 }
 
 export function TimelineView({ nodes, citations = [], onSelectNode }: Props) {
+  const t = useTranslations("gnosiplexio");
   const svgRef = useRef<SVGSVGElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const [yMetric, setYMetric] = useState<"citations" | "credibility">("citations");
@@ -76,14 +78,14 @@ export function TimelineView({ nodes, citations = [], onSelectNode }: Props) {
       .attr("x", width / 2).attr("y", height + 35)
       .attr("text-anchor", "middle")
       .attr("class", "fill-gray-500 text-xs")
-      .text("Publication Year");
+      .text(t("timeline.publicationYear"));
 
     g.append("text")
       .attr("transform", "rotate(-90)")
       .attr("x", -height / 2).attr("y", -40)
       .attr("text-anchor", "middle")
       .attr("class", "fill-gray-500 text-xs")
-      .text(yMetric === "citations" ? "Citations" : "Credibility Score");
+      .text(yMetric === "citations" ? t("timeline.citations") : t("timeline.credibilityScore"));
 
     const tooltip = d3.select(tooltipRef.current);
 
@@ -129,7 +131,7 @@ export function TimelineView({ nodes, citations = [], onSelectNode }: Props) {
           .style("display", "block")
           .style("left", `${event.offsetX + 12}px`)
           .style("top", `${event.offsetY - 10}px`)
-          .html(`<strong>${d.title}</strong><br/>Year: ${d.year}<br/>Citations: ${d.citations}<br/>Credibility: ${(d.credibility * 100).toFixed(0)}%`);
+          .html(`<strong>${d.title}</strong><br/>${t("timeline.year")}: ${d.year}<br/>${t("timeline.citations")}: ${d.citations}<br/>${t("timeline.credibility")}: ${(d.credibility * 100).toFixed(0)}%`);
       })
       .on("mouseleave", () => tooltip.style("display", "none"))
       .on("click", (_, d) => onSelectNode?.(d.id));
@@ -140,15 +142,15 @@ export function TimelineView({ nodes, citations = [], onSelectNode }: Props) {
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
           <Clock className="w-4 h-4" />
-          Timeline
+          {t("timeline.title")}
         </div>
         <select
           value={yMetric}
           onChange={(e) => setYMetric(e.target.value as "citations" | "credibility")}
           className="text-xs border rounded px-2 py-1 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300"
         >
-          <option value="citations">Citations</option>
-          <option value="credibility">Credibility</option>
+          <option value="citations">{t("timeline.citations")}</option>
+          <option value="credibility">{t("timeline.credibility")}</option>
         </select>
       </div>
       <div className="relative">
@@ -159,10 +161,10 @@ export function TimelineView({ nodes, citations = [], onSelectNode }: Props) {
         />
       </div>
       <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-        Citation evolution links: {citations.length}
+        {t("timeline.citationEvolutionLinks")}: {citations.length}
       </div>
       {nodes.length === 0 && (
-        <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-8">No work nodes to display</p>
+        <p className="text-center text-gray-400 dark:text-gray-500 text-sm py-8">{t("timeline.noWorkNodes")}</p>
       )}
     </div>
   );

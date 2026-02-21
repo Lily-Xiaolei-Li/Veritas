@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { ShieldCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
 
 type Props = {
   score: number;
@@ -15,8 +16,11 @@ function getLevel(score: number) {
 }
 
 export function CredibilityBadge({ score, breakdown }: Props) {
+  const t = useTranslations("gnosiplexio");
   const [showTooltip, setShowTooltip] = useState(false);
   const { label, bg, dot } = getLevel(score);
+  const localizedLabel =
+    label === "Low" ? t("credibility.low") : label === "Medium" ? t("credibility.medium") : t("credibility.high");
 
   return (
     <div className="relative inline-block">
@@ -27,11 +31,11 @@ export function CredibilityBadge({ score, breakdown }: Props) {
       >
         <span className={`w-2 h-2 rounded-full ${dot}`} />
         <ShieldCheck className="w-3 h-3" />
-        {label} ({(score * 100).toFixed(0)}%)
+        {localizedLabel} ({(score * 100).toFixed(0)}%)
       </button>
       {showTooltip && breakdown && (
         <div className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-56 p-3 rounded-lg shadow-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-xs">
-          <p className="font-semibold mb-1">Credibility Breakdown</p>
+          <p className="font-semibold mb-1">{t("credibility.breakdown")}</p>
           {Object.entries(breakdown).map(([k, v]) => (
             <div key={k} className="flex justify-between py-0.5">
               <span className="text-gray-500 dark:text-gray-400">{k}</span>

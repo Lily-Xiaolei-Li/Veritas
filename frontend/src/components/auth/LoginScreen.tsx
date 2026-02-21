@@ -12,6 +12,7 @@
 
 import React, { useState } from "react";
 import { Loader2 } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Input } from "@/components/ui/Input";
 import { useLogin, useSessionExpired } from "@/lib/hooks/useAuth";
 import { APP_NAME } from "@/lib/utils/constants";
@@ -22,6 +23,7 @@ import { cn } from "@/lib/utils/cn";
 // =============================================================================
 
 export function LoginScreen() {
+  const t = useTranslations("auth");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [formError, setFormError] = useState<string | null>(null);
@@ -40,11 +42,11 @@ export function LoginScreen() {
 
     // Basic validation
     if (!username.trim()) {
-      setFormError("Username is required");
+      setFormError(t("usernameRequired"));
       return;
     }
     if (!password) {
-      setFormError("Password is required");
+      setFormError(t("passwordRequired"));
       return;
     }
 
@@ -52,7 +54,7 @@ export function LoginScreen() {
       { username: username.trim(), password },
       {
         onError: (error) => {
-          setFormError(error.message || "Login failed. Please try again.");
+          setFormError(error.message || t("loginFailed"));
         },
       }
     );
@@ -65,7 +67,7 @@ export function LoginScreen() {
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900">{APP_NAME}</h1>
           <p className="mt-2 text-gray-600">
-            Sign in to access your cognitive workbench
+            {t("signInSubtitle")}
           </p>
         </div>
 
@@ -76,7 +78,7 @@ export function LoginScreen() {
             role="alert"
           >
             <p className="text-sm text-yellow-800">
-              Your session has expired. Please sign in again.
+              {t("sessionExpired")}
             </p>
           </div>
         )}
@@ -88,22 +90,22 @@ export function LoginScreen() {
         >
           <div className="space-y-4">
             <Input
-              label="Username"
+              label={t("username")}
               type="text"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
+              placeholder={t("usernamePlaceholder")}
               autoComplete="username"
               disabled={isPending}
               autoFocus
             />
 
             <Input
-              label="Password"
+              label={t("password")}
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Enter your password"
+              placeholder={t("passwordPlaceholder")}
               autoComplete="current-password"
               disabled={isPending}
             />
@@ -134,17 +136,17 @@ export function LoginScreen() {
             {isPending ? (
               <span className="flex items-center justify-center gap-2">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Signing in...
+                {t("signingIn")}
               </span>
             ) : (
-              "Sign in"
+              t("signIn")
             )}
           </button>
         </form>
 
         {/* Footer */}
         <p className="mt-4 text-center text-sm text-gray-500">
-          Local-first AI assistant
+          {t("footer")}
         </p>
       </div>
     </div>

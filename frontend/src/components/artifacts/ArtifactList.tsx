@@ -8,6 +8,7 @@
 
 import React from "react";
 import { Loader2, AlertCircle, FileText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { ArtifactItem } from "./ArtifactItem";
 import type { ArtifactLike } from "@/lib/artifacts/types";
 
@@ -42,12 +43,13 @@ export function ArtifactList({
   onToggleEdit,
   onToggleCheck,
 }: ArtifactListProps) {
+  const t = useTranslations("artifacts");
   // Loading state
   if (isLoading && artifacts.length === 0) {
     return (
       <div className="flex items-center justify-center h-48 text-gray-500">
         <Loader2 className="h-6 w-6 animate-spin mr-2" />
-        <span>Loading artifacts...</span>
+        <span>{t("loading")}</span>
       </div>
     );
   }
@@ -57,7 +59,7 @@ export function ArtifactList({
     return (
       <div className="flex flex-col items-center justify-center h-48 text-red-500">
         <AlertCircle className="h-8 w-8 mb-2" />
-        <span className="text-sm font-medium">Failed to load artifacts</span>
+        <span className="text-sm font-medium">{t("loadFailed")}</span>
         <span className="text-xs text-gray-500 mt-1">
           {error?.message || "Unknown error"}
         </span>
@@ -71,10 +73,10 @@ export function ArtifactList({
       <div className="flex flex-col items-center justify-center h-48 text-gray-500">
         <FileText className="h-12 w-12 mb-3 text-gray-300" />
         <span className="text-sm font-medium text-gray-600">
-          No artifacts yet
+          {t("emptyTitle")}
         </span>
         <span className="text-xs text-gray-400 mt-1">
-          Artifacts will appear here when the agent produces outputs
+          {t("emptyHint")}
         </span>
       </div>
     );

@@ -15,6 +15,7 @@
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import { Terminal, CheckCircle, XCircle, Loader2, AlertCircle, History, Brain, GitCompare, AlertTriangle, ThumbsUp, Copy, ChevronDown, MessageSquare, FileText, ScrollText } from "lucide-react";
+import { useTranslations } from "next-intl";
 import { Badge } from "../ui/Badge";
 import { useWorkbenchStore, BrainEvent, useAuthStore } from "@/lib/store";
 import { useHealth } from "@/lib/hooks/useHealth";
@@ -24,10 +25,11 @@ import { authGet, authFetch } from "@/lib/api/authFetch";
 import { API_BASE_URL } from "@/lib/utils/constants";
 import { CheckerPanel } from "@/components/checker";
 import { CitalioPanel } from "@/components/citalio";
+import { VFManagerPanel } from "@/components/vf-manager";
 import { useArtifactPreview } from "@/lib/hooks/useArtifacts";
 import { isLocalArtifact } from "@/lib/artifacts/types";
 
-type ConsoleTab = "events" | "conversation" | "history" | "status" | "logs" | "checker" | "citalio";
+type ConsoleTab = "events" | "conversation" | "history" | "status" | "logs" | "checker" | "citalio" | "vf-manager";
 
 // Placeholder for conversation messages - will be populated by backend
 interface ConversationMessage {
@@ -44,6 +46,7 @@ interface ConsolePanelProps {
 }
 
 export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
+  const t = useTranslations();
   const { toolEvents, brainEvents, sseError, currentSessionId, selectedPersonaId, outboundPreview, editTargetArtifactId, editTargetSelections } = useWorkbenchStore();
   const [activeTab, setActiveTab] = useState<ConsoleTab>("events");
 
@@ -72,7 +75,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             <Terminal className="h-4 w-4" />
-            Prompt
+            {t("console.prompt")}
           </button>
           <button
             onClick={() => setActiveTab("conversation")}
@@ -83,7 +86,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             <MessageSquare className="h-4 w-4" />
-            Conversation
+            {t("console.conversation")}
           </button>
           <button
             onClick={() => setActiveTab("history")}
@@ -94,7 +97,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             <History className="h-4 w-4" />
-            History
+            {t("console.history")}
           </button>
           <button
             onClick={() => setActiveTab("status")}
@@ -105,7 +108,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             <AlertCircle className="h-4 w-4" />
-            Status
+            {t("console.status")}
           </button>
           <button
             onClick={() => setActiveTab("logs")}
@@ -116,7 +119,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             <ScrollText className="h-4 w-4" />
-            Log
+            {t("console.log")}
           </button>
           <button
             onClick={() => setActiveTab("checker")}
@@ -127,7 +130,7 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             🪄
-            Veritafactum
+            {t("console.checker")}
           </button>
           <button
             onClick={() => setActiveTab("citalio")}
@@ -138,15 +141,18 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
             }`}
           >
             ✨
-            Citalio
+            {t("console.citalio")}
           </button>
           <button
-            onClick={() => window.open("/vf-middleware", "_blank")}
-            className="flex items-center gap-1.5 px-2 py-1 text-sm rounded text-gray-400 hover:text-gray-200"
-            title="Open VF Middleware Manager"
+            onClick={() => setActiveTab("vf-manager")}
+            className={`flex items-center gap-1.5 px-2 py-1 text-sm rounded ${
+              activeTab === "vf-manager"
+                ? "bg-gray-700 text-gray-100"
+                : "text-gray-400 hover:text-gray-200"
+            }`}
           >
             📚
-            VF Manager
+            {t("console.vfManager")}
           </button>
         </div>
 
@@ -262,6 +268,10 @@ export function ConsolePanel({ onToggleCollapse }: ConsolePanelProps) {
       ) : activeTab === "citalio" ? (
         <div className="flex-1 overflow-hidden">
           <CitalioTabWrapper />
+        </div>
+      ) : activeTab === "vf-manager" ? (
+        <div className="flex-1 overflow-hidden">
+          <VFManagerPanel />
         </div>
       ) : (
         <StatusTab />
@@ -706,11 +716,20 @@ function CitalioTabWrapper() {
   const artifactEdits = useWorkbenchStore((s) => s.artifactEdits);
   const localArtifacts = useWorkbenchStore((s) => s.localArtifacts);
   const updateArtifactEdit = useWorkbenchStore((s) => s.updateArtifactEdit);
+  const editTargetSelections = useWorkbenchStore((s) => s.editTargetSelections);
 
   const localArtifact = localArtifacts.find((a) => a.id === selectedArtifactId);
   const isLocal = localArtifact ? isLocalArtifact(localArtifact) : false;
   const remoteId = selectedArtifactId && !isLocal ? selectedArtifactId : null;
   const { data: preview } = useArtifactPreview(remoteId);
+
+  // Get selected text from editor selections
+  const selectedText = React.useMemo(() => {
+    if (editTargetSelections.length > 0) {
+      return editTargetSelections.map((s) => s.text).join("\n");
+    }
+    return "";
+  }, [editTargetSelections]);
 
   const getText = React.useCallback(() => {
     if (!selectedArtifactId) return "";
@@ -725,7 +744,56 @@ function CitalioTabWrapper() {
     updateArtifactEdit(selectedArtifactId, updatedText);
   }, [selectedArtifactId, updateArtifactEdit]);
 
-  return <CitalioPanel getText={getText} artifactId={selectedArtifactId || undefined} onApplyAll={handleApplyAll} />;
+  // Handle citation insertion (manual mode)
+  const handleInsertCitation = React.useCallback((intext: string, fullRef: string) => {
+    if (!selectedArtifactId) return;
+    
+    const currentText = getText();
+    let newText = currentText;
+    
+    // If there's a selection, insert citation at the end of the selection
+    if (editTargetSelections.length > 0) {
+      const lastSel = editTargetSelections[editTargetSelections.length - 1];
+      // For now, just append to selected text
+      const selectedContent = lastSel.text;
+      const cleanSelected = selectedContent.replace(/[.!?]\s*$/, "");
+      const punct = /[.!?]\s*$/.test(selectedContent) ? selectedContent.match(/[.!?]\s*$/)?.[0] || "." : "";
+      const withCitation = `${cleanSelected} ${intext}${punct}`;
+      newText = currentText.replace(selectedContent, withCitation);
+    }
+    
+    // Add full reference to REFERENCES section
+    const hasReferences = newText.toLowerCase().includes("## references") || 
+                         newText.toLowerCase().includes("# references");
+    
+    if (!hasReferences) {
+      newText = newText.trimEnd() + "\n\n## REFERENCES\n\n" + fullRef;
+    } else {
+      // Find REFERENCES section and append
+      const refMatch = newText.match(/(##?\s*references\s*\n)/i);
+      if (refMatch && refMatch.index !== undefined) {
+        const insertPos = refMatch.index + refMatch[0].length;
+        const before = newText.slice(0, insertPos);
+        const after = newText.slice(insertPos);
+        // Check if reference already exists
+        if (!after.includes(fullRef)) {
+          newText = before + "\n" + fullRef + after;
+        }
+      }
+    }
+    
+    updateArtifactEdit(selectedArtifactId, newText);
+  }, [selectedArtifactId, getText, editTargetSelections, updateArtifactEdit]);
+
+  return (
+    <CitalioPanel 
+      getText={getText} 
+      artifactId={selectedArtifactId || undefined} 
+      onApplyAll={handleApplyAll}
+      selectedText={selectedText}
+      onInsertCitation={handleInsertCitation}
+    />
+  );
 }
 
 function StatusTab() {

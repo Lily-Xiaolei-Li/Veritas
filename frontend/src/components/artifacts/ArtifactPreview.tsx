@@ -9,6 +9,7 @@
 
 import React, { useMemo, useState, useEffect, useRef } from "react";
 import Image from "next/image";
+import { useTranslations } from "next-intl";
 import {
   FileText,
   Loader2,
@@ -26,7 +27,7 @@ import dynamic from "next/dynamic";
 // Lazy load TiptapEditor to avoid SSR issues
 const TiptapEditor = dynamic(() => import("./TiptapEditor"), { 
   ssr: false,
-  loading: () => <div className="p-4 text-gray-500">Loading editor...</div>
+  loading: () => <div className="p-4 text-gray-500">{/* Loading handled in component */}</div>
 });
 import { useArtifactPreview, getArtifactDownloadUrl, useSaveArtifact, useUpdateArtifactContent, useArtifactDraft, useUpdateArtifactDraft } from "@/lib/hooks/useArtifacts";
 import { getArtifactMarkdownName } from "@/lib/artifacts/download";
@@ -159,6 +160,7 @@ function NoPreview({ artifact }: { artifact: ArtifactLike }) {
 }
 
 export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
+  const t = useTranslations("artifacts");
   const currentSessionId = useWorkbenchStore((s) => s.currentSessionId);
   const setSelectedArtifact = useWorkbenchStore((s) => s.setSelectedArtifact);
   const isEditorMaximized = useWorkbenchStore((s) => s.isEditorMaximized);
@@ -453,7 +455,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
     return (
       <div className="flex flex-col items-center justify-center h-full text-gray-500 p-8">
         <FileText className="h-12 w-12 mb-3 text-gray-300" />
-        <span className="text-sm text-gray-600">Select an artifact to preview</span>
+        <span className="text-sm text-gray-600">{t("selectToPreview")}</span>
       </div>
     );
   }
@@ -651,7 +653,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
       {isFlashing && (
         <div className="absolute top-2 right-2 z-20 flex items-center gap-1 px-2 py-1 bg-green-500 text-white text-xs font-medium rounded-full animate-pulse">
           <span>✓</span>
-          <span>Updated</span>
+          <span>{t("updated")}</span>
         </div>
       )}
       {/* Minimal Header - just filename and action buttons */}
@@ -696,7 +698,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
                 <span className="text-blue-600 dark:text-blue-400 font-medium">{selectedWordCount}</span>
                 <span className="mx-0.5">/</span>
                 <span>{totalWordCount}</span>
-                <span className="ml-0.5">words</span>
+                <span className="ml-0.5">{t("words")}</span>
               </span>
             ) : (
               <span title={`${totalWordCount} words total`}>
@@ -795,7 +797,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
               <textarea
                 value={rewritePrompt}
                 onChange={(e) => setRewritePrompt(e.target.value)}
-                placeholder="e.g., Make this more concise, remove hedging, keep citations"
+                placeholder={t("rewritePlaceholder")}
                 className="w-full min-h-[90px] px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 disabled={rewriteRunning}
                 autoFocus
@@ -834,7 +836,7 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
         {showCreateModal && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50" onClick={() => setShowCreateModal(false)}>
             <div className="bg-white dark:bg-gray-800 rounded-lg p-4 w-96 shadow-xl" onClick={(e) => e.stopPropagation()}>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">Create New Artifact</h3>
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-3">{t("createNewArtifact")}</h3>
               
               <div className="space-y-3">
                 <div>
@@ -923,8 +925,8 @@ export function ArtifactPreview({ artifact }: ArtifactPreviewProps) {
         ) : isError ? (
           <div className="flex flex-col items-center justify-center h-32 text-red-500">
             <AlertCircle className="h-8 w-8 mb-2" />
-            <span className="text-sm">Failed to load preview</span>
-            <span className="text-xs text-gray-500">Please try refresh or reselect the artifact.</span>
+            <span className="text-sm">{t("loadPreviewFailed")}</span>
+            <span className="text-xs text-gray-500">{t("loadPreviewHint")}</span>
           </div>
         ) : previewKind === "image" ? (
           <ImagePreview artifact={artifact} />

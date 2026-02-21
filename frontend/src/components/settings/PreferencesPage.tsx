@@ -2,9 +2,11 @@
 
 import React, { useEffect } from "react";
 import { useWorkbenchStore } from "@/lib/store";
+import { useTranslations } from "next-intl";
 import { themes, THEME_NAMES, type ThemeName } from "@/lib/themes";
 
 export function PreferencesPage() {
+  const t = useTranslations();
   const theme = useWorkbenchStore((s) => s.theme);
   const setTheme = useWorkbenchStore((s) => s.setTheme);
 
@@ -20,7 +22,7 @@ export function PreferencesPage() {
   return (
     <div className="p-6">
       <h2 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        Appearance
+        {t("settings.appearance")}
       </h2>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -35,7 +37,7 @@ export function PreferencesPage() {
       </div>
 
       <p className="text-xs text-gray-500 dark:text-gray-400 mt-4">
-        Select a color theme for the workbench. All themes except Light use dark mode.
+        {t("settings.themeHint")}
       </p>
     </div>
   );

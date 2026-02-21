@@ -174,11 +174,20 @@ class VFProfileStore:
             "chunks": chunks,
         }
 
-    def semantic_search(self, query: str, limit: int = 8, chunk_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    def semantic_search(
+        self, 
+        query: str, 
+        limit: int = 8, 
+        chunk_id: Optional[str] = None,
+        query_vector: Optional[List[float]] = None,  # Pre-computed vector to avoid re-encoding
+    ) -> List[Dict[str, Any]]:
         from qdrant_client.models import FieldCondition, Filter, MatchValue
 
         self.ensure_collection()
-        query_vector = _safe_encode(query)
+        
+        # Use pre-computed vector if provided, otherwise encode
+        if query_vector is None:
+            query_vector = _safe_encode(query)
 
         q_filter = None
         if chunk_id:
@@ -208,6 +217,10 @@ class VFProfileStore:
                 }
             )
         return out
+    
+    def encode_query(self, query: str) -> List[float]:
+        """Pre-encode a query for reuse across multiple searches."""
+        return _safe_encode(query)
 
     def delete_profile(self, paper_id: str) -> Dict[str, Any]:
         from qdrant_client.models import Filter, FieldCondition, MatchValue, PointIdsList
