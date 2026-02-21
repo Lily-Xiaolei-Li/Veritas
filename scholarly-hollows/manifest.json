@@ -1,0 +1,43 @@
+{
+  "name": "scholarly-hollows",
+  "version": "1.0.0",
+  "display_name": "Scholarly Hollows",
+  "description": "Academic magic spells for Veritas - advanced AI features for research",
+  "requires_veritas_version": ">=1.0.0",
+  "api_prefix": "/api/v1/sh",
+  "routes_module": "routes",
+  "author": "Barry Li",
+  "license": "MIT",
+  "spells": [
+    {
+      "id": "veritafactum",
+      "name": "Veritafactum",
+      "chinese_name": "真知照见",
+      "description": "Sentence-by-sentence citation verification"
+    },
+    {
+      "id": "citalio",
+      "name": "Citalio", 
+      "chinese_name": "引经据典",
+      "description": "Automatic citation recommendation"
+    },
+    {
+      "id": "proliferomaxima",
+      "name": "Proliferomaxima",
+      "chinese_name": "寻书万卷",
+      "description": "Citation network proliferation"
+    },
+    {
+      "id": "exportario",
+      "name": "Ex-portario",
+      "chinese_name": "破壁取珠",
+      "description": "Paywall bypass for full-text download"
+    }
+  ],
+  "frontend_components": [
+    "veritafactum",
+    "citalio",
+    "proliferomaxima",
+    "exportario"
+  ]
+}
