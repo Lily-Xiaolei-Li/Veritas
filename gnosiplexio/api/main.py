@@ -12,8 +12,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from gnosiplexio.api.routes import router as gnosiplexio_router
-from gnosiplexio.config import get_settings
+from api.routes import router as gnosiplexio_router
+from config import get_settings
 
 # Configure logging
 logging.basicConfig(
@@ -110,7 +110,7 @@ if __name__ == "__main__":
     import uvicorn
     
     uvicorn.run(
-        "gnosiplexio.api.main:app",
+        "api.main:app",
         host="0.0.0.0",
         port=8002,
         reload=settings.DEBUG,

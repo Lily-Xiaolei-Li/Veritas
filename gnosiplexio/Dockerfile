@@ -21,4 +21,4 @@ ENV PYTHONPATH=/app
 ENV GNOSIPLEXIO_DATA_DIR=/app/data/gnosiplexio
 
 # Run the application
-CMD ["python", "-m", "uvicorn", "gnosiplexio.api.main:app", "--host", "0.0.0.0", "--port", "8002"]
+CMD ["python", "-m", "uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8002"]

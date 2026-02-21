@@ -4,8 +4,9 @@ Gnosiplexio Configuration — Environment-based settings.
 from __future__ import annotations
 
 import os
-from typing import Literal
+from typing import Literal, Union
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings
 
 
@@ -30,8 +31,17 @@ class GnosiplexioSettings(BaseSettings):
     DATA_DIR: str = "data/gnosiplexio"
     AUTO_SAVE: bool = True
     
-    # CORS settings
+    # CORS settings (accepts string or list)
     CORS_ORIGINS: list[str] = ["*"]
+    
+    @field_validator("CORS_ORIGINS", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v):
+        """Parse CORS_ORIGINS from string or list."""
+        if isinstance(v, str):
+            # Handle comma-separated string
+            return [origin.strip() for origin in v.split(",")]
+        return v
     
     # API settings
     API_PREFIX: str = "/api/v1"

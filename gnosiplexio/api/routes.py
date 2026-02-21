@@ -137,7 +137,7 @@ def _get_engine():
     if _engine_instance is None:
         with _engine_lock:
             if _engine_instance is None:
-                from gnosiplexio.core.engine import GnosiplexioEngine
+                from core.engine import GnosiplexioEngine
                 from pathlib import Path
                 import os
 
@@ -148,7 +148,7 @@ def _get_engine():
                 # Try to set up Veritas adapter if available
                 adapter = None
                 try:
-                    from gnosiplexio.adapters.veritas_adapter import VeritasAdapter
+                    from adapters.veritas_adapter import VeritasAdapter
                     # Note: VeritasAdapter is async, but engine may expect sync adapter
                     # For now, just instantiate (actual API calls will be handled by engine)
                     adapter = VeritasAdapter()
@@ -190,8 +190,8 @@ def ingest_paper(request: IngestRequest):
             )
         elif request.data:
             # Inline data: create a temporary engine with a GenericAdapter
-            from gnosiplexio.adapters.generic_adapter import GenericAdapter
-            from gnosiplexio.core.engine import GnosiplexioEngine
+            from adapters.generic_adapter import GenericAdapter
+            from core.engine import GnosiplexioEngine
 
             data = json.loads(request.data)
             if isinstance(data, dict):

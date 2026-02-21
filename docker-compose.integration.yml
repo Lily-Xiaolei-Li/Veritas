@@ -56,7 +56,6 @@ services:
       - VERITAS_CORE_URL=http://veritas-core:8000
       - GNOSIPLEXIO_DATA_DIR=/app/data/gnosiplexio
       - GNOSIPLEXIO_AUTO_SAVE=true
-      - GNOSIPLEXIO_CORS_ORIGINS=*
       - GNOSIPLEXIO_DEBUG=false
     volumes:
       - gnosiplexio-data:/app/data/gnosiplexio
