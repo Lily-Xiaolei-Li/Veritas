@@ -14,11 +14,19 @@ All routes are prefixed with /api/v1/sh/ when loaded by Veritas Core.
 
 from fastapi import APIRouter
 
+from .veritafactum import router as veritafactum_router
+from .citalio import router as citalio_router
+from .proliferomaxima import router as proliferomaxima_router
+
 # Main router for the plugin - exported for Veritas Core plugin loader
 router = APIRouter()
 
+# Include all spell routers
+router.include_router(veritafactum_router)
+router.include_router(citalio_router)
+router.include_router(proliferomaxima_router)
 
-# Placeholder routes - will be populated as spell modules are implemented
+
 @router.get("/health")
 async def health_check():
     """Health check endpoint for Scholarly Hollows plugin."""

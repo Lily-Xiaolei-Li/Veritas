@@ -1,0 +1,3 @@
+# Scholarly Hollows Dependencies
+httpx
+pydantic
