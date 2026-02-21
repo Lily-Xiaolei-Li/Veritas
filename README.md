@@ -55,9 +55,9 @@ For development roadmap, see [roadmap.md](roadmap.md).
    psql -h localhost -p 5433 -U postgres
 
    -- Create user + DB (choose your own password)
-   CREATE USER agentb WITH PASSWORD '<YOUR_PASSWORD>';
-   CREATE DATABASE agent_b OWNER agentb;
-   GRANT ALL PRIVILEGES ON DATABASE agent_b TO agentb;
+   CREATE USER veritas WITH PASSWORD '<YOUR_PASSWORD>';
+   CREATE DATABASE veritas OWNER veritas;
+   GRANT ALL PRIVILEGES ON DATABASE veritas TO veritas;
    \q
    ```
 
@@ -90,13 +90,13 @@ Veritas uses a local PostgreSQL instance:
 |---------|-------|
 | Host | localhost |
 | Port | 5433 |
-| Database | agent_b |
-| User | agentb |
+| Database | veritas |
+| User | veritas |
 | Password | <YOUR_PASSWORD> |
 
 Connection string in `backend/.env`:
 ```
-DATABASE_URL=postgresql+asyncpg://agentb:<YOUR_PASSWORD>@localhost:5433/agent_b
+DATABASE_URL=postgresql+asyncpg://veritas:<YOUR_PASSWORD>@localhost:5433/veritas
 ```
 
 ---
@@ -125,58 +125,51 @@ npm run dev
 
 ```
 Veritas/
-├── backend/                     # FastAPI backend
-│   ├── app/
-│   │   ├── main.py              # FastAPI application
-│   │   ├── config.py            # Configuration
-│   │   ├── models.py            # Database models
-│   │   ├── agent/               # LangGraph agent runtime
-│   │   ├── llm/                 # LLM provider abstraction
-│   │   ├── routes/              # API routes
-│   │   └── services/            # Business logic
-│   ├── alembic/                 # Database migrations
-│   ├── tests/                   # Backend tests
-│   ├── xiaolei_api/             # XiaoLei integration API
-│   └── requirements.txt         # Python dependencies
-│
-├── frontend/                    # Next.js frontend
-│   ├── src/
-│   │   ├── app/                 # Next.js App Router
-│   │   ├── components/          # React components
-│   │   └── lib/                 # Hooks, store, utils
-│   └── package.json             # Node dependencies
-│
-├── docs/                        # Documentation
-├── data/                        # Data files
-├── start.bat                    # Start all services
-├── PRD.md                       # Product Requirements
-├── roadmap.md                   # Development roadmap
-├── devlog.md                    # Development log
-└── PROJECT-LOG.md               # Project history
+├── veritas-core/               # 核心平台 (Port 8000)
+│   ├── backend/                # FastAPI 后端
+│   └── frontend/               # React 前端
+├── scholarly-hollows/          # 魔法插件 (作为 Core 插件加载)
+│   ├── routes/                 # 4个魔法 spell
+│   ├── services/
+│   └── frontend/
+├── gnosiplexio/                # 知识图谱 (Port 8002)
+│   ├── api/
+│   ├── core/
+│   ├── adapters/
+│   └── frontend/
+├── backend/                    # (原始代码，待迁移)
+├── frontend/                   # (原始代码，待迁移)
+├── docs/                       # Documentation
+└── docker-compose.integration.yml
 ```
 
 ---
 
-## Current Status
+## Current Status ✅
 
-### Completed ✅
+**三组件架构重构完成:**
 
-- **Phase 0**: Foundations, Database, Auth, Execution
-- **Phase 1 (B1.0-B1.6)**: Workbench UI, Streaming, Files, Kill Switch, Sessions, Auth
-- **B1.8**: Tool Framework (built-ins + tool_start/tool_end console + tests)
-- **B2.0**: LLM Provider Abstraction
-- **B2.1**: LangGraph Runtime (optional advanced module)
+| 组件 | 状态 | 端口 | 说明 |
+|------|------|------|------|
+| Veritas Core | ✅ Ready | 8000 | 核心平台 + 插件系统 |
+| Scholarly Hollows | ✅ Ready | - | 作为 Core 插件加载 |
+| Gnosiplexio | ✅ Ready | 8002 | 独立知识图谱服务 |
 
-### Next Steps
-
-- **B2.2**: Documentation (Quickstart, Dev Guide, Extension Guide)
-- **B2.4**: Testing & Stability (API smoke + CI)
-- **B1.9**: Simple Agent Loop acceptance + smoke tests (align with run-state-machine)
-- **B2.5**: v1.0 Release checklist
+**集成测试: 9/10 通过**
 
 ---
 
 ## Architecture
+
+### 三组件架构
+
+| 组件 | 职责 | 端口 |
+|------|------|------|
+| **Veritas Core** | 核心平台、插件系统、用户界面 | 8000 |
+| **Scholarly Hollows** | 魔法插件 (4 spells) | 作为插件加载 |
+| **Gnosiplexio** | 独立知识图谱服务 | 8002 |
+
+### 技术栈
 
 | Layer | Technology | Status |
 |-------|-----------|--------|

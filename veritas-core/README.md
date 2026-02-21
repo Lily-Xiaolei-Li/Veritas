@@ -1,7 +1,8 @@
 # Veritas Core
 
 **Version:** 1.0.0  
-**Status:** In Development (95% complete)
+**Status:** In Development (95% complete)  
+**Developed by Lily Xiaolei Li**
 
 Veritas Core is the foundation platform for academic research assistance.
 
@@ -29,7 +30,7 @@ Veritas Core is the foundation platform for academic research assistance.
 # Backend
 cd backend
 pip install -r requirements.txt
-python -m uvicorn app.main:app --reload --port 8001
+python -m uvicorn app.main:app --reload --port 8000
 
 # Frontend
 cd frontend

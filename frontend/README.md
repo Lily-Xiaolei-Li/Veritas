@@ -1,16 +1,18 @@
-# Agent B Research - Frontend
+# Veritas - Frontend
 
-React/Next.js frontend for Agent B's Cognitive Workbench, providing a three-panel resizable interface for interacting with autonomous AI agents.
+**Developed by Lily Xiaolei Li**
+
+React/Next.js frontend for Veritas Research Workbench, providing a three-panel resizable interface for interacting with autonomous AI agents.
 
 ## Overview
 
-This is the frontend implementation for **Agent B Milestone B1.0 - Workbench Shell**. It provides a modern, responsive web interface with:
+This is the frontend implementation for **Veritas Workbench UI**. It provides a modern, responsive web interface with:
 
 - **Three-panel resizable layout**: Reasoning (left), Artifacts (top-right), Console (bottom-right)
 - **Backend health monitoring**: Real-time connection status to FastAPI backend
 - **Type-safe API client**: Full TypeScript integration with backend models
 - **State management**: Zustand stores with localStorage persistence
-- **Future-ready**: Prepared for SSE streaming (B1.1), chat interface (B1.1), and file outputs (B1.3)
+- **Extensible**: SSE streaming, chat interface, and file outputs
 
 ## Technology Stack
 
@@ -121,9 +123,9 @@ frontend/
 │   ├── components/
 │   │   ├── workbench/                # Main workbench components
 │   │   │   ├── WorkbenchLayout.tsx   # Three-panel resizable layout
-│   │   │   ├── ReasoningPanel.tsx    # Left panel (chat - B1.1)
-│   │   │   ├── ArtifactsPanel.tsx    # Top-right (files - B1.3)
-│   │   │   └── ConsolePanel.tsx      # Bottom-right (logs - B1.1)
+│   │   │   ├── ReasoningPanel.tsx    # Left panel (chat)
+│   │   │   ├── ArtifactsPanel.tsx    # Top-right (files)
+│   │   │   └── ConsolePanel.tsx      # Bottom-right (logs)
 │   │   │
 │   │   ├── health/                   # Health monitoring
 │   │   │   ├── HealthStatus.tsx      # Detailed health display
@@ -146,7 +148,7 @@ frontend/
 │   │   ├── hooks/                    # React hooks
 │   │   │   ├── useHealth.ts          # Health monitoring hook
 │   │   │   ├── useSession.ts         # Session management
-│   │   │   └── useSSE.ts             # SSE streaming (B1.1)
+│   │   │   └── useSSE.ts             # SSE streaming
 │   │   │
 │   │   ├── store/                    # Zustand state stores
 │   │   │   ├── sessionStore.ts       # Session state
@@ -323,9 +325,9 @@ Visual health status indicator with optional label.
 
 ### Panel Components
 
-**ReasoningPanel**: Placeholder for chat interface (B1.1)
-**ArtifactsPanel**: Placeholder for file outputs (B1.3)
-**ConsolePanel**: Placeholder for logs and events (B1.1)
+**ReasoningPanel**: Chat interface for AI interactions
+**ArtifactsPanel**: File outputs and document management
+**ConsolePanel**: Logs and event monitoring
 
 All panels include:
 - Header with title
@@ -338,8 +340,8 @@ All panels include:
 |----------|-------------|---------|
 | `NEXT_PUBLIC_API_URL` | Backend API base URL | `http://localhost:8000` |
 | `NEXT_PUBLIC_API_BASE_PATH` | API path prefix | `/api/v1` |
-| `NEXT_PUBLIC_DEFAULT_SESSION_ID` | Hardcoded session ID (B1.0) | `hardcoded-session-001` |
-| `NEXT_PUBLIC_ENABLE_AUTH` | Enable authentication (B2.0+) | `false` |
+| `NEXT_PUBLIC_DEFAULT_SESSION_ID` | Default session ID | `hardcoded-session-001` |
+| `NEXT_PUBLIC_ENABLE_AUTH` | Enable authentication | `false` |
 
 **Note**: All environment variables must be prefixed with `NEXT_PUBLIC_` to be accessible in the browser.
 
@@ -401,15 +403,14 @@ import { useHealth } from '@/lib/hooks/useHealth';
 2. Verify UI store is properly initialized in providers
 3. Clear localStorage and try again: `localStorage.clear()`
 
-## Future Milestones
+## Roadmap
 
-This B1.0 implementation prepares for:
+Future enhancements planned:
 
-- **B1.1**: Chat interface in ReasoningPanel, SSE streaming, Console logs
-- **B1.2**: Session management (create/switch/delete sessions)
-- **B1.3**: File artifacts display in ArtifactsPanel
-- **B2.0**: Authentication and authorization
-- **B2.1**: Multi-user support
+- Enhanced session management
+- Advanced file artifact handling
+- Authentication and authorization
+- Multi-user support
 
 ## Contributing
 

@@ -2,7 +2,8 @@
 
 **中文名:** 织智成网  
 **Version:** 0.1.0  
-**Status:** Phase 4.1 - Independent Structure Complete
+**Status:** v0.1.0 - Production Ready  
+**Developed by Lily Xiaolei Li**
 
 Gnosiplexio is an independent knowledge graph software for academic research.
 
@@ -100,7 +101,7 @@ from gnosiplexio.adapters import VeritasAdapter
 adapter = VeritasAdapter()
 
 # Or specify custom URL
-adapter = VeritasAdapter(base_url="http://veritas-core:8001")
+adapter = VeritasAdapter(base_url="http://veritas-core:8000")
 
 # Use the adapter
 papers = await adapter.search_papers("machine learning", limit=10)
@@ -112,7 +113,7 @@ await adapter.close()
 ```
 
 **Configuration via Environment Variables:**
-- `VERITAS_CORE_URL`: Base URL for Veritas Core (default: `http://localhost:8001`)
+- `VERITAS_CORE_URL`: Base URL for Veritas Core (default: `http://localhost:8000`)
 - `VERITAS_CORE_TIMEOUT`: Request timeout in seconds (default: `30`)
 
 ### Implementing Custom Adapters
