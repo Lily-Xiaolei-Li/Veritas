@@ -1,4 +1,6 @@
-# Veritas — Local-First Research Workspace
+# Veritas — *Veritas Lux Scientiae*
+
+> *Truth is the Light of Science*
 
 **Version:** 1.0.0  
 **Status:** v1.0 (packaged research workbench)  
@@ -304,19 +306,6 @@ python scripts/intro_pipeline.py
 ```
 
 These scripts bypass the CLI and call the `/api/chat` endpoint directly via Python's `urllib`, streaming SSE responses. They demonstrate how to orchestrate multi-step drafting pipelines programmatically.
-
----
-
-## 🔒 Development Rules
-
-### Code Integration Workflow
-
-**Only main agent (小蕾) and super agent (超级小蕾) can modify this project!**
-
-1. Coder agents work in their own workspaces
-2. Main/super reviews code quality
-3. Approved code is integrated by main/super only
-4. Direct modifications by coder agents are prohibited
 
 ---
 
