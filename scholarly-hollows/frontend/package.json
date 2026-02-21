@@ -1,0 +1,7 @@
+{
+  "name": "scholarly-hollows-frontend",
+  "version": "1.0.0",
+  "description": "Scholarly Hollows frontend components for Veritas",
+  "main": "index.ts",
+  "dependencies": {}
+}
