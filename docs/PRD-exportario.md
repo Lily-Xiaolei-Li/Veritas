@@ -10,7 +10,7 @@
 
 ## 1. 概述
 
-Ex-portario 将现有的 `download-papers` skill 封装成 Agent-B 的魔法按钮，与其他魔咒统一风格。核心能力：突破 paywall，按用户指定条件筛选并下载学术论文全文。
+Ex-portario 将现有的 `download-papers` skill 封装成 Veritas 的魔法按钮，与其他魔咒统一风格。核心能力：突破 paywall，按用户指定条件筛选并下载学术论文全文。
 
 ### 与其他魔咒的关系
 

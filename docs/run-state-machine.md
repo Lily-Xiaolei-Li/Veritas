@@ -1,6 +1,6 @@
 # Run/Session/Artifacts State Machine (Canonical)
 
-**Project:** Agent-B-Academic  
+**Project:** Veritas  
 **Purpose:** Freeze the *single source of truth* for run/session lifecycle semantics so UI and APIs don’t drift.  
 **Scope:** REST endpoints, SSE events, and DB fields related to Sessions, Runs, Messages, and Artifacts.
 

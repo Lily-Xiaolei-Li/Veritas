@@ -3,7 +3,7 @@
 **Spell Name:** Gnosiplexio — 知识之网的编织者  
 **Etymology:** Gnosi (γνῶσις, knowledge/insight) + Plexio (plexus, weave/network)  
 **Version:** 2.0 (evolved from VF-KG v1)  
-**Author:** Barry Li & 超级小蕾  
+**Author:** Lily Xiaolei Li & 超级小蕾  
 **Date:** 2026-02-16  
 **Status:** Draft for review  
 

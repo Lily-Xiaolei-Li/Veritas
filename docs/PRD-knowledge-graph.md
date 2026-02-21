@@ -1,6 +1,6 @@
 # PRD: Veritafactum Knowledge Graph (VF-KG)
 
-**Author:** Barry Li & 超级小蕾  
+**Author:** Lily Xiaolei Li & 超级小蕾  
 **Date:** 2026-02-15  
 **Status:** Draft for review  
 
@@ -10,7 +10,7 @@
 
 A structured knowledge system that represents academic literature as a network of **papers, concepts, authors, and their relationships** — built from AI-generated profiles, not raw text chunks.
 
-It can run standalone or embed into Agent-B-Research (ABR). It serves three consumers: **human researchers** (visual exploration), **Veritafactum** (citation verification), and **ABR's AI personas** (grounded academic reasoning).
+It can run standalone or embed into Veritas (ABR). It serves three consumers: **human researchers** (visual exploration), **Veritafactum** (citation verification), and **ABR's AI personas** (grounded academic reasoning).
 
 ---
 

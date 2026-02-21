@@ -1,11 +1,12 @@
-# Agent B Research — Local-First Research Workspace
+# Veritas — Local-First Research Workspace
 
-**Version:** 1.0.0
-**Status:** v1.0 (packaged research workbench)
+**Version:** 1.0.0  
+**Status:** v1.0 (packaged research workbench)  
+**Developed by Lily Xiaolei Li**
 
-Agent B Research is a packaged research workbench based on the original Agent B platform. It helps researchers run an end-to-end workflow locally: manage artifacts, capture context, interact with LLMs (e.g., OpenRouter), and iteratively draft and edit research outputs.
+Veritas is a packaged research workbench for academic researchers. It helps you run an end-to-end workflow locally: manage artifacts, capture context, interact with LLMs (e.g., OpenRouter), and iteratively draft and edit research outputs.
 
-> **Production note:** When `ENVIRONMENT=production` and `DATABASE_URL` is set, Agent B Research will **fail fast** if database initialization or Alembic migrations fail. This is intentional to avoid running with a broken schema.
+> **Production note:** When `ENVIRONMENT=production` and `DATABASE_URL` is set, Veritas will **fail fast** if database initialization or Alembic migrations fail. This is intentional to avoid running with a broken schema.
 
 For complete product specifications, see [PRD.md](PRD.md).
 For development roadmap, see [roadmap.md](roadmap.md).
@@ -34,7 +35,7 @@ For development roadmap, see [roadmap.md](roadmap.md).
 - Minimum 4GB RAM available
 - Minimum 5GB disk space
 
-> ⚠️ **No Docker Required!** Agent B is designed to run without Docker. Using Docker can add complexity and slow down local development/testing. If end-users want to deploy inside Docker later, that is optional and out of scope for this repo.
+> ⚠️ **No Docker Required!** Veritas is designed to run without Docker. Using Docker can add complexity and slow down local development/testing. If end-users want to deploy inside Docker later, that is optional and out of scope for this repo.
 
 ---
 
@@ -60,7 +61,7 @@ For development roadmap, see [roadmap.md](roadmap.md).
    \q
    ```
 
-### Starting Agent B
+### Starting Veritas
 
 **Double-click `start.bat`** or run in terminal:
 ```powershell
@@ -75,7 +76,7 @@ This will:
 5. Open frontend server (port 3000)
 6. Open http://localhost:3000 in your browser
 
-### Stopping Agent B
+### Stopping Veritas
 
 Simply close the two terminal windows (Backend and Frontend).
 
@@ -83,7 +84,7 @@ Simply close the two terminal windows (Backend and Frontend).
 
 ## Database Configuration
 
-Agent B uses a local PostgreSQL instance:
+Veritas uses a local PostgreSQL instance:
 
 | Setting | Value |
 |---------|-------|
@@ -123,7 +124,7 @@ npm run dev
 ## Project Structure
 
 ```
-Agent-B-Academic/
+Veritas/
 ├── backend/                     # FastAPI backend
 │   ├── app/
 │   │   ├── main.py              # FastAPI application
@@ -190,7 +191,7 @@ Agent-B-Academic/
 
 ## 📝 Research Workflow — Academic Paper Drafting
 
-Agent B Research uses a **persona-driven, artifact-centric workflow** to draft, review, and refine academic papers. The system is designed around **stateless isolation** — each AI call is a clean prompt with explicit context, preventing memory contamination across iterations.
+Veritas uses a **persona-driven, artifact-centric workflow** to draft, review, and refine academic papers. The system is designed around **stateless isolation** — each AI call is a clean prompt with explicit context, preventing memory contamination across iterations.
 
 ### Core Concepts
 
@@ -364,4 +365,8 @@ MIT License
 
 ---
 
-**Remember:** Agent B exists to amplify Agent A (you), not replace judgment.
+**Remember:** Veritas exists to amplify your research, not replace judgment.
+
+---
+
+*Developed by Lily Xiaolei Li*

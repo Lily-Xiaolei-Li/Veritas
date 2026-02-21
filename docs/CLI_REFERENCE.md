@@ -1,4 +1,4 @@
-# Agent-B Research CLI Reference
+# Veritas CLI Reference
 
 **Version:** 1.0.0 | **Updated:** 2026-02-19
 
@@ -36,7 +36,7 @@ python -m cli.main <resource> <action> [options]
 
 **From backend directory:**
 ```powershell
-cd "C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend"
+cd "C:\path\to\Veritas\backend"
 .\venv\Scripts\python.exe -m cli.main <resource> <action> [options]
 ```
 
@@ -1161,4 +1161,4 @@ Short forms for common operations:
 
 ---
 
-*Agent-B Research CLI Reference v1.0.0*
+*Veritas CLI Reference v1.0.0*

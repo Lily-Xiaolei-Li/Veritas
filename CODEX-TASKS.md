@@ -1,7 +1,7 @@
-# Codex Tasks - Agent-B-Academic Sprint
+# Codex Tasks - Veritas Sprint
 
 ## 🎯 Goal
-Transform Agent-B into Agent-B-Academic - a PhD/researcher workbench with XiaoLei AI assistant.
+Transform Veritas into Veritas - a PhD/researcher workbench with XiaoLei AI assistant.
 
 ---
 
@@ -93,7 +93,7 @@ Transform Agent-B into Agent-B-Academic - a PhD/researcher workbench with XiaoLe
 ## 📁 Project Structure
 
 ```
-Agent-B-Academic/
+Veritas/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py

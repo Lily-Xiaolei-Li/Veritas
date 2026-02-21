@@ -1,6 +1,6 @@
 # Citalio Manual Mode — 实现文档
 
-**Project:** Agent-B-Research (ABR)  
+**Project:** Veritas (ABR)  
 **Author:** 超级小蕾  
 **Date:** 2026-02-18  
 **Status:** ✅ Implemented

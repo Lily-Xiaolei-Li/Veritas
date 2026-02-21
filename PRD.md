@@ -1,10 +1,11 @@
 # Product Requirements Document (PRD)
 
-## Agent B — Local-First AI Workspace Platform
+## Veritas — Local-First AI Workspace Platform
 
-**Version:** 2.0
-**Codename:** Agent B
-**Last Updated:** January 26, 2026
+**Version:** 2.0  
+**Codename:** Veritas  
+**Last Updated:** January 26, 2026  
+**Author:** Lily Xiaolei Li
 
 **Audience:**
 
@@ -28,7 +29,7 @@ Agent B is now positioned as an open-source foundation for building local-first 
 - Adds Extension Points documentation
 - Targets a v1.0 stable release
 
-The original cognitive workbench vision remains valid for domain-specific applications built on this platform (e.g., Agent B Auditor).
+The original cognitive workbench vision remains valid for domain-specific applications built on this platform.
 
 ### Version 1.1 (January 26, 2026)
 
@@ -39,13 +40,13 @@ The original cognitive workbench vision remains valid for domain-specific applic
 
 ## 1. Concept & Vision
 
-### 1.1 What Is Agent B?
+### 1.1 What Is Veritas?
 
-Agent B is an open-source foundation for building local-first, privacy-preserving AI workspaces. It provides the infrastructure that developers need to create domain-specific AI assistants without starting from scratch.
+Veritas is an open-source foundation for building local-first, privacy-preserving AI workspaces. It provides the infrastructure that developers need to create domain-specific AI assistants without starting from scratch.
 
-Agent B is a **platform**, not a product. It handles the common concerns—LLM integration, safe code execution, document processing, session management, and a flexible UI shell—so builders can focus on their domain-specific logic.
+Veritas is a **platform**, not a product. It handles the common concerns—LLM integration, safe code execution, document processing, session management, and a flexible UI shell—so builders can focus on their domain-specific logic.
 
-### 1.2 Why Agent B Exists
+### 1.2 Why Veritas Exists
 
 Building AI applications requires solving the same problems repeatedly:
 
@@ -55,7 +56,7 @@ Building AI applications requires solving the same problems repeatedly:
 - Managing conversation history and sessions
 - Providing a usable interface for interaction
 
-Agent B solves these once, well, so developers can build specialized applications on top.
+Veritas solves these once, well, so developers can build specialized applications on top.
 
 ### 1.3 Core Principles
 

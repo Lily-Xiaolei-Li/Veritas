@@ -129,9 +129,9 @@ scholarly-hollows/
 
 ---
 
-## 👨‍💻 Author
+## 👩‍💻 Author
 
-**Barry Li**
+**Lily Xiaolei Li**
 
 ---
 

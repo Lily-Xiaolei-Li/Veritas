@@ -1,4 +1,4 @@
-# Agent-B Academic Workbench - 项目开发日志
+# Veritas Academic Workbench - 项目开发日志
 
 ## 2026-02-07 - XiaoLei API 集成成功 🎉
 
@@ -40,16 +40,16 @@
 
 #### 5. 测试验证
 - ✅ Gateway API 直连测试（curl）：成功
-- ✅ Agent-B `/api/chat` 代理测试：成功
+- ✅ Veritas `/api/chat` 代理测试：成功
 - ✅ 前端界面显示测试：成功
 - ✅ 完整流程端到端测试：通过 ✨
 
 ### 技术架构
 
 ```
-Agent-B Frontend (Next.js)
+Veritas Frontend (Next.js)
     ↓ HTTP POST
-Agent-B Backend (FastAPI) /api/chat
+Veritas Backend (FastAPI) /api/chat
     ↓ HTTP POST with Authorization header
 Clawdbot Gateway :18789/v1/chat/completions
     ↓ Route to agent

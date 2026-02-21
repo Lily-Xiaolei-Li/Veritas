@@ -251,11 +251,11 @@ Panel sizes are managed by `react-resizable-panels` and persisted via the UI sto
 
 ```bash
 # Terminal 1: Start backend
-cd Agent-B
+cd Veritas
 make dev
 
 # Terminal 2: Start frontend
-cd Agent-B
+cd Veritas
 make frontend-dev
 ```
 

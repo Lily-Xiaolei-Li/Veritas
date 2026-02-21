@@ -1,11 +1,11 @@
-# Agent-B Stable Start (Dev)
+# Veritas Stable Start (Dev)
 
 This project is currently run in **dev mode** (Next.js + Uvicorn). Dev processes sometimes exit or get killed.
 
 To keep it running, use the stable scripts:
 
-- **Start Agent-B (Stable).bat** (keeps a watchdog window open)
-- **Stop Agent-B (Stable).bat**
+- **Start Veritas (Stable).bat** (keeps a watchdog window open)
+- **Stop Veritas (Stable).bat**
 
 ## Where are the logs?
 Stable mode writes logs here:
@@ -18,7 +18,7 @@ If the UI says Offline or the page won’t load, check these logs first.
 ## Prerequisites
 **Qdrant server must be running** before starting Agent B:
 ```powershell
-cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+cd C:\Users\Lily Xiaolei Li (UoN)\clawd\tools\qdrant
 .\qdrant.exe --config-path config\config.yaml
 ```
 Verify: http://localhost:6333/collections

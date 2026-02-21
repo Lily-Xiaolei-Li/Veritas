@@ -1,4 +1,4 @@
-# Agent-B Research Tools 工具指南
+# Veritas Research Tools 工具指南
 
 *小蕾整理，2026-02-19*
 
@@ -6,7 +6,7 @@
 
 ## 📍 位置
 
-`C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend\tools\`
+`C:\Users\Lily Xiaolei Li (UoN)\clawd\projects\Veritas\backend\tools\`
 
 ---
 

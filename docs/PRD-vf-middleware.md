@@ -1,6 +1,6 @@
 # PRD: Veritafactum Middleware — Citation Profile Database
 
-**Author:** Barry Li & 超级小蕾  
+**Author:** Lily Xiaolei Li & 超级小蕾  
 **Date:** 2026-02-15  
 **Version:** 2.0 (revised from Knowledge Graph PRD)  
 **Status:** Approved for development  
@@ -310,5 +310,5 @@ When the time comes to build a Knowledge Graph product:
 
 *"先把地基打牢，再盖高楼。VF middleware就是这个地基。"*
 
-*Prepared by Super Xiaolei for Master Barry Li 🌟*  
+*Prepared by Super Xiaolei for Master Lily Xiaolei Li 🌟*  
 *2026-02-15 v2.0*

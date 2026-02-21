@@ -34,7 +34,7 @@ from .contract import CLIBusinessError, success_envelope
 
 QDRANT_URL = "http://localhost:6333"
 CENTRAL_DB = Path(__file__).parent.parent / "data" / "central_index.sqlite"
-CHUNKS_DIR = Path(r"C:\Users\Barry Li (UoN)\clawd\projects\library-rag\data\chunks")
+CHUNKS_DIR = Path(r"C:\Users\Lily Xiaolei Li (UoN)\clawd\projects\library-rag\data\chunks")
 
 
 def library_status(args):

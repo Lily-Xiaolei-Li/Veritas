@@ -10,8 +10,8 @@ Goal: get Agent B running locally in **10–15 minutes**.
 
 ## 2) Clone
 ```powershell
-git clone https://github.com/Bazza1982/Agent-B-Academic.git
-cd Agent-B-Academic
+git clone https://github.com/Bazza1982/Veritas.git
+cd Veritas
 ```
 
 ## 3) Configure environment
@@ -32,14 +32,14 @@ DATABASE_URL=postgresql+asyncpg://agentb:<YOUR_PASSWORD>@localhost:5433/agent_b
 
 ## 4) Start (recommended: stable watchdog)
 Double-click:
-- **Start Agent-B (Stable).bat**
+- **Start Veritas (Stable).bat**
 
 Then open:
 - http://localhost:3000
 
 ## 5) Stop
 Double-click:
-- **Stop Agent-B (Stable).bat**
+- **Stop Veritas (Stable).bat**
 
 ## Logs
 Stable mode writes logs here:
@@ -51,7 +51,7 @@ Stable mode writes logs here:
 Agent B uses Qdrant in **server mode** (NOT embedded). Start it before the backend:
 
 ```powershell
-cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+cd C:\path\to\tools\qdrant
 .\qdrant.exe --config-path config\config.yaml
 ```
 

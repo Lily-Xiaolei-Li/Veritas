@@ -1,6 +1,6 @@
 # PRD: Workspace Persistence & Auto-Save System
 
-**Product:** Agent-B Academic Research Workbench  
+**Product:** Veritas Academic Research Workbench  
 **Feature:** Workspace Persistence & Recovery  
 **Version:** 1.0  
 **Author:** 小蕾 (Lily)  
@@ -11,7 +11,7 @@
 
 ## 1. Executive Summary
 
-Agent-B is an AI-powered academic research workbench that helps researchers analyze papers, draft manuscripts, and manage research artifacts. As researchers invest significant time building their workspace—uploading papers, generating analyses, drafting content—**losing this work due to browser refresh, crash, or device switch is unacceptable**.
+Veritas is an AI-powered academic research workbench that helps researchers analyze papers, draft manuscripts, and manage research artifacts. As researchers invest significant time building their workspace—uploading papers, generating analyses, drafting content—**losing this work due to browser refresh, crash, or device switch is unacceptable**.
 
 This PRD defines a **professional-grade persistence system** that ensures:
 - Zero data loss under any circumstance
@@ -194,7 +194,7 @@ When same artifact edited on multiple devices:
 
 #### 5.3.1 Session Recovery Flow
 ```
-User opens Agent-B
+User opens Veritas
        ↓
 Check localStorage for pending offline changes
        ↓ (if any)
@@ -520,7 +520,7 @@ Accessible via artifact context menu → "Version History"
 ## 12. Appendix
 
 ### A. Competitor Analysis
-| Feature | Agent-B (proposed) | Notion | Overleaf | Obsidian |
+| Feature | Veritas (proposed) | Notion | Overleaf | Obsidian |
 |---------|-------------------|--------|----------|----------|
 | Auto-save | ✅ 5s interval | ✅ Real-time | ✅ Real-time | ✅ On change |
 | Version history | ✅ 30 days | ✅ 30 days (paid) | ✅ Unlimited | ❌ Plugin |

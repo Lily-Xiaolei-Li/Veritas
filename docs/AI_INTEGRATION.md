@@ -1,7 +1,7 @@
-# Agent-B Research — AI Integration Guide
+# Veritas - AI Integration Guide
 
-> **For AI Agents**: Claude, GPT, Gemini, etc.  
-> **Backend**: http://localhost:8001  
+> **For AI Agents**: Claude, GPT, Gemini, etc.
+> **Backend**: http://localhost:8001
 > **CLI Entry**: `backend/cli/main.py`
 
 ---
@@ -12,7 +12,7 @@
 
 ```powershell
 # Working directory
-cd "C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend"
+cd "C:\path\to\Veritas\backend"
 
 # CLI command alias
 $CLI = ".\venv\Scripts\python.exe -m cli.main"
@@ -314,7 +314,7 @@ Python tools for extracting paper sections. Import from `backend/tools/`.
 
 ```python
 import sys
-sys.path.insert(0, r"C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend")
+sys.path.insert(0, r"C:\path\to\Veritas\backend")
 
 from tools import (
     lookup_introduction,
@@ -372,7 +372,7 @@ sections = lookup_all_sections("paper_id")
 ```python
 from tools import AVAILABLE_SECTIONS
 print(AVAILABLE_SECTIONS)
-# ['abstract', 'introduction', 'methodology', 
+# ['abstract', 'introduction', 'methodology',
 #  'literature_review', 'empirical_analysis', 'conclusion']
 ```
 
@@ -483,7 +483,7 @@ result = subprocess.run(
     ["python", "-m", "cli.main", "library", "status", "--json"],
     capture_output=True,
     text=True,
-    cwd=r"C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend"
+    cwd=r"C:\path\to\Veritas\backend"
 )
 
 # Parse JSON from stdout (stderr contains logs)
@@ -591,7 +591,7 @@ for pid in paper_ids:
     intro = lookup_introduction(pid)
     lit = lookup_literature_review(pid)
     concl = lookup_conclusion(pid)
-    
+
     print(f"=== {pid} ===")
     if intro:
         print(f"INTRO: {len(intro)} chars")

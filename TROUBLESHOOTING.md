@@ -117,14 +117,14 @@ sqlalchemy.exc.OperationalError: could not connect to server: Connection refused
 ```powershell
 # Start PostgreSQL using Docker
 docker run -d `
-  --name agent-b-postgres `
+  --name Veritas-postgres `
   -e POSTGRES_PASSWORD=postgres `
   -e POSTGRES_DB=agent_b `
   -p 5432:5432 `
   postgres:16
 
 # Verify it's running
-docker ps | Select-String agent-b-postgres
+docker ps | Select-String Veritas-postgres
 ```
 
 **Check if port 5432 is already in use:**
@@ -513,7 +513,7 @@ netstat -ano | findstr :5432
 
 # Option 1: Stop the other service
 # Option 2: Use different port
-docker run -d --name agent-b-postgres -p 5433:5432 postgres:16
+docker run -d --name Veritas-postgres -p 5433:5432 postgres:16
 
 # Update DATABASE_URL to use new port
 $env:DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5433/agent_b"
@@ -772,7 +772,7 @@ docker ps | Select-String postgres
 echo $env:DATABASE_URL
 
 # Can you connect to PostgreSQL?
-docker exec -it agent-b-postgres psql -U postgres -d agent_b
+docker exec -it Veritas-postgres psql -U postgres -d agent_b
 # Type \q to exit
 ```
 
@@ -1032,17 +1032,17 @@ client = get_qdrant_client()  # Returns QdrantClient(url="http://localhost:6333"
 
 ### Starting Qdrant Server
 
-Qdrant server binary: `C:\Users\Barry Li (UoN)\clawd\tools\qdrant\qdrant.exe`
+Qdrant server binary: `C:\Users\Lily Xiaolei Li (UoN)\clawd\tools\qdrant\qdrant.exe`
 
 ```powershell
-cd C:\Users\Barry Li (UoN)\clawd\tools\qdrant
+cd C:\Users\Lily Xiaolei Li (UoN)\clawd\tools\qdrant
 .\qdrant.exe --config-path config\config.yaml
 ```
 
 Config (`tools/qdrant/config/config.yaml`):
 ```yaml
 storage:
-  storage_path: C:\Users\Barry Li (UoN)\clawd\projects\library-rag\qdrant_data
+  storage_path: C:\Users\Lily Xiaolei Li (UoN)\clawd\projects\library-rag\qdrant_data
 service:
   host: 127.0.0.1
   http_port: 6333

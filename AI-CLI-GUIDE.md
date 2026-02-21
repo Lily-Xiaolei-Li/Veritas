@@ -1,13 +1,13 @@
-# Agent-B-Research — AI CLI Guide
+# Veritas — AI CLI Guide
 
-> For AI agents interacting with Agent-B-Research programmatically.  
+> For AI agents interacting with Veritas programmatically.  
 > Backend runs on **port 8001**. CLI outputs JSON to stdout when `--json` is passed.
 
 ## Quick Start
 
 ```powershell
 # All commands run from the backend directory
-cd "C:\Users\Barry Li (UoN)\clawd\projects\Agent-B-Research\backend"
+cd "C:\path\to\Veritas\backend"
 $CLI = ".\venv\Scripts\python.exe -m cli.main"
 
 # List sessions

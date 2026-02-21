@@ -1,6 +1,6 @@
 # ABR Architecture Refactor Plan
 
-**Author:** 超级小蕾 (Agent-B Research 项目负责人)  
+**Author:** 超级小蕾 (Veritas Research 项目负责人)  
 **Date:** 2026-02-19  
 **Status:** Draft — 待老爷在 Linux 环境实施
 
@@ -8,11 +8,11 @@
 
 ## 1. Executive Summary
 
-将 Agent-B-Research (ABR) 拆分为三个独立组件：
+将 Veritas (ABR) 拆分为三个独立组件：
 
 | 组件 | 名称 | 性质 | 依赖 |
 |------|------|------|------|
-| **ABR Core** | Agent-B Research Basic | 基础平台 | 无 |
+| **ABR Core** | Veritas Research Basic | 基础平台 | 无 |
 | **SH Add-On** | Scholarly Hollows | 魔法套装插件 | 依赖 ABR Core |
 | **Gnosiplexio** | 织智成网 | 独立软件 + ABR 兼容插件 | 可选依赖 ABR Core |
 
@@ -28,7 +28,7 @@
 ### 2.1 现有目录结构
 
 ```
-Agent-B-Research/
+Veritas/
 ├── backend/
 │   ├── app/
 │   │   ├── routes/           # API 路由（混合了 Core 和 SH）
@@ -269,7 +269,7 @@ openapi: 3.0.0
 info:
   title: ABR Core API
   version: 1.0.0
-  description: Agent-B Research Core Platform API
+  description: Veritas Research Core Platform API
 
 paths:
   # Library RAG

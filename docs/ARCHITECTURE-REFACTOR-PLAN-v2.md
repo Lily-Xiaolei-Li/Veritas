@@ -13,7 +13,7 @@
 
 **Veritas** (拉丁语"真理") — 学术研究的本质就是追求真理。
 
-将 Agent-B-Research (ABR) 重构为三个独立组件：
+将 Veritas (ABR) 重构为三个独立组件：
 
 | 组件 | 名称 | 性质 | 进度 | 依赖 |
 |------|------|------|------|------|
@@ -561,7 +561,7 @@ class CitationSearcher:
 
 | 旧名 | 新名 |
 |------|------|
-| Agent-B-Research | **Veritas** |
+| Veritas | **Veritas** |
 | ABR Core | **Veritas Core** |
 | ABR | **Veritas** |
 

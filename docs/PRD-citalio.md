@@ -1,6 +1,6 @@
 # PRD: Citalio — 引用显现 ✨
 
-**Project:** Agent-B-Research (ABR)  
+**Project:** Veritas (ABR)  
 **Author:** 超级小蕾 (Design) + 老爷 (Vision)  
 **Date:** 2026-02-16  
 **Status:** Draft  

@@ -1,4 +1,4 @@
-# Agent-B-Research 汉化说明书 / i18n Localization Spec
+# Veritas 汉化说明书 / i18n Localization Spec
 
 **Author:** 超级小蕾  
 **Date:** 2026-02-16  

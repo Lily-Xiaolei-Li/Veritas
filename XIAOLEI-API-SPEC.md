@@ -1,10 +1,10 @@
 # XiaoLei API Specification
 
-小蕾 API - Agent-B-Academic 的后台大脑接口
+小蕾 API - Veritas 的后台大脑接口
 
 ## Overview
 
-这是一个 FastAPI 服务，作为 Agent-B-Academic 和小蕾 (Clawdbot) 之间的桥梁。
+这是一个 FastAPI 服务，作为 Veritas 和小蕾 (Clawdbot) 之间的桥梁。
 
 **端口：** 8768
 **位置：** `backend/xiaolei_api/`

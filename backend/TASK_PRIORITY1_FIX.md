@@ -82,7 +82,7 @@
 ## 📂 关键路径
 
 - **SQLite:** `backend/data/central_index.sqlite`
-- **Chunks:** `C:\Users\Barry Li (UoN)\clawd\projects\library-rag\data\chunks\`
+- **Chunks:** `C:\Users\Lily Xiaolei Li (UoN)\clawd\projects\library-rag\data\chunks\`
 - **Qdrant:** `http://localhost:6333`
 - **Collections:** `vf_profiles`, `academic_papers`
 

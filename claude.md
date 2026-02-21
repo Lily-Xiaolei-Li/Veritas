@@ -534,7 +534,7 @@ Invoke-WebRequest -Uri http://localhost:8000/api `
 ## File Structure Quick Reference
 
 ```
-Agent-B/
+Veritas/
 ├── backend/
 │   ├── app/
 │   │   ├── main.py              # FastAPI app with lifespan manager

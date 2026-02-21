@@ -78,8 +78,8 @@ This matters for:
 ## 4) Stable start scripts
 
 If you use the stable scripts:
-- `Start Agent-B (Stable).bat`
-- `Stop Agent-B (Stable).bat`
+- `Start Veritas (Stable).bat`
+- `Stop Veritas (Stable).bat`
 
 Logs are written to:
 - `./.run/backend.out.log` + `./.run/backend.err.log`

@@ -2,7 +2,7 @@
 
 **Version:** 2.0  
 **Date:** 2026-02-15  
-**Author:** Agent-B / Barry  
+**Author:** Lily Xiaolei Li  
 **Status:** Draft  
 
 ---
@@ -65,7 +65,7 @@ POST /vf/sync
 ```
 
 **Sync 逻辑：**
-1. 扫描 `library_path`（默认 `C:\Users\Barry Li (UoN)\clawd\projects\library-rag\data\parsed\`）下所有 `.md` 文件
+1. 扫描 `library_path`（默认 `C:\Users\Lily Xiaolei Li (UoN)\clawd\projects\library-rag\data\parsed\`）下所有 `.md` 文件
 2. 从每篇 `.md` 前几行提取 metadata（title, authors, year）来构造 `paper_id`
    - 解析规则：markdown 前 matter 或前 10 行中匹配 `# Title`, `Authors:`, `Year:` 等模式
    - `paper_id` 生成格式：`{FirstAuthorLastName}{Year}_{sanitized_short_title}`

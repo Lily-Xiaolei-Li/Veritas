@@ -1,6 +1,6 @@
 # Technical Design Document: Sentence-Level Academic Checker
 
-**Project:** Agent-B-Research (ABR)  
+**Project:** Veritas (ABR)  
 **Author:** 超级小蕾 (Design) + 老爷 (Vision)  
 **Date:** 2026-02-14  
 **Status:** Approved for Development  
@@ -579,7 +579,7 @@ CREATE TABLE checker_annotations (
 ## 9. File Structure
 
 ```
-Agent-B-Research/
+Veritas/
 ├── backend/
 │   ├── app/
 │   │   ├── routes/
