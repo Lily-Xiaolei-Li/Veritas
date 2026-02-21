@@ -1,0 +1,139 @@
+# Veritas Multi-Instance Configuration
+# =====================================
+# Instance A: 大文库 (800+ papers) - Ports 8000/8002
+# Instance B: SLR精华文库 (124 papers) - Ports 8100/8102
+#
+# Usage:
+#   docker compose -f docker-compose.multi.yml up -d
+#   docker compose -f docker-compose.multi.yml down
+#
+# Developed by Lily Xiaolei Li
+
+services:
+  # =========================================================================
+  # Instance A: 大文库 (Main Library - 800+ papers)
+  # =========================================================================
+  veritas-core-main:
+    build:
+      context: ./veritas-core/backend
+      dockerfile: Dockerfile
+    container_name: veritas-core-main
+    ports:
+      - "8000:8000"
+    environment:
+      - VERITAS_PLUGIN_DIR=/opt/veritas/plugins
+      - VERITAS_INSTANCE_NAME=大文库
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./scholarly-hollows:/opt/veritas/plugins/scholarly-hollows:ro
+      - veritas-main-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-main-net
+
+  gnosiplexio-main:
+    build:
+      context: ./gnosiplexio
+      dockerfile: Dockerfile
+    container_name: gnosiplexio-main
+    ports:
+      - "8002:8002"
+    environment:
+      - GNOSIPLEXIO_DATA_SOURCE=veritas
+      - GNOSIPLEXIO_VERITAS_API_URL=http://veritas-core-main:8000
+      - VERITAS_CORE_URL=http://veritas-core-main:8000
+      - GNOSIPLEXIO_DATA_DIR=/app/data/gnosiplexio
+      - GNOSIPLEXIO_AUTO_SAVE=true
+      - GNOSIPLEXIO_DEBUG=false
+    volumes:
+      - gnosiplexio-main-data:/app/data/gnosiplexio
+    depends_on:
+      veritas-core-main:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-main-net
+
+  # =========================================================================
+  # Instance B: SLR精华文库 (Systematic Literature Review - 124 papers)
+  # =========================================================================
+  veritas-core-slr:
+    build:
+      context: ./veritas-core/backend
+      dockerfile: Dockerfile
+    container_name: veritas-core-slr
+    ports:
+      - "8100:8000"
+    environment:
+      - VERITAS_PLUGIN_DIR=/opt/veritas/plugins
+      - VERITAS_INSTANCE_NAME=SLR精华文库
+      - LOG_LEVEL=INFO
+    volumes:
+      - ./scholarly-hollows:/opt/veritas/plugins/scholarly-hollows:ro
+      - veritas-slr-data:/app/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-slr-net
+
+  gnosiplexio-slr:
+    build:
+      context: ./gnosiplexio
+      dockerfile: Dockerfile
+    container_name: gnosiplexio-slr
+    ports:
+      - "8102:8002"
+    environment:
+      - GNOSIPLEXIO_DATA_SOURCE=veritas
+      - GNOSIPLEXIO_VERITAS_API_URL=http://veritas-core-slr:8000
+      - VERITAS_CORE_URL=http://veritas-core-slr:8000
+      - GNOSIPLEXIO_DATA_DIR=/app/data/gnosiplexio
+      - GNOSIPLEXIO_AUTO_SAVE=true
+      - GNOSIPLEXIO_DEBUG=false
+    volumes:
+      - gnosiplexio-slr-data:/app/data/gnosiplexio
+    depends_on:
+      veritas-core-slr:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-slr-net
+
+networks:
+  veritas-main-net:
+    driver: bridge
+  veritas-slr-net:
+    driver: bridge
+
+volumes:
+  veritas-main-data:
+    name: veritas-main-data
+  gnosiplexio-main-data:
+    name: gnosiplexio-main-data
+  veritas-slr-data:
+    name: veritas-slr-data
+  gnosiplexio-slr-data:
+    name: gnosiplexio-slr-data
