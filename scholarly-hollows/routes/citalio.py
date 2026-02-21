@@ -7,9 +7,16 @@ from uuid import uuid4
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.logging_config import get_logger
-from app.services.citalio.engine import run_citalio
-from app.services.citalio.manual_search import CitalioManualSearcher
+try:
+    # Try Veritas Core imports first (when loaded as plugin)
+    from app.logging_config import get_logger
+    from app.services.citalio.engine import run_citalio
+    from app.services.citalio.manual_search import CitalioManualSearcher
+except ImportError:
+    # Fallback to local imports (standalone mode)
+    from ..logging_config import get_logger
+    from ..services.citalio.engine import run_citalio
+    from ..services.citalio.manual_search import CitalioManualSearcher
 
 logger = get_logger("citalio.routes")
 

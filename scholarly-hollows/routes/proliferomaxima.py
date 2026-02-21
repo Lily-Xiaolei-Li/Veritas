@@ -8,9 +8,16 @@ from uuid import uuid4
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.services.proliferomaxima.batch_engine import ProliferomaximaBatchEngine
-from app.services.proliferomaxima.paper_selector import PaperSelector, find_paper_md_files
-from app.services.proliferomaxima.ref_extractor import ReferenceExtractor
+try:
+    # Try Veritas Core imports first (when loaded as plugin)
+    from app.services.proliferomaxima.batch_engine import ProliferomaximaBatchEngine
+    from app.services.proliferomaxima.paper_selector import PaperSelector, find_paper_md_files
+    from app.services.proliferomaxima.ref_extractor import ReferenceExtractor
+except ImportError:
+    # Fallback to local imports (standalone mode)
+    from ..services.proliferomaxima.batch_engine import ProliferomaximaBatchEngine
+    from ..services.proliferomaxima.paper_selector import PaperSelector, find_paper_md_files
+    from ..services.proliferomaxima.ref_extractor import ReferenceExtractor
 
 router = APIRouter(prefix="/proliferomaxima", tags=["proliferomaxima"])
 

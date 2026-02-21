@@ -9,6 +9,7 @@ networkx>=3.0
 
 # Data validation
 pydantic>=2.0
+pydantic-settings>=2.0
 
 # FastAPI for API routes (optional, for standalone mode)
 fastapi>=0.100.0

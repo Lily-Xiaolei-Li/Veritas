@@ -1,0 +1,81 @@
+# Docker Compose for Integration Testing
+# ======================================
+# Veritas Core + Scholarly Hollows + Gnosiplexio
+#
+# Usage:
+#   docker compose -f docker-compose.integration.yml up --build
+#   docker compose -f docker-compose.integration.yml down
+#
+# Test:
+#   python scripts/test_full_integration.py
+
+version: "3.8"
+
+services:
+  # =========================================================================
+  # Veritas Core - Main API Server (port 8000)
+  # =========================================================================
+  veritas-core:
+    build:
+      context: ./veritas-core/backend
+      dockerfile: Dockerfile
+    container_name: veritas-core
+    ports:
+      - "8000:8000"
+    environment:
+      - VERITAS_PLUGIN_DIR=/opt/veritas/plugins
+      - VERITAS_CORS_ORIGINS=*
+      - LOG_LEVEL=INFO
+    volumes:
+      # Mount scholarly-hollows as a plugin
+      - ./scholarly-hollows:/opt/veritas/plugins/scholarly-hollows:ro
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-net
+
+  # =========================================================================
+  # Gnosiplexio - Knowledge Graph Engine (port 8002)
+  # =========================================================================
+  gnosiplexio:
+    build:
+      context: ./gnosiplexio
+      dockerfile: Dockerfile
+    container_name: gnosiplexio
+    ports:
+      - "8002:8002"
+    environment:
+      - GNOSIPLEXIO_DATA_SOURCE=veritas
+      - GNOSIPLEXIO_VERITAS_API_URL=http://veritas-core:8000
+      # VeritasAdapter uses VERITAS_CORE_URL
+      - VERITAS_CORE_URL=http://veritas-core:8000
+      - GNOSIPLEXIO_DATA_DIR=/app/data/gnosiplexio
+      - GNOSIPLEXIO_AUTO_SAVE=true
+      - GNOSIPLEXIO_CORS_ORIGINS=*
+      - GNOSIPLEXIO_DEBUG=false
+    volumes:
+      - gnosiplexio-data:/app/data/gnosiplexio
+    depends_on:
+      veritas-core:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8002/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - veritas-net
+
+networks:
+  veritas-net:
+    driver: bridge
+
+volumes:
+  gnosiplexio-data:

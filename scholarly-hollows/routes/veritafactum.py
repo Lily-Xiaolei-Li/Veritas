@@ -16,8 +16,14 @@ from uuid import uuid4
 from fastapi import APIRouter, BackgroundTasks, HTTPException, status
 from pydantic import BaseModel, Field
 
-from app.logging_config import get_logger
-from app.services.checker.engine import run_checker
+try:
+    # Try Veritas Core imports first (when loaded as plugin)
+    from app.logging_config import get_logger
+    from app.services.checker.engine import run_checker
+except ImportError:
+    # Fallback to local imports (standalone mode)
+    from ..logging_config import get_logger
+    from ..services.veritafactum.engine import run_checker
 
 logger = get_logger("checker.routes")
 

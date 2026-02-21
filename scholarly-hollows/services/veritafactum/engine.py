@@ -11,10 +11,15 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Coroutine, Dict, List, Optional
 from uuid import uuid4
 
-from app.logging_config import get_logger
+try:
+    from app.logging_config import get_logger
+    from app.services.vf_middleware import profile_searcher as rag_searcher
+except ImportError:
+    from ...logging_config import get_logger
+    # Fallback: stub rag_searcher if not available
+    rag_searcher = None
 
 from . import ai_detector, classifier, extractor, flow_checker, report_generator, splitter
-from app.services.vf_middleware import profile_searcher as rag_searcher
 
 logger = get_logger("checker.engine")
 
