@@ -17,6 +17,7 @@ from fastapi import APIRouter
 from .veritafactum import router as veritafactum_router
 from .citalio import router as citalio_router
 from .proliferomaxima import router as proliferomaxima_router
+from .exportario import router as exportario_router
 
 # Main router for the plugin - exported for Veritas Core plugin loader
 router = APIRouter()
@@ -25,6 +26,7 @@ router = APIRouter()
 router.include_router(veritafactum_router)
 router.include_router(citalio_router)
 router.include_router(proliferomaxima_router)
+router.include_router(exportario_router)
 
 
 @router.get("/health")

@@ -5,6 +5,7 @@ FastAPI application for Veritas Core with plugin system.
 """
 
 import logging
+import os
 from contextlib import asynccontextmanager
 from typing import List
 
@@ -45,10 +46,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS 中间件
+# CORS 中间件 - 从环境变量读取允许的源
+CORS_ORIGINS = os.getenv("VERITAS_CORS_ORIGINS", "*").split(",")
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # 生产环境应限制
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

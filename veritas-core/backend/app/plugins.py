@@ -22,6 +22,7 @@ Example manifest.json:
 import importlib.util
 import json
 import logging
+import os
 from pathlib import Path
 from typing import List, Optional
 
@@ -33,13 +34,20 @@ logger = logging.getLogger(__name__)
 class PluginManager:
     """Veritas Core 插件管理器"""
 
-    def __init__(self, plugin_dir: str = "/opt/veritas/plugins"):
+    def __init__(self, plugin_dir: str = None):
         """
         Initialize the plugin manager.
 
         Args:
-            plugin_dir: Directory containing installed plugins
+            plugin_dir: Directory containing installed plugins.
+                        Default: ~/.veritas/plugins or VERITAS_PLUGIN_DIR env var
         """
+        if plugin_dir is None:
+            # Default: ~/.veritas/plugins or from env
+            plugin_dir = os.getenv(
+                "VERITAS_PLUGIN_DIR",
+                str(Path.home() / ".veritas" / "plugins")
+            )
         self.plugin_dir = Path(plugin_dir)
         self.loaded_plugins: List[str] = []
 
