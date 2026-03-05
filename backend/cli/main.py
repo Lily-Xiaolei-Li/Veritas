@@ -668,6 +668,13 @@ def _resolve_session_defaults(args: argparse.Namespace, mode_value: str) -> None
 
 
 def main(argv: Optional[list[str]] = None) -> int:
+    # Ensure UTF-8 for CLI output to handle emojis/academic symbols
+    if sys.stdout.encoding.lower() != 'utf-8':
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+        except (AttributeError, TypeError):
+            pass
+
     parser = build_parser()
     raw_arg_list = argv if argv is not None else sys.argv[1:]
     arg_list = _apply_aliases(raw_arg_list)

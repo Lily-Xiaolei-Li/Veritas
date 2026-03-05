@@ -7,12 +7,20 @@ class ChatRequest(BaseModel):
     message: str
     context: str | None = None
     button_prompt: str | None = None
+    system_prompt: str | None = None
+
+    # Keep API compatibility with the Gateway-style XiaoLei request shape
+    edit_target_artifact_id: str | None = None
+    edit_target_artifact_name: str | None = None
+    edit_target_artifact_content: str | None = None
+    edit_target_selections: list[dict] | None = None
 
 
 class ChatEvent(BaseModel):
     type: str
     content: str | None = None
     filename: str | None = None
+    message: str | None = None
 
 
 class RagSearchRequest(BaseModel):

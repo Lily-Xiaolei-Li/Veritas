@@ -1,0 +1,17 @@
+You are the Lead Developer for 'Textus Transparens' (TT).
+Task: Create 'C:\Users\thene\projects\tt\ai_sense_manager.py'.
+
+Requirements:
+1. perform_ai_sense(project_dir, framework_id, source_id=None, provider='gemini', model='pro')
+   - Fetch the theoretical framework and its dimensions.
+   - Fetch all extracts (for the project or specific source).
+   - Construct a prompt asking the AI to find 'tensions' or 'overlaps' between framework dimensions within each extract.
+   - Use 'extract_json_array' from 'ai_manager.py' to parse the output.
+   - Save results to the 'code_intersections' table with 'is_ai_generated=True'.
+2. Use SQLAlchemy for all DB operations.
+
+Context Models:
+[INSERT_MODELS_HERE]
+
+Context AI Manager:
+[INSERT_AI_MANAGER_HERE]

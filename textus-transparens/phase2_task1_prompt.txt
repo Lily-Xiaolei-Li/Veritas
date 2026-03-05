@@ -1,0 +1,18 @@
+You are the Lead Developer for 'Textus Transparens' (TT).
+Task: Create 'C:\Users\thene\projects\tt\advanced_matrix_manager.py'.
+
+Requirements:
+1. build_advanced_matrix(project_dir, x_axis, y_axis)
+   - x_axis/y_axis can be: 'theme', 'cluster', 'case', 'case_attr:<key>'.
+2. Cell Metrics:
+   - Density: number of CodeAssignments.
+   - Breadth: number of unique Sources.
+   - Enriched Quotes: top 3 text_spans.
+3. Return a dictionary structure suitable for Rich table display.
+
+Context:
+Models: [INSERT_MODELS_HERE]
+
+Code Manager (for DB engine): [INSERT_CODE_MANAGER_HERE]
+
+Write the complete Python file.

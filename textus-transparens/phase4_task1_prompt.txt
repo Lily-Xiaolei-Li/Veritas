@@ -1,0 +1,20 @@
+You are the Lead Developer for 'Textus Transparens' (TT). We are in Phase 3/4 of v1.1.
+
+Task: Create 'C:\Users\thene\projects\tt\narrative_manager.py'.
+
+Requirements:
+1. synthesize_evolution(project_dir, start_date=None)
+   - Fetch all 'AuditLog' entries (filtered by date if provided).
+   - Fetch all 'Memo' entries.
+   - Fetch all 'JudgementNote' entries.
+   - Sort everything by 'created_at'.
+   - Construct a rich context representing the "history" of the project's analytical decisions.
+   - Use 'gemini-3.1-pro' (high intelligence) to synthesize this data into a chronological narrative.
+   - The narrative should explain structural shifts in the research, key theoretical breakthroughs, and how "gut feelings" led to codebook changes.
+   - Format: Markdown report.
+2. The prompt to Gemini must strictly enforce citing IDs of logs/memos/notes to ensure traceability.
+
+Context Models:
+[INSERT_MODELS_HERE]
+
+Write the complete Python file. Use 'subprocess.run' to call Gemini CLI for the synthesis.

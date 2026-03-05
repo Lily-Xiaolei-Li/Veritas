@@ -1,0 +1,29 @@
+[
+  {
+    "model": "llama3.1:8b",
+    "success": true,
+    "elapsed_seconds": 244.61,
+    "eval_count": 184,
+    "tokens_per_sec": 12.12,
+    "output_length": 651,
+    "output": "```python\ndef fibonacci(n):\n    \"\"\"\n    Returns the nth Fibonacci number.\n\n    Args:\n        n (int): The index of the Fibonacci number to return.\n\n    Returns:\n        int: The nth Fibonacci number.\n\n    Raises:\n        ValueError: If n is a negative integer.\n    \"\"\"\n\n    if not isinstance(n, int) or n < 0:\n        raise ValueError(\"Input must be a non-negative integer\")\n\n    elif n == 0:\n        return 0\n    elif n == 1:\n        return 1\n\n    else:\n        fib_n_2 = 0\n        fib_n_1 = 1\n\n        for _ in range(2, n + 1):\n            fib_n = fib_n_1 + fib_n_2\n            fib_n_2 = fib_n_1\n            fib_n_1 = fib_n\n\n        return fib_n\n```"
+  },
+  {
+    "model": "qwen2.5:14b",
+    "success": true,
+    "elapsed_seconds": 43.56,
+    "eval_count": 169,
+    "tokens_per_sec": 6.37,
+    "output_length": 648,
+    "output": "```python\ndef fibonacci(n):\n    \"\"\"\n    Returns the nth Fibonacci number.\n    \n    Args:\n        n (int): The index in the Fibonacci sequence to return. Must be non-negative.\n        \n    Returns:\n        int: The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is a negative integer.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    \n    if n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    \n    fib_values = [0, 1]\n    for i in range(2, n + 1):\n        next_value = fib_values[i - 1] + fib_values[i - 2]\n        fib_values.append(next_value)\n    \n    return fib_values[n]\n```"
+  },
+  {
+    "model": "deepseek-r1:14b",
+    "success": true,
+    "elapsed_seconds": 241.12,
+    "eval_count": 1382,
+    "tokens_per_sec": 6.2,
+    "output_length": 671,
+    "output": "```python\ndef fibonacci(n):\n    \"\"\"\n    Returns the nth Fibonacci number (0-indexed). \n    Raises ValueError if n is a negative integer.\n    \n    Parameters:\n        n (int): A non-negative integer representing the index of the Fibonacci sequence.\n        \n    Returns:\n        int: The nth Fibonacci number.\n        \n    Raises:\n        ValueError: If n is a negative integer.\n    \"\"\"\n    if n < 0:\n        raise ValueError(\"n must be a non-negative integer\")\n    elif n == 0:\n        return 0\n    elif n == 1:\n        return 1\n    else:\n        a, b = 0, 1\n        for i in range(2, n + 1):\n            c = a + b\n            a = b\n            b = c\n        return b\n```"
+  }
+]

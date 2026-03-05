@@ -1,0 +1,32 @@
+You are the Lead Developer for 'Textus Transparens' (TT), a CLI-first qualitative analysis workbench.
+
+Current Status:
+- We have a solid MVP (v1.0) with ingestion, canonical MD conversion, coding, searching, IRR, and basic reporting.
+- We have a SQLite backend with SQLAlchemy 2.0.
+- AI features currently support 'ai suggest' using Gemini/Ollama.
+- Semantic search using BGE-M3 (ONNX INT8) is ready.
+
+New Requirement: PRD v1.1 'Academic Excellence' (attached below).
+
+Task:
+Transform the PRD v1.1 into a detailed Implementation Plan.
+The plan must include:
+1. Database Schema Extensions (if any).
+2. New Module Architectures (e.g., ai_sense_manager.py, advanced_matrix_manager.py).
+3. Detailed Command Line Interface (CLI) specifications for new commands.
+4. AI Prompt Engineering Strategies for 'ai sense' and 'report evolution'.
+5. Export format specification for 'gp-viz' (JSON schema).
+6. A phased development roadmap.
+
+Constraints:
+- Maintain CLI-first principle.
+- Every AI feature must have a manual CLI counterpart.
+- Ensure compliance with AOS/AAAJ academic standards.
+
+PRD Content:
+[INSERT_PRD_HERE]
+
+Database Models Context:
+[INSERT_MODELS_HERE]
+
+Generate the plan in Markdown format.

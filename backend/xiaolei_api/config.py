@@ -17,6 +17,18 @@ def _split_csv(value: str | None) -> list[str]:
     return [part.strip() for part in value.split(",") if part.strip()]
 
 
+def _float(value: str | None, default: float) -> float:
+    if value is None:
+        return default
+    return float(value)
+
+
+def _int(value: str | None, default: int) -> int:
+    if value is None:
+        return default
+    return int(value)
+
+
 def _repo_root() -> Path:
     return Path(__file__).resolve().parents[2]
 
@@ -33,6 +45,13 @@ class Settings:
     clawdbot_endpoint: str
     buttons_path: Path
     request_timeout_s: float
+
+    # LLM settings (reuses Veritas Core's provider stack)
+    xiaolei_llm_provider: str
+    xiaolei_llm_model: str
+    xiaolei_llm_temperature: float
+    xiaolei_llm_max_tokens: int | None
+    xiaolei_llm_timeout_s: int
 
 
 _SETTINGS: Settings | None = None
@@ -64,6 +83,12 @@ def get_settings() -> Settings:
 
     request_timeout_s = float(os.environ.get("XIAOLEI_REQUEST_TIMEOUT_S", "15"))
 
+    xiaolei_llm_provider = os.environ.get("XIAOLEI_LLM_PROVIDER", "openrouter")
+    xiaolei_llm_model = os.environ.get("XIAOLEI_LLM_MODEL", "openai/gpt-5.2")
+    xiaolei_llm_temperature = _float(os.environ.get("XIAOLEI_LLM_TEMPERATURE"), 0.7)
+    xiaolei_llm_max_tokens = _int(os.environ.get("XIAOLEI_LLM_MAX_TOKENS"), 0) or None
+    xiaolei_llm_timeout_s = int(os.environ.get("XIAOLEI_LLM_TIMEOUT_S", str(int(request_timeout_s))) or 20)
+
     _SETTINGS = Settings(
         api_host=api_host,
         api_port=api_port,
@@ -75,5 +100,10 @@ def get_settings() -> Settings:
         clawdbot_endpoint=clawdbot_endpoint,
         buttons_path=buttons_path,
         request_timeout_s=request_timeout_s,
+        xiaolei_llm_provider=xiaolei_llm_provider,
+        xiaolei_llm_model=xiaolei_llm_model,
+        xiaolei_llm_temperature=xiaolei_llm_temperature,
+        xiaolei_llm_max_tokens=xiaolei_llm_max_tokens,
+        xiaolei_llm_timeout_s=xiaolei_llm_timeout_s,
     )
     return _SETTINGS

@@ -2,8 +2,12 @@ import logging
 import sys
 from pathlib import Path
 
-# Add parent to path for absolute imports when running standalone
-sys.path.insert(0, str(Path(__file__).parent))
+# Ensure imports can resolve Veritas modules and local xiaolei_api modules.
+repo_root = Path(__file__).resolve().parents[1]
+backend_root = repo_root / "backend"
+for path in (repo_root, backend_root):
+    if str(path) not in sys.path:
+        sys.path.insert(0, str(path))
 
 from config import get_settings
 from fastapi import FastAPI

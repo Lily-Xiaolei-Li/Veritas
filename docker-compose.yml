@@ -1,0 +1,31 @@
+services:
+  xiaolei_api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile.xiaolei_api
+    container_name: xiaolei_api
+    ports:
+      - "8768:8768"
+    environment:
+      - XIAOLEI_API_HOST=0.0.0.0
+      - XIAOLEI_API_PORT=8768
+      - XIAOLEI_CORS_ENABLED=true
+      - XIAOLEI_CORS_ORIGINS=*
+      # Real LLM settings (from host env)
+      - XIAOLEI_LLM_PROVIDER=${XIAOLEI_LLM_PROVIDER:-openrouter}
+      - XIAOLEI_LLM_MODEL=${XIAOLEI_LLM_MODEL:-openai/gpt-5.2}
+      - XIAOLEI_LLM_TEMPERATURE=${XIAOLEI_LLM_TEMPERATURE:-0.7}
+      - XIAOLEI_LLM_MAX_TOKENS=${XIAOLEI_LLM_MAX_TOKENS:-1024}
+      - XIAOLEI_LLM_TIMEOUT_S=${XIAOLEI_LLM_TIMEOUT_S:-30}
+      # OpenClaw Gateway routing (no provider API keys needed)
+      - OPENCLAW_GATEWAY_URL=${OPENCLAW_GATEWAY_URL:-http://host.docker.internal:18789}
+      - OPENCLAW_GATEWAY_TOKEN=${OPENCLAW_GATEWAY_TOKEN:-}
+      - OPENCLAW_AGENT_ID=${OPENCLAW_AGENT_ID:-main}
+      - OPENCLAW_MODEL=${OPENCLAW_MODEL:-openclaw}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8768/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s

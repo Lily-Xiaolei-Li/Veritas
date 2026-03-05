@@ -1,0 +1,19 @@
+You are the Lead Developer for 'Textus Transparens' (TT).
+Task: Create 'C:\Users\thene\projects\tt\gpviz_export_manager.py'.
+
+Requirements:
+1. export_gp_viz(project_dir)
+2. Nodes: Codes with weight (assignment count) and cluster.
+3. Edges: 
+   - Co-occurrence frequency.
+   - Semantic Similarity (using BGE-M3).
+4. Model details:
+   - Use `onnxruntime` to load `C:\Users\thene\.cache\bge-m3-onnx-npu\bge-m3-int8.onnx`.
+   - Tokenizer: `BAAI/bge-m3`.
+   - Calculate cosine similarity between code definitions or aggregated extract embeddings.
+5. Output format: `semantic_landscape.json` (as per PRD v1.1 spec).
+
+Context:
+Models: [INSERT_MODELS_HERE]
+
+Write the complete Python file.

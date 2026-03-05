@@ -117,6 +117,18 @@
       "provenance": {
         "type": "run"
       }
+    },
+    {
+      "id": "art_284b15ab76",
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "run_id": "r_d1f4b082b3",
+      "name": "run-r_d1f4b082b3.md",
+      "type": "markdown",
+      "content": "[Error calling XiaoLei Chat: [WinError 10061] No connection could be made because the target machine actively refused it]",
+      "created_at": "2026-03-05T10:00:09.935413+00:00",
+      "provenance": {
+        "type": "run"
+      }
     }
   ],
   "runs": [
@@ -129,6 +141,16 @@
       "parent_run_id": null,
       "request": "hello test",
       "response": "你好，老爷。博士小蕾在线，随时待命。有什么研究任务？"
+    },
+    {
+      "id": "r_d1f4b082b3",
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "status": "completed",
+      "started_at": "2026-03-05T10:00:05.631863+00:00",
+      "ended_at": "2026-03-05T10:00:09.935413+00:00",
+      "parent_run_id": null,
+      "request": "hi",
+      "response": "[Error calling XiaoLei Chat: [WinError 10061] No connection could be made because the target machine actively refused it]"
     }
   ],
   "messages": [
@@ -138,6 +160,13 @@
       "user": "hello test",
       "assistant": "你好，老爷。博士小蕾在线，随时待命。有什么研究任务？",
       "created_at": "2026-02-14T07:15:30.263370+00:00"
+    },
+    {
+      "session_id": "46938659-9f7b-4f80-a559-c4e93168899b",
+      "run_id": "r_d1f4b082b3",
+      "user": "hi",
+      "assistant": "[Error calling XiaoLei Chat: [WinError 10061] No connection could be made because the target machine actively refused it]",
+      "created_at": "2026-03-05T10:00:09.935413+00:00"
     }
   ]
 }

@@ -1,0 +1,50 @@
+services:
+  gp-viz-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gp-viz-api
+    command: ["python", "-m", "app.api_server"]
+    ports:
+      - "1880:8080"
+    environment:
+      - QDRANT_HOST=${QDRANT_HOST:-host.docker.internal}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - XIAOLEI_API_URL=${XIAOLEI_API_URL:-http://host.docker.internal:8768}
+      - GP_EXCEL_PATH=${GP_EXCEL_PATH:-}
+      - GP_PDF_DIR=${GP_PDF_DIR:-}
+      - GP_VECTR_COLLECTION=${GP_VECTR_COLLECTION:-vf_profiles_slr}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "python - <<'PY'\nimport urllib.request\nurllib.request.urlopen('http://localhost:8080/health')\nPY"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  gp-viz-streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: gp-viz-streamlit
+    command: ["streamlit", "run", "app/main.py", "--server.port", "8501", "--server.address", "0.0.0.0"]
+    ports:
+      - "18501:8501"
+    depends_on:
+      gp-viz-api:
+        condition: service_healthy
+    environment:
+      - QDRANT_HOST=${QDRANT_HOST:-host.docker.internal}
+      - QDRANT_PORT=${QDRANT_PORT:-6333}
+      - XIAOLEI_API_URL=${XIAOLEI_API_URL:-http://host.docker.internal:8768}
+      - GP_EXCEL_PATH=${GP_EXCEL_PATH:-}
+      - GP_PDF_DIR=${GP_PDF_DIR:-}
+      - GP_VECTR_COLLECTION=${GP_VECTR_COLLECTION:-vf_profiles_slr}
+      - GP_VIZ_API_URL=http://gp-viz-api:8080
+    restart: unless-stopped
+    volumes:
+      - ./app/pages:/app/pages:ro
+
+networks:
+  default:
+    name: gp-viz-net

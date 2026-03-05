@@ -6,7 +6,7 @@ import re
 from pathlib import Path
 
 from config import get_settings
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 from models import Button, ButtonCreateRequest, ButtonsResponse
 
 router = APIRouter()
@@ -132,7 +132,7 @@ async def create_button(request: ButtonCreateRequest) -> Button:
 
 
 @router.delete("/buttons/{button_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_button(button_id: str) -> None:
+async def delete_button(button_id: str) -> Response:
     settings = get_settings()
     buttons = _read_buttons(settings.buttons_path)
     remaining = [button for button in buttons if button.id != button_id]
@@ -141,4 +141,4 @@ async def delete_button(button_id: str) -> None:
         raise HTTPException(status_code=404, detail="Button not found")
 
     _write_buttons(settings.buttons_path, remaining)
-    return None
+    return Response(status_code=status.HTTP_204_NO_CONTENT)

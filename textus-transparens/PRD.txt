@@ -1,0 +1,529 @@
+## Textus Transparens (TT) PRD v3.1
+
+**CLI-first qualitative analysis workbench with Markdown canonical artefacts, AI-assisted coding (human-reviewed), judgement-trace (“gut feeling”) reverse engineering, NVivo-style reporting, and reproducibility-first governance.**
+
+---
+
+### 1. Overview
+
+**Product name:** Textus Transparens (TT)
+
+**Problem:** Traditional qualitative analysis tools are GUI-bound, hard to reproduce, and insufficiently explicit about auditability of analytic decisions—especially in AI-assisted workflows and multi-project research programmes.
+
+**Solution:** TT is a **CLI-first**, **audit-trail-first** qualitative analysis tool that converts heterogeneous sources (PDF/DOCX/TXT/HTML/transcripts) into **canonical Markdown**, supports coding/memoing/aggregation to themes, adds **AI-assisted semantic coding** with mandatory human review, captures and systematises researcher judgement (“gut feeling”) as structured decision traces, supports inter-rater reliability workflows, and produces **NVivo-style reports** (as reproducible Markdown/CSV/JSON artefacts).
+
+---
+
+### 2. Goals and success criteria
+
+#### 2.1 Goals
+
+1. Support rigorous qualitative/content analysis across **any qualitative material** (not only papers).
+2. Make workflows **reproducible and auditable by default** (scriptable CLI, deterministic exports).
+3. Add AI assistance that accelerates coding **without undermining defensibility** (provenance + review + audit trail).
+4. Provide NVivo-equivalent **reporting**, plus evidence packs suitable for thesis/journal writing.
+5. Support academic credibility requirements (e.g., **IRR support**, transparent codebook lifecycle).
+
+#### 2.2 Success criteria (measurable)
+
+* **Reproducibility:** A complete analysis can be regenerated from CLI commands + project folder with no manual steps.
+* **Traceability:** Every coded extract resolves to canonical Markdown and back to the original source (PDF page / transcript turn / doc paragraph).
+* **Reporting:** TT generates NVivo-style reports plus theme evidence packs in `.md` with supporting `.csv/.json`.
+* **AI governance:** 100% of AI suggestions are accepted/rejected/edited with recorded decision + provenance.
+* **Integrity:** Codebook merges/splits/deprecations never silently destroy assignments; all changes are auditable.
+* **IRR:** TT supports double-coding subsets and produces agreement statistics and artefacts suitable for thesis/journal methods sections.
+
+---
+
+### 3. Non-goals
+
+* Replacing reference managers (EndNote/Zotero) entirely.
+* Fully automated analysis without researcher validation.
+* A rich GUI as the primary interface (GUI may be added later as an optional viewer).
+
+---
+
+### 4. Users and core use cases
+
+#### 4.1 Primary user
+
+PhD researcher conducting systematic/content analysis, interviews, documentary analysis, and mixed qualitative corpora.
+
+#### 4.2 Core use cases
+
+* Create and switch between multiple projects quickly.
+* Import sources, convert to Markdown, attach metadata, maintain stable IDs.
+* Manual coding + memoing + iterative codebook refinement.
+* Aggregate codes → clusters → sub-themes → themes with explicit decision rules.
+* Run AI semantic suggestion passes; review and apply decisions with full provenance logging.
+* Capture “gut feeling” judgement notes anchored to evidence and codebook rules.
+* Run IRR workflows (subset sampling, double-coding, agreement stats).
+* Generate NVivo-style reports, theme evidence packs, and thesis-ready export matrices.
+
+---
+
+### 5. Product principles
+
+1. **CLI-first:** every action is a command; everything is scriptable.
+2. **Audit trail everywhere:** changes, merges/splits, AI runs, decisions logged append-only.
+3. **Evidence-first:** analysis outputs are always backed by an evidence network (extracts ↔ codes ↔ themes ↔ memos).
+4. **Human-in-the-loop:** AI proposes; researcher decides; decisions are recorded.
+5. **Markdown-canonical:** `.md` is the central text artefact for processing and output.
+6. **No silent drift:** if anchors cannot be resolved, TT produces explicit “orphaned” items requiring reconciliation.
+
+---
+
+### 6. Workspace, projects, and folder structure
+
+#### 6.1 Workspace model
+
+TT supports a workspace containing multiple projects.
+
+```text
+TT_WORKSPACE/
+  projects/
+    <project_name>/
+  shared/
+    templates/
+    taxonomies/
+  cache/
+    conversions/
+    embeddings/
+    ai_runs/
+```
+
+#### 6.2 Project structure (self-contained)
+
+```text
+<project>/
+  tt.yml
+  db/tt.sqlite
+  sources/
+    S0001/
+      original/...
+      canonical/source.md
+      canonical/source.meta.yaml
+      canonical/source.map.json
+      derivatives/
+        source.corrected.md
+        patches/
+          2026-03-03_patch01.diff
+  codebook/
+    codebook.md
+    codebook.json
+  cases/
+    cases.csv|json
+  runs/ai/<run_id>/...
+  reports/<release_name>/...
+  exports/...
+  snapshots/<snapshot_name>/...
+  logs/tt_commands.jsonl
+```
+
+---
+
+### 7. Authority model and consistency rules (source-of-truth)
+
+#### 7.1 Authority split (explicit)
+
+* **System of record for analysis:** `db/tt.sqlite`
+  (codes, assignments, memos, mappings, audit logs, AI runs, IRR artefacts, reports)
+* **System of record for text representation:** `sources/<id>/canonical/source.md` + `source.meta.yaml` + `source.map.json`
+  (the canonical textual form of the source and its traceability mapping)
+
+#### 7.2 Divergence handling (no silent drift)
+
+TT enforces:
+
+* `original_hash`, `canonical_md_hash`, `map_hash`, and `canonical_md_version_id` per source.
+* Anchor resolution checks whenever extracts/assignments are rendered in reports.
+
+If canonical artefacts change and an assignment can no longer resolve:
+
+* TT marks the assignment as **orphaned** (not deleted).
+* TT requires explicit reconciliation via CLI before the orphaned content can be used in final reports.
+
+---
+
+### 8. Canonical Markdown pipeline (ingestion and conversion)
+
+#### 8.1 Requirement
+
+All sources—PDF/DOCX/TXT/HTML/transcripts—are converted into canonical `.md` (e.g., via docling), preserving links to the original artefacts.
+
+#### 8.2 Design assumptions
+
+* Canonical `.md` may be imperfect; correctness is ensured by traceability to originals.
+* Originals are immutable and preserved in `sources/<id>/original/`.
+* Canonical md is **read-only by default**; modifications occur via TT correction workflow (Section 12).
+
+---
+
+### 9. Anchors and traceability specification (load-bearing, MVP)
+
+#### 9.1 Decision: hybrid anchors are mandatory in MVP
+
+* **Primary anchor:** stable structural markers (page + heading path + block index; transcript turns; doc paragraphs).
+* **Fallback precision:** `source.map.json` mapping to original coordinates (page, bbox, turn ranges) where available.
+
+#### 9.2 Anchor formats (standard)
+
+* PDFs: `p:<page>|h:<heading_path>|b:<block_index>`
+  Example: `p:12|h:Methods>Audit trail|b:07`
+* Transcripts: `t:<timestamp>|sp:<speaker>|turn:<n>`
+  Example: `t:00:34:12|sp:INTVWR|turn:184`
+* DOCX/TXT/MD: `h:<heading_path>|para:<n>|line:<n>`
+  Example: `h:Findings>Independence|para:12`
+
+#### 9.3 Marker generation
+
+TT may embed non-rendering markers in Markdown (recommended for MVP) and/or maintain a map.json. TT must ensure anchors remain stable across deterministic re-indexing steps.
+
+---
+
+### 10. Data model (core entities)
+
+#### 10.1 Must-have entities
+
+* **Project**
+* **Source**
+  `source_id`, `source_type`, `source_uri`, hashes, conversion provenance, attributes
+* **Extract**
+  `extract_id`, `source_id`, anchor, text_span (rendered from md at time of view), optional snapshot
+* **Code**
+  `code_id`, name, hierarchy, definition, inclusion/exclusion/boundary rules, status
+* **CodeAssignment**
+  `assignment_id`, `extract_id`, `code_id`, `coder_id`, created_at/by, anchor_resolved_at_version, status (active/orphaned)
+* **Memo**
+  `memo_id`, type, text, links to source/extract/code/theme/case, timestamps
+* **Cluster**
+* **SubTheme / Theme**
+* **Case** (NVivo-like)
+* **AISuggestion**
+* **JudgementNote**
+* **AuditLog**
+
+#### 10.2 Metadata scheme (core + extensions)
+
+`source.meta.yaml` contains:
+
+* Core: id/type/provenance/permissions/tags/attributes
+* Extensions: `article`, `interview`, `policy_doc`, `fieldnote`, etc.
+
+---
+
+### 11. Codebook lifecycle and versioning mechanics (explicit)
+
+#### 11.1 Code states
+
+* `active`
+* `deprecated`
+* `merged_into:<code_id>`
+* `split_into:[code_id,…]`
+
+#### 11.2 Codebook versioning
+
+* `codebook.json` is versioned; each version has a hash.
+* Each CodeAssignment stores `codebook_hash_at_time` and `code_id` (stable IDs never change).
+
+#### 11.3 Merge mechanics (A → B)
+
+* Code A becomes `merged_into:B` (A remains in history).
+* Existing assignments to A are **not deleted**.
+* Reports default to **roll-up view** (A contributes to B) unless “legacy view” requested.
+* Optional “materialise merge” can rewrite assignments but must retain provenance (`superseded_by`).
+
+#### 11.4 Split mechanics (A → B + C)
+
+* Code A becomes `split_into:[B,C]`.
+* All assignments to A are flagged `needs_review=true`.
+* TT creates a review queue; AI may suggest reclassification but human confirmation is required.
+* No silent reassignment is permitted.
+
+#### 11.5 Deprecation
+
+* Deprecated codes remain reportable but disallowed for new assignments by default.
+
+---
+
+### 12. Conversion QA and correction workflow (MVP)
+
+#### 12.1 Requirement
+
+TT must provide a workflow for conversion failures without breaking traceability.
+
+#### 12.2 Workflow design
+
+1. **Flag conversion quality issues** per source (stored in DB + meta).
+2. **Corrections are applied as derivatives**, not overwriting canonical md:
+
+   * `derivatives/source.corrected.md`
+   * logged patch files in `derivatives/patches/`
+3. **Re-index and reconcile anchors**:
+
+   * TT attempts deterministic re-resolution
+   * unresolved assignments become **orphaned** and require explicit re-anchoring
+
+#### 12.3 Logging
+
+All corrections and reconciliations are logged in AuditLog with hashes of before/after artefacts.
+
+---
+
+### 13. Core functional requirements (NVivo-like)
+
+#### 13.1 Ingestion and metadata
+
+* Bulk import sources
+* Convert to canonical `.md`
+* Import metadata from CSV/JSON (join by DOI/filename/hash)
+* Deduplicate; flag missing metadata
+* Maintain stable IDs across renames/moves
+
+#### 13.2 Full-text search (MVP)
+
+TT must support fast search across:
+
+* source text (canonical and/or corrected derivatives)
+* coded extracts
+* memos
+* codebook definitions/rules
+* metadata and attributes
+  Search must be filterable by code, case, attributes, and source_type.
+
+#### 13.3 Coding
+
+* Assign codes to extracts (multi-code)
+* Code hierarchy
+* Batch coding via CLI
+* Optional assignment confidence
+
+#### 13.4 Memoing
+
+* Memos linked to source/extract/code/theme/case
+* Memo templates (classification reason, theory use, tensions, limitations)
+
+#### 13.5 Aggregation
+
+* Map codes → clusters → sub-themes → themes
+* Store theme definitions + decision rules
+* Freeze “release” snapshots of analytical structure
+
+#### 13.6 Cases and attributes (promoted to MVP)
+
+* Define cases (participants, organisations, sites, events)
+* Link sources/extracts to cases
+* Attribute tables (key–value or typed fields)
+* Enable case/attribute filtering and matrix queries
+
+---
+
+### 14. AI-assisted semantic coding (human-reviewed)
+
+#### 14.1 Objective
+
+AI proposes candidate extracts/spans + candidate codes with rationale grounded in codebook criteria; researcher reviews and applies decisions.
+
+#### 14.2 Must-have capabilities
+
+* Suggest spans for selected codes or code families
+* Whole-source triage (coverage gaps, likely missed regions)
+* Review queue: accept/reject/edit with reason
+* Provenance logging per AI run:
+
+  * model/provider/version, parameters
+  * prompt template ID
+  * codebook version hash
+  * source text hash(s)
+  * timestamp + run_id
+
+#### 14.3 Governance
+
+* Suggestions never become assignments without explicit `apply`.
+* All decisions are recorded (accept/reject/edit) with reasons.
+
+---
+
+### 15. “Gut-feeling” reverse engineering module
+
+#### 15.1 Objective
+
+Capture researcher judgement as structured, auditable traces:
+**trigger → rule → decision → ladder lineage → alternatives**
+
+#### 15.2 Must-have capabilities
+
+* Gut tag extracts with proposed code + confidence + trigger phrases + rationale
+* Link judgement notes to specific inclusion/exclusion/boundary rules (or new-rule candidate)
+* Record ladder position at time of decision (theme/subtheme/cluster/code)
+* Confusion tracking (common alternative pairs) for codebook refinement
+
+---
+
+### 16. Inter-rater reliability (IRR) support (credibility requirement)
+
+#### 16.1 MVP IRR
+
+* `coder_id` on assignments
+* Create and freeze an IRR sample set (random or stratified)
+* Double-coding support for selected sources/extract sets
+* Compute and export:
+
+  * percent agreement
+  * Cohen’s kappa (per selected code; macro summary)
+* IRR report exported as `.md` and `.csv`
+
+#### 16.2 v1 IRR enhancements
+
+* Adjudication workflow (resolve disagreements with logged decisions)
+* Optional additional statistics (e.g., Krippendorff’s alpha)
+
+---
+
+### 17. Reporting (key requirement)
+
+#### 17.1 Principle
+
+TT must generate NVivo-style outputs as reproducible artefacts primarily in `.md`, with `.csv/.json` for analysis and integration.
+
+#### 17.2 Must-have reports
+
+1. **Codebook report**: hierarchy + definitions + rules + examples (`.md/.json/.csv`)
+2. **Coding summary**: counts/coverage per code; per-source density (`.csv/.md`)
+3. **Coded extracts report**: per-code extracts with anchors + linked memos (`.md/.csv`)
+4. **Co-occurrence**: matrix + edge list for networks (`.csv`)
+5. **Matrix coding queries** (MVP; enabled by promoted case model):
+
+   * codes × cases
+   * codes × attributes
+   * themes × source_type / year_group / jurisdiction (`.csv`)
+6. **Theme evidence pack (thesis-ready)**:
+
+   * theme/subtheme definition + decision rules
+   * contributing clusters/codes
+   * exemplar extracts (anchored)
+   * linked memos, judgement notes, AI rationales
+   * boundary decisions / deviant cases
+   * folder of `.md` + `.csv` artefacts
+7. **Method audit report**:
+
+   * codebook iterations; merges/splits/deprecations
+   * AI run stats (acceptance rates by code family)
+   * judgement-note stats
+   * conversion correction events and reconciliation outcomes (`.md/.json`)
+
+---
+
+### 18. CLI interface requirements
+
+#### 18.1 Command families (illustrative)
+
+* Projects: `tt project init|switch|list`
+* Sources: `tt source add|list|show|qa|correct`
+* Metadata: `tt meta import|export`
+* Search: `tt search ...`
+* Codes: `tt code create|rename|merge|split|deprecate|list`
+* Coding: `tt code apply|remove|batch`
+* Memos: `tt memo add|list|search`
+* Mapping: `tt map cluster|subtheme|theme ...` and `tt map freeze`
+* AI: `tt ai suggest` + `tt review open|accept|reject|edit|apply`
+* Gut: `tt gut tag|link-rule|stats|export`
+* IRR: `tt irr sample create|run|report`
+* Reports: `tt report codebook|code|theme --pack|audit|matrix`
+* Exports: `tt export matrix --template ...`
+* Snapshots: `tt snapshot create|diff|restore`
+
+#### 18.2 Logging
+
+Every command writes:
+
+* append-only to `logs/tt_commands.jsonl`
+* structured events to the DB AuditLog
+
+---
+
+### 19. Import/export and interoperability
+
+#### 19.1 Imports
+
+* Metadata CSV (Scopus/EndNote exports)
+* Case/attribute tables (CSV/JSON)
+* Codebook import/export (JSON + Markdown)
+
+#### 19.2 Exports
+
+* Master matrices via configurable templates (SLR vs interviews)
+* Reports and evidence packs (Markdown-first)
+* Edge lists / matrices for network tooling
+* Snapshot bundles (frozen state + hash manifest)
+
+#### 19.3 Output-first format choice
+
+* Canonical working artefact: `.md`
+* Tables: `.csv`
+* Structured interchange: `.json`
+* Optional later modules: Word/Excel/PDF rendering from Markdown
+
+---
+
+### 20. Reproducibility, snapshots, and integrity
+
+#### 20.1 Must-have
+
+* Snapshot mechanism capturing:
+
+  * db, codebook, metadata, and hash manifest of originals + canonical/derivative md
+* Snapshot diff:
+
+  * codebook changes (merge/split/deprecate)
+  * assignment deltas
+  * AI run deltas
+  * correction/reconciliation events
+
+#### 20.2 Nice-to-have
+
+* Git-friendly deterministic exports
+* Signed manifests (optional)
+
+---
+
+### 21. Security and privacy
+
+* Per-project policy: allow/deny external AI calls
+* Optional redaction pipeline before API calls
+* Configurable retention for AI logs (store minimal text if needed)
+* Sensitivity levels per source and per project
+
+---
+
+### 22. Roadmap
+
+#### MVP (CLI-first NVivo-equivalent core + load-bearing governance)
+
+* Projects + source ingestion + `.md` conversion
+* Hybrid anchors + traceability enforcement + orphan reconciliation
+* Manual coding + memos + code hierarchy
+* Case/attribute model (MVP-level)
+* Full-text search
+* Aggregation mapping to themes + freeze releases
+* Conversion QA + correction derivatives + patch logs
+* Reports: codebook, coded extracts, coding summary, co-occurrence, basic matrix queries
+* Export matrices via templates
+* IRR MVP (sample set + double-coding + kappa/agreement exports)
+
+#### v1 (AI assistance)
+
+* AI suggestions + review queue + provenance logs
+* Coverage/gap triage
+* AI acceptance statistics
+* AI-assisted reclassification suggestions for splits (still human-confirmed)
+
+#### v1.1 (Judgement tracing + thesis packs)
+
+* Gut-feeling module (JudgementNotes + rule linkage + confusion matrix)
+* Theme evidence packs + method audit report expansions
+* Snapshot diff improvements and integrity enhancements
+* IRR adjudication workflow
+
+---
+
