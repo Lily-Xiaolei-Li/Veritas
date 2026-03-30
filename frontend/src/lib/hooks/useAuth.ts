@@ -49,20 +49,30 @@ export function useAuthStatus() {
       }
     };
 
+    const _connectStart = performance.now();
+    const _fmt = (ms: number) => `${ms.toFixed(0)}ms`;
+
+    console.debug(`[AUTH] Starting connection probe → ${API_BASE_URL}`);
+
     try {
       // Step 1: Check if backend is reachable via health endpoint
+      const _t1 = performance.now();
       const healthResponse = await fetchWithTimeout(
         `${API_BASE_URL}/health`,
         { method: "GET" },
         5000
       );
+      const _health_ms = performance.now() - _t1;
 
       if (!healthResponse.ok) {
+        console.warn(`[AUTH] Health check failed (${healthResponse.status}) — ${_fmt(_health_ms)}`);
         return "offline";
       }
+      console.debug(`[AUTH] ✓ Health check OK — ${_fmt(_health_ms)}`);
 
       // Step 2: Probe auth endpoint with dummy credentials
       // This triggers the actual auth check inside the login handler
+      const _t2 = performance.now();
       const authProbeResponse = await fetchWithTimeout(
         `${API_BASE_URL}/api/v1/auth/login`,
         {
@@ -72,27 +82,33 @@ export function useAuthStatus() {
         },
         5000
       );
+      const _auth_ms = performance.now() - _t2;
+      const _total_ms = performance.now() - _connectStart;
 
       // Check response body for "Authentication not enabled" message
       if (authProbeResponse.status === 404) {
         try {
           const data = await authProbeResponse.json();
           if (data.detail === "Authentication not enabled") {
+            console.info(`[AUTH] ✓ Auth disabled — health: ${_fmt(_health_ms)}, probe: ${_fmt(_auth_ms)}, total: ${_fmt(_total_ms)}`);
             return "disabled";
           }
         } catch {
           // If we can't parse JSON, still treat 404 as disabled
         }
+        console.info(`[AUTH] ✓ Auth disabled (404) — total: ${_fmt(_total_ms)}`);
         return "disabled";
       }
 
       // 401 means auth is enabled but credentials are wrong (expected)
       // 422 at this point shouldn't happen (we sent valid structure)
       // Any other status means auth is enabled
+      console.info(`[AUTH] ✓ Auth enabled (${authProbeResponse.status}) — health: ${_fmt(_health_ms)}, probe: ${_fmt(_auth_ms)}, total: ${_fmt(_total_ms)}`);
       return "enabled";
     } catch (error) {
       // Network error or timeout
-      console.error("Auth status detection failed:", error);
+      const _total_ms = performance.now() - _connectStart;
+      console.error(`[AUTH] Connection probe failed after ${_fmt(_total_ms)}:`, error);
       return "offline";
     }
   }, []);

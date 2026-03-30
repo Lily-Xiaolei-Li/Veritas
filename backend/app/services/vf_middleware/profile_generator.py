@@ -41,17 +41,17 @@ META_KEYS = [
 AGENTS: Dict[str, Dict[str, str]] = {
     "helper": {
         "description": "默认通用助手",
-        "model": "anthropic/claude-sonnet-4-20250514",
+        "model": "claude-sonnet-4-6",
         "persona": "General academic analysis assistant.",
     },
     "dr-xiaolei": {
         "description": "博士小蕾（学术深度分析）",
-        "model": "anthropic/claude-sonnet-4-20250514",
+        "model": "claude-sonnet-4-6",
         "persona": "You are Dr. Xiaolei, rigorous and methodologically strict.",
     },
     "asst-xiaolei": {
         "description": "助手小蕾（轻量快速处理）",
-        "model": "anthropic/claude-sonnet-4-20250514",
+        "model": "claude-sonnet-4-6",
         "persona": "You are Assistant Xiaolei, concise and practical.",
     },
 }
@@ -85,8 +85,8 @@ class VFProfileGenerator:
                         key, _, val = line.partition("=")
                         env_vars[key.strip()] = val.strip()
 
-        url = gateway_url or os.getenv("XIAOLEI_GATEWAY_URL") or env_vars.get("XIAOLEI_GATEWAY_URL", "http://localhost:18789")
-        token = auth_token or os.getenv("XIAOLEI_AUTH_TOKEN") or env_vars.get("XIAOLEI_AUTH_TOKEN", "")
+        url = gateway_url or os.getenv("XIAOLEI_GATEWAY_URL") or env_vars.get("XIAOLEI_GATEWAY_URL", "http://localhost:18801")
+        token = auth_token or os.getenv("XIAOLEI_AUTH_TOKEN") or env_vars.get("XIAOLEI_AUTH_TOKEN", "EMPTY")
         return url, token
 
     async def generate_profile(

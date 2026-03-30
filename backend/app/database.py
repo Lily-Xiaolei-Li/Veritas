@@ -5,12 +5,14 @@ Handles PostgreSQL connections using SQLAlchemy async engine.
 """
 
 import os
+import time
+import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncGenerator, Optional
 
 from dotenv import load_dotenv
-from sqlalchemy import text
+from sqlalchemy import text, event
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -19,6 +21,9 @@ from sqlalchemy.ext.asyncio import (
 )
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.pool import AsyncAdaptedQueuePool
+
+_db_logger = logging.getLogger("agent_b.database")
+_SLOW_QUERY_MS = int(os.getenv("SLOW_QUERY_MS", "200"))  # warn if query > 200ms
 
 # Load .env file from backend directory
 _backend_dir = Path(__file__).resolve().parent.parent
@@ -100,6 +105,27 @@ class Database:
         self._engine = create_async_engine(
             self.config.database_url, **self.config.get_engine_kwargs()
         )
+
+        # Slow query monitoring — attach to the sync engine underneath async
+        sync_engine = self._engine.sync_engine
+
+        @event.listens_for(sync_engine, "before_cursor_execute")
+        def _before_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            conn.info.setdefault("_query_start_time", []).append(time.perf_counter())
+
+        @event.listens_for(sync_engine, "after_cursor_execute")
+        def _after_cursor_execute(conn, cursor, statement, parameters, context, executemany):
+            starts = conn.info.get("_query_start_time", [])
+            if starts:
+                elapsed_ms = (time.perf_counter() - starts.pop()) * 1000
+                if elapsed_ms >= _SLOW_QUERY_MS:
+                    # Truncate long statements for readability
+                    stmt_preview = statement[:200].replace("\n", " ").strip()
+                    _db_logger.warning(
+                        f"[SLOW QUERY] {elapsed_ms:.0f}ms — {stmt_preview}"
+                    )
+                else:
+                    _db_logger.debug(f"[QUERY] {elapsed_ms:.1f}ms")
 
         self._session_factory = async_sessionmaker(
             self._engine,

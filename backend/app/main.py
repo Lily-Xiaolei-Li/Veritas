@@ -1,6 +1,7 @@
 import asyncio
 import os
 import sys
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -89,6 +90,11 @@ async def lifespan(app: FastAPI):
     - Cleanup on shutdown
     """
     # Startup
+    _boot_start = time.perf_counter()
+
+    def _elapsed(since: float) -> str:
+        return f"{(time.perf_counter() - since) * 1000:.0f}ms"
+
     logger.info("Agent B starting up...")
     logger.info(f"Environment: {settings.environment}")
     logger.info(f"Log level: {settings.log_level}")
@@ -116,15 +122,32 @@ async def lifespan(app: FastAPI):
         logger.info(f"Database configured: {db_url_safe}")
 
         try:
+            _t = time.perf_counter()
             await db.initialize()
-            logger.info("Database initialized successfully")
+            logger.info(f"[STARTUP] Database initialized — {_elapsed(_t)}")
 
             # Run migrations (B2.4 stability)
-            logger.info("Running database migrations...")
-            migration_result = run_migrations()
+            # NOTE: run_migrations() uses psycopg v3 sync which deadlocks when run
+            # inside asyncio (either directly or via run_in_executor). Run alembic
+            # as an isolated subprocess to avoid the event loop conflict entirely.
+            logger.info("[STARTUP] Running database migrations...")
+            _t = time.perf_counter()
+            _alembic_proc = await asyncio.create_subprocess_exec(
+                "alembic", "upgrade", "head",
+                cwd=str(Path(__file__).parent.parent),
+                stdout=asyncio.subprocess.PIPE,
+                stderr=asyncio.subprocess.STDOUT,
+            )
+            _alembic_out, _ = await _alembic_proc.communicate()
+            _alembic_ok = _alembic_proc.returncode == 0
+            migration_result = {
+                "ok": _alembic_ok,
+                "detail": f"alembic upgrade head ({'ok' if _alembic_ok else 'FAILED, rc=' + str(_alembic_proc.returncode)})",
+            }
+            _migration_ms = _elapsed(_t)
 
             if migration_result.get("ok"):
-                logger.info(f"✓ {migration_result.get('detail')}")
+                logger.info(f"[STARTUP] Migrations complete — {_migration_ms} — {migration_result.get('detail')}")
             else:
                 msg = f"Migrations failed: {migration_result.get('detail')}"
 
@@ -139,23 +162,27 @@ async def lifespan(app: FastAPI):
 
             # Initialize LangGraph checkpointer (B2.1)
             try:
+                _t = time.perf_counter()
                 await initialize_checkpointer(settings.database_url)
                 if is_checkpointer_ready():
-                    logger.info("LangGraph checkpointer initialized (persistence enabled)")
+                    logger.info(f"[STARTUP] LangGraph checkpointer initialized — {_elapsed(_t)}")
                 else:
-                    logger.warning("LangGraph checkpointer not available (persistence disabled)")
+                    logger.warning(f"[STARTUP] LangGraph checkpointer not available (persistence disabled) — {_elapsed(_t)}")
             except Exception as exc:
-                logger.error(f"Checkpointer initialization failed: {exc}", exc_info=True)
+                logger.error(f"[STARTUP] Checkpointer initialization failed — {_elapsed(_t)}: {exc}", exc_info=True)
                 logger.warning("Application will continue without checkpoint persistence")
 
             # Reconcile stale runs on startup (B2.1)
             try:
+                _t = time.perf_counter()
                 async with db.session() as reconcile_session:
                     interrupted_count = await reconcile_stale_runs(reconcile_session)
                     if interrupted_count > 0:
-                        logger.info(f"Reconciled {interrupted_count} stale runs to 'interrupted' status")
+                        logger.info(f"[STARTUP] Reconciled {interrupted_count} stale runs — {_elapsed(_t)}")
+                    else:
+                        logger.info(f"[STARTUP] Run reconciliation complete (none stale) — {_elapsed(_t)}")
             except Exception as exc:
-                logger.error(f"Run reconciliation failed: {exc}", exc_info=True)
+                logger.error(f"[STARTUP] Run reconciliation failed: {exc}", exc_info=True)
                 logger.warning("Application will continue, but some runs may be stuck in 'running' status")
 
         except Exception as exc:
@@ -188,8 +215,9 @@ async def lifespan(app: FastAPI):
             )
 
             try:
+                _t = time.perf_counter()
                 await file_watcher.start()
-                logger.info("File watcher started successfully")
+                logger.info(f"[STARTUP] File watcher started — {_elapsed(_t)}")
             except Exception as exc:
                 logger.error(f"File watcher failed to start: {exc}", exc_info=True)
                 logger.warning("Application will continue without file watching")
@@ -199,7 +227,7 @@ async def lifespan(app: FastAPI):
         else:
             logger.info("File watcher disabled by configuration")
 
-        logger.info("Agent B ready")
+        logger.info(f"[STARTUP] Agent B ready — total boot time: {_elapsed(_boot_start)}")
         logger.info(f"API server listening on {settings.api_host}:{settings.api_port}")
 
         yield

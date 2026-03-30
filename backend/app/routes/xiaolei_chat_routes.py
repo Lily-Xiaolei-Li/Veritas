@@ -33,6 +33,7 @@ class XiaoLeiChatRequest(BaseModel):
     context: str | None = None
     button_prompt: str | None = None
     system_prompt: str | None = None  # Persona system prompt
+    model: str | None = None          # HASHI API model override
     # Edit target (B1.7 - Edit Toggle)
     edit_target_artifact_id: str | None = None
     edit_target_artifact_name: str | None = None
@@ -115,26 +116,17 @@ async def chat(request: XiaoLeiChatRequest):
     
     messages.append({"role": "user", "content": user_content})
     
-    # OpenAI-compatible payload
+    # OpenAI-compatible payload — use client-selected model or default
     payload = {
-        "model": "anthropic/claude-sonnet-4-20250514",  # Gateway will route appropriately
+        "model": request.model or "claude-sonnet-4-6",
         "messages": messages,
         "stream": True
     }
-    
-    # Build headers with Authorization and Agent ID
+
+    # Build headers — HASHI accepts any non-empty API key
     headers = {"Content-Type": "application/json"}
-    if settings.xiaolei_auth_token:
-        headers["Authorization"] = f"Bearer {settings.xiaolei_auth_token}"
-        logger.debug("Using XiaoLei auth token for Gateway request")
-    else:
-        logger.warning("No XIAOLEI_AUTH_TOKEN configured - request may fail")
-    
-    # Add Agent ID for routing to specific agent (e.g., 博士小蕾)
-    # OpenClaw uses x-openclaw-agent-id header for agent routing
-    if settings.xiaolei_agent_id:
-        headers["x-openclaw-agent-id"] = settings.xiaolei_agent_id
-        logger.debug(f"Routing to agent: {settings.xiaolei_agent_id}")
+    auth_token = settings.xiaolei_auth_token or "EMPTY"
+    headers["Authorization"] = f"Bearer {auth_token}"
 
     async def event_stream():
         timeout = httpx.Timeout(

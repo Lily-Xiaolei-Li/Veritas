@@ -42,6 +42,7 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
   const [sendError, setSendError] = useState<string | null>(null);
   const [chatMode, setChatMode] = useState<"xiaolei" | "openrouter">("xiaolei");
   const [openrouterModel, setOpenrouterModel] = useState<string>("");
+  const [hashiModel, setHashiModel] = useState<string>("claude-sonnet-4-6");
   
   // RAG configuration
   const [ragEnabled, setRagEnabled] = useState<{ library: boolean; interviews: boolean }>({
@@ -113,6 +114,24 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
     })();
     return () => { cancelled = true; };
   }, [currentSessionId]);
+
+  // HASHI API models (from HASHI API Gateway)
+  const HASHI_MODELS = [
+    { id: "claude-sonnet-4-6", name: "Claude Sonnet 4.6" },
+    { id: "claude-opus-4-6", name: "Claude Opus 4.6" },
+    { id: "claude-haiku-4-5", name: "Claude Haiku 4.5" },
+    { id: "gemini-2.5-pro", name: "Gemini 2.5 Pro" },
+    { id: "gemini-2.5-flash", name: "Gemini 2.5 Flash" },
+    { id: "gemini-2.5-flash-lite", name: "Gemini 2.5 Flash Lite" },
+    { id: "gemini-3.1-pro-preview", name: "Gemini 3.1 Pro Preview" },
+    { id: "gemini-3-flash-preview", name: "Gemini 3 Flash Preview" },
+    { id: "gpt-5.4", name: "GPT 5.4" },
+    { id: "gpt-5.3-codex", name: "GPT 5.3 Codex" },
+    { id: "gpt-5.2-codex", name: "GPT 5.2 Codex" },
+    { id: "gpt-5.2", name: "GPT 5.2" },
+    { id: "gpt-5.1-codex-max", name: "GPT 5.1 Codex Max" },
+    { id: "gpt-5.1-codex-mini", name: "GPT 5.1 Codex Mini" },
+  ];
 
   // Provider config (Phase 2)
   const { data: openrouterCfg } = useLLMProviderConfig("openrouter");
@@ -678,10 +697,11 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
         }
 
         await streamXiaoLeiChat(
-          { 
+          {
             message: content,
             system_prompt: systemPrompt,
             context: contextStr,
+            model: hashiModel,
             // Edit target (B1.7)
             edit_target_artifact_id: editTargetArtifactId || undefined,
             edit_target_artifact_name: editTargetName,
@@ -867,9 +887,25 @@ export function ReasoningPanel({ onCollapse }: ReasoningPanelProps) {
             className="text-[11px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
             title="Chat provider"
           >
-            <option value="xiaolei">小蕾 (Lily)</option>
+            <option value="xiaolei">HASHI API</option>
             <option value="openrouter">OpenRouter</option>
           </select>
+
+          {/* HASHI API model */}
+          {chatMode === "xiaolei" && (
+            <select
+              value={hashiModel}
+              onChange={(e) => setHashiModel(e.target.value)}
+              className="text-[11px] border border-gray-300 dark:border-gray-600 rounded px-1.5 py-0.5 bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+              title="HASHI API model"
+            >
+              {HASHI_MODELS.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.name}
+                </option>
+              ))}
+            </select>
+          )}
 
           {/* OpenRouter model */}
           {chatMode === "openrouter" && (

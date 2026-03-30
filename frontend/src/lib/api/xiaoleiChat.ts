@@ -18,6 +18,7 @@ export interface XiaoLeiChatRequest {
   context?: string;
   button_prompt?: string;
   system_prompt?: string;  // Persona system prompt for AI behavior
+  model?: string;          // HASHI API model override
   // Edit target (B1.7 - Edit Toggle)
   edit_target_artifact_id?: string;
   edit_target_artifact_name?: string;

@@ -60,8 +60,8 @@ class Settings(BaseSettings):
         description="XiaoLei API request timeout in seconds"
     )
     xiaolei_gateway_url: str = Field(
-        default="http://localhost:18789",
-        description="XiaoLei Gateway URL for chat completions"
+        default="http://localhost:18801",
+        description="HASHI API Gateway URL for chat completions"
     )
     xiaolei_auth_token: Optional[str] = Field(
         default=None,

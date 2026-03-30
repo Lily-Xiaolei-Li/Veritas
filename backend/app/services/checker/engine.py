@@ -37,8 +37,8 @@ def _load_gateway_config() -> tuple[str, str]:
                 if line and not line.startswith("#") and "=" in line:
                     key, _, val = line.partition("=")
                     env_vars[key.strip()] = val.strip()
-    url = os.getenv("XIAOLEI_GATEWAY_URL") or env_vars.get("XIAOLEI_GATEWAY_URL", "http://localhost:18789")
-    token = os.getenv("XIAOLEI_AUTH_TOKEN") or env_vars.get("XIAOLEI_AUTH_TOKEN", "")
+    url = os.getenv("XIAOLEI_GATEWAY_URL") or env_vars.get("XIAOLEI_GATEWAY_URL", "http://localhost:18801")
+    token = os.getenv("XIAOLEI_AUTH_TOKEN") or env_vars.get("XIAOLEI_AUTH_TOKEN", "EMPTY")
     return url, token
 
 
@@ -46,15 +46,13 @@ _GATEWAY_URL, _GATEWAY_TOKEN = _load_gateway_config()
 
 
 async def _default_llm_call(system_prompt: str, user_prompt: str) -> str:
-    """Default LLM call via OpenClaw Gateway.
-    
-    Uses auth token from backend .env for authentication.
-    """
+    """Default LLM call via HASHI API Gateway."""
     import httpx
 
-    headers = {"Content-Type": "application/json"}
-    if _GATEWAY_TOKEN:
-        headers["Authorization"] = f"Bearer {_GATEWAY_TOKEN}"
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {_GATEWAY_TOKEN}",
+    }
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
@@ -62,7 +60,7 @@ async def _default_llm_call(system_prompt: str, user_prompt: str) -> str:
                 f"{_GATEWAY_URL}/v1/chat/completions",
                 headers=headers,
                 json={
-                    "model": "anthropic/claude-sonnet-4-20250514",
+                    "model": "claude-sonnet-4-6",
                     "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": user_prompt},
@@ -75,7 +73,7 @@ async def _default_llm_call(system_prompt: str, user_prompt: str) -> str:
             data = response.json()
             return data["choices"][0]["message"]["content"]
     except Exception as e:
-        logger.warning(f"OpenClaw Gateway call failed: {e}")
+        logger.warning(f"HASHI Gateway call failed: {e}")
         raise
 
 
